@@ -1,20 +1,31 @@
 import type { LinkProps } from '@tanstack/react-router';
-import { LayoutDashboardIcon, type LucideIcon } from 'lucide-react';
-import type { Role } from '@/queries/auth/type';
+import {
+  BriefcaseIcon,
+  LayoutDashboardIcon,
+  type LucideIcon,
+  ShieldIcon,
+  UsersIcon,
+} from 'lucide-react';
 
 export interface NavItem {
   title: string;
   to: LinkProps['to'];
   icon: LucideIcon;
-  /** Roles that see this item; keep in sync with the route's requireAuth. */
-  roles: Role[];
+  /** Super admins only; keep in sync with the route's requireAuth. */
+  superOnly?: boolean;
 }
 
-export const navItems: NavItem[] = [
+export const navGroups: { label: string; items: NavItem[] }[] = [
   {
-    title: 'Нүүр',
-    to: '/',
-    icon: LayoutDashboardIcon,
-    roles: ['admin', 'broker'],
+    label: 'Ерөнхий',
+    items: [{ title: 'Хянах самбар', to: '/', icon: LayoutDashboardIcon }],
+  },
+  {
+    label: 'Удирдлага',
+    items: [
+      { title: 'Харилцагчид', to: '/clients', icon: UsersIcon },
+      { title: 'Брокерууд', to: '/brokers', icon: BriefcaseIcon },
+      { title: 'Админууд', to: '/admins', icon: ShieldIcon, superOnly: true },
+    ],
   },
 ];

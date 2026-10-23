@@ -1,6 +1,6 @@
 # private_bond_admin_front
 
-Admin and broker web app for the private bond platform. Which features a user sees depends on their role (`admin` or `broker`). The customer app lives in a separate repo, `private_bond_customer_front`.
+Admin panel for the private bond platform (`/api/admin`): client review, broker and admin management. Brokers sign in to their own panel (`/api/broker`), not here. The customer app lives in a separate repo, `private_bond_customer_front`.
 
 ## Features
 
@@ -25,11 +25,11 @@ You need [Node.js](https://nodejs.org/) 22+ and [pnpm](https://pnpm.io/).
     pnpm install
     ```
 
-2.  **Point the dev proxy at the backend** (optional, defaults to `http://localhost:8080`):
+2.  **Point the dev proxy at the backend** (optional, defaults to `http://localhost:3000`, where `make dev` in `private_bond_back` serves the API):
 
     ```bash
     # .env.development
-    API_PROXY_TARGET=http://localhost:8080
+    API_PROXY_TARGET=http://localhost:3000
     ```
 
 3.  **Run the development server:**
@@ -57,7 +57,6 @@ You need [Node.js](https://nodejs.org/) 22+ and [pnpm](https://pnpm.io/).
 ```
 .
 ├── public
-│   └── favicon.svg
 ├── src
 │   ├── assets
 │   ├── components
@@ -117,7 +116,7 @@ You need [Node.js](https://nodejs.org/) 22+ and [pnpm](https://pnpm.io/).
 
 ### Root files
 
-- **`public`**: Static files served as-is, not processed by Vite (favicon).
+- **`public`**: Static files served as-is, not processed by Vite (empty for now: no favicon, `index.html` points the icon at `data:,` so the browser asks for none).
 - **`.env.development` / `.env.staging` / `.env.prod`**: Environment per mode. See [Environment Variables](#environment-variables).
 - **`biome.json`**: Lint and format rules. Skips `routeTree.gen.ts` and `components/ui`.
 - **`components.json`**: shadcn/ui config (style, base color, aliases). Used by `shadcn add`.
@@ -213,43 +212,50 @@ src/components/nav/nav-items.ts        menu item with roles
 
 Keep the `roles` of a menu item and of its route guard the same. Hiding a menu item does not protect the page; the guard does.
 
+## Screens
+
+| Path | Who | What |
+|---|---|---|
+| `/login` | signed out | Email and password; lock and throttle countdowns. No self sign-up: a super admin creates admins. |
+| `/` | any admin | Counts by review status, blocked clients and brokers; the review queue. |
+| `/clients` | any admin | Filter by status tab, type, active; search (name, email, phone, РД). Filters live in the URL. |
+| `/clients/$clientId` | any admin | Every field of the type; approve (pending, complete profile), reject with a reason the client sees, block, unblock, delete; an organization's members. |
+| `/brokers` | any admin | Create (generated initial password to share), edit, reset password, block, unblock, delete. |
+| `/admins` | super admins | As brokers; nobody acts on themselves. Hidden from the menu otherwise. |
+| `/account` | any admin | Profile, password change, sessions. |
+
+The first super admin comes from the backend: `go run ./cmd admin create-super --email E --phone P --last-name L --first-name F` (the password is read from stdin).
+
 ## Auth Flow
 
-The session is an httpOnly cookie set by the backend. The frontend never reads or stores a token.
+The API sets HttpOnly cookies; the frontend never reads or stores a token and sends every request with `withCredentials`.
 
 ```
 open a /_dashboard page
-  -> routes/_dashboard/route.tsx beforeLoad
-  -> lib/auth.ts requireAuth
-  -> queryClient.ensureQueryData(meOptions())      queries/auth/options.ts
-  -> getMe() -> fetchAndValidate('auth/me', MeSchema)
-  -> GET /api/auth/me (cookie sent, withCredentials)
-       200: page renders; components read the user with useSuspenseQuery(meOptions())
+  -> routes/_dashboard/route.tsx beforeLoad -> lib/auth.ts requireAuth (superOnly for /admins)
+  -> queryClient.ensureQueryData(meOptions()) -> GET /api/admin/me
+       200: page renders
        error: redirect to /login
-       role not allowed: redirect to /
 
-any request returns 401 later
-  -> fetcher interceptor -> handler in main.tsx
-  -> queryClient.clear(), toast if the user was signed in, navigate to /login
+a request answers 401 auth.unauthenticated (the 15-minute access cookie expired)
+  -> lib/fetcher.ts interceptor -> refreshSession(): POST auth/refresh
+     (one at a time: a shared promise per tab, navigator.locks across tabs)
+       ok: retry the request once
+       fails: handler in main.tsx clears the cache and goes to /login
+
+login, refresh and a password change -> scheduleRefresh() refreshes every 14 minutes
 ```
+
+Errors are `application/problem+json`, read into `ApiError` (`code`, Mongolian `message`, field `errors`, `requestId`, `retryAfter`).
 
 ## Environment Variables
 
 | Variable | File | Purpose |
 |---|---|---|
-| `VITE_API_URL` | all `.env.*` | Axios `baseURL`. `/api` keeps requests same-origin so the cookie is sent. |
-| `API_PROXY_TARGET` | `.env.development` | Backend address for the dev proxy. Not exposed to the browser (no `VITE_` prefix). |
+| `VITE_API_URL` | all `.env.*` | Axios `baseURL`, `/api/admin`. Same-origin so the cookies are sent. |
+| `API_PROXY_TARGET` | `.env.development` | Backend address for the dev proxy. Not exposed to the browser. |
 
-In staging and production, `/api` must be reverse-proxied to the backend (nginx).
-
-## Backend TODOs
-
-These are placeholders until the backend API is defined (marked `TODO` in code):
-
-- `GET /me` path (`auth/me`) and its response (`MeSchema` in `queries/auth/type.ts`).
-- Error body shape (`{ error }` in `lib/fetcher.ts`).
-- Dev proxy target and route prefix (`vite.config.ts`).
-- Session cookie name, separate from the customer app (e.g. `admin_session`), with `SameSite=Lax` and `Secure`.
+The API accepts state-changing requests only from `ADMIN_ORIGINS` (locally `http://localhost:5173`). Opening the panel by another address, such as the machine's IP, needs that origin added there.
 
 ## Learn More
 

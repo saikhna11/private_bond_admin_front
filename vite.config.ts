@@ -12,10 +12,9 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 5173,
       // Same-origin /api in dev so the httpOnly session cookie is sent.
-      // TODO: align with backend (route prefix, port).
       proxy: {
         '/api': {
-          target: env.API_PROXY_TARGET || 'http://localhost:8080',
+          target: env.API_PROXY_TARGET || 'http://localhost:3000',
           changeOrigin: true,
         },
       },

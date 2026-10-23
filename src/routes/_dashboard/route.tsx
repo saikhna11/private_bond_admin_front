@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_dashboard')({
     await requireAuth(context.queryClient);
   },
   component: DashboardLayout,
-  staticData: { crumb: 'Нүүр' },
+  staticData: { crumb: 'Самбар' },
 });

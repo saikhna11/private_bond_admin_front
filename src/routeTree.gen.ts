@@ -12,7 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteRouteImport } from './routes/_dashboard/route'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
+import { Route as DashboardClientsRouteRouteImport } from './routes/_dashboard/clients/route'
+import { Route as BrokerPanelRouteRouteImport } from './routes/broker/_panel/route'
+import { Route as BrokerPublicRouteRouteImport } from './routes/broker/_public/route'
+import { Route as DashboardAccountIndexRouteImport } from './routes/_dashboard/account/index'
+import { Route as DashboardAdminsIndexRouteImport } from './routes/_dashboard/admins/index'
+import { Route as DashboardBrokersIndexRouteImport } from './routes/_dashboard/brokers/index'
+import { Route as DashboardClientsIndexRouteImport } from './routes/_dashboard/clients/index'
+import { Route as DashboardClientsClientIdRouteImport } from './routes/_dashboard/clients/$clientId'
 import { Route as PublicLoginIndexRouteImport } from './routes/_public/login/index'
+import { Route as BrokerPanelIndexRouteImport } from './routes/broker/_panel/index'
+import { Route as BrokerPanelAccountIndexRouteImport } from './routes/broker/_panel/account/index'
+import { Route as BrokerPublicLoginIndexRouteImport } from './routes/broker/_public/login/index'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/_dashboard',
@@ -27,39 +38,163 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardClientsRouteRoute = DashboardClientsRouteRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const BrokerPanelRouteRoute = BrokerPanelRouteRouteImport.update({
+  id: '/broker/_panel',
+  path: '/broker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrokerPublicRouteRoute = BrokerPublicRouteRouteImport.update({
+  id: '/broker/_public',
+  path: '/broker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardAccountIndexRoute = DashboardAccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardAdminsIndexRoute = DashboardAdminsIndexRouteImport.update({
+  id: '/admins/',
+  path: '/admins/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBrokersIndexRoute = DashboardBrokersIndexRouteImport.update({
+  id: '/brokers/',
+  path: '/brokers/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardClientsIndexRoute = DashboardClientsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardClientsRouteRoute,
+} as any)
+const DashboardClientsClientIdRoute =
+  DashboardClientsClientIdRouteImport.update({
+    id: '/$clientId',
+    path: '/$clientId',
+    getParentRoute: () => DashboardClientsRouteRoute,
+  } as any)
 const PublicLoginIndexRoute = PublicLoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+const BrokerPanelIndexRoute = BrokerPanelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BrokerPanelRouteRoute,
+} as any)
+const BrokerPanelAccountIndexRoute = BrokerPanelAccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => BrokerPanelRouteRoute,
+} as any)
+const BrokerPublicLoginIndexRoute = BrokerPublicLoginIndexRouteImport.update({
+  id: '/login/',
+  path: '/login/',
+  getParentRoute: () => BrokerPublicRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
+  '/clients': typeof DashboardClientsRouteRouteWithChildren
+  '/broker': typeof BrokerPublicRouteRouteWithChildren
+  '/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/account/': typeof DashboardAccountIndexRoute
+  '/admins/': typeof DashboardAdminsIndexRoute
+  '/brokers/': typeof DashboardBrokersIndexRoute
+  '/clients/': typeof DashboardClientsIndexRoute
   '/login/': typeof PublicLoginIndexRoute
+  '/broker/': typeof BrokerPanelIndexRoute
+  '/broker/account/': typeof BrokerPanelAccountIndexRoute
+  '/broker/login/': typeof BrokerPublicLoginIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof DashboardIndexRoute
+  '/broker': typeof BrokerPanelIndexRoute
+  '/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/account': typeof DashboardAccountIndexRoute
+  '/admins': typeof DashboardAdminsIndexRoute
+  '/brokers': typeof DashboardBrokersIndexRoute
+  '/clients': typeof DashboardClientsIndexRoute
   '/login': typeof PublicLoginIndexRoute
+  '/broker/account': typeof BrokerPanelAccountIndexRoute
+  '/broker/login': typeof BrokerPublicLoginIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dashboard': typeof DashboardRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_dashboard/clients': typeof DashboardClientsRouteRouteWithChildren
+  '/broker/_panel': typeof BrokerPanelRouteRouteWithChildren
+  '/broker/_public': typeof BrokerPublicRouteRouteWithChildren
   '/_dashboard/': typeof DashboardIndexRoute
+  '/_dashboard/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/_dashboard/account/': typeof DashboardAccountIndexRoute
+  '/_dashboard/admins/': typeof DashboardAdminsIndexRoute
+  '/_dashboard/brokers/': typeof DashboardBrokersIndexRoute
+  '/_dashboard/clients/': typeof DashboardClientsIndexRoute
   '/_public/login/': typeof PublicLoginIndexRoute
+  '/broker/_panel/': typeof BrokerPanelIndexRoute
+  '/broker/_panel/account/': typeof BrokerPanelAccountIndexRoute
+  '/broker/_public/login/': typeof BrokerPublicLoginIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login/'
+  fullPaths:
+    | '/'
+    | '/clients'
+    | '/broker'
+    | '/clients/$clientId'
+    | '/account/'
+    | '/admins/'
+    | '/brokers/'
+    | '/clients/'
+    | '/login/'
+    | '/broker/'
+    | '/broker/account/'
+    | '/broker/login/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
+  to:
+    | '/'
+    | '/broker'
+    | '/clients/$clientId'
+    | '/account'
+    | '/admins'
+    | '/brokers'
+    | '/clients'
+    | '/login'
+    | '/broker/account'
+    | '/broker/login'
   id:
-    '__root__' | '/_dashboard' | '/_public' | '/_dashboard/' | '/_public/login/'
+    | '__root__'
+    | '/_dashboard'
+    | '/_public'
+    | '/_dashboard/clients'
+    | '/broker/_panel'
+    | '/broker/_public'
+    | '/_dashboard/'
+    | '/_dashboard/clients/$clientId'
+    | '/_dashboard/account/'
+    | '/_dashboard/admins/'
+    | '/_dashboard/brokers/'
+    | '/_dashboard/clients/'
+    | '/_public/login/'
+    | '/broker/_panel/'
+    | '/broker/_panel/account/'
+    | '/broker/_public/login/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
+  BrokerPanelRouteRoute: typeof BrokerPanelRouteRouteWithChildren
+  BrokerPublicRouteRoute: typeof BrokerPublicRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -85,6 +220,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/_dashboard/clients': {
+      id: '/_dashboard/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof DashboardClientsRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/broker/_panel': {
+      id: '/broker/_panel'
+      path: '/broker'
+      fullPath: '/broker'
+      preLoaderRoute: typeof BrokerPanelRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/broker/_public': {
+      id: '/broker/_public'
+      path: '/broker'
+      fullPath: '/broker'
+      preLoaderRoute: typeof BrokerPublicRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_dashboard/account/': {
+      id: '/_dashboard/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof DashboardAccountIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/admins/': {
+      id: '/_dashboard/admins/'
+      path: '/admins'
+      fullPath: '/admins/'
+      preLoaderRoute: typeof DashboardAdminsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/brokers/': {
+      id: '/_dashboard/brokers/'
+      path: '/brokers'
+      fullPath: '/brokers/'
+      preLoaderRoute: typeof DashboardBrokersIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/clients/': {
+      id: '/_dashboard/clients/'
+      path: '/'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof DashboardClientsIndexRouteImport
+      parentRoute: typeof DashboardClientsRouteRoute
+    }
+    '/_dashboard/clients/$clientId': {
+      id: '/_dashboard/clients/$clientId'
+      path: '/$clientId'
+      fullPath: '/clients/$clientId'
+      preLoaderRoute: typeof DashboardClientsClientIdRouteImport
+      parentRoute: typeof DashboardClientsRouteRoute
+    }
     '/_public/login/': {
       id: '/_public/login/'
       path: '/login'
@@ -92,15 +283,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLoginIndexRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/broker/_panel/': {
+      id: '/broker/_panel/'
+      path: '/'
+      fullPath: '/broker/'
+      preLoaderRoute: typeof BrokerPanelIndexRouteImport
+      parentRoute: typeof BrokerPanelRouteRoute
+    }
+    '/broker/_panel/account/': {
+      id: '/broker/_panel/account/'
+      path: '/account'
+      fullPath: '/broker/account/'
+      preLoaderRoute: typeof BrokerPanelAccountIndexRouteImport
+      parentRoute: typeof BrokerPanelRouteRoute
+    }
+    '/broker/_public/login/': {
+      id: '/broker/_public/login/'
+      path: '/login'
+      fullPath: '/broker/login/'
+      preLoaderRoute: typeof BrokerPublicLoginIndexRouteImport
+      parentRoute: typeof BrokerPublicRouteRoute
+    }
   }
 }
 
+interface DashboardClientsRouteRouteChildren {
+  DashboardClientsClientIdRoute: typeof DashboardClientsClientIdRoute
+  DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
+}
+
+const DashboardClientsRouteRouteChildren: DashboardClientsRouteRouteChildren = {
+  DashboardClientsClientIdRoute: DashboardClientsClientIdRoute,
+  DashboardClientsIndexRoute: DashboardClientsIndexRoute,
+}
+
+const DashboardClientsRouteRouteWithChildren =
+  DashboardClientsRouteRoute._addFileChildren(
+    DashboardClientsRouteRouteChildren,
+  )
+
 interface DashboardRouteRouteChildren {
+  DashboardClientsRouteRoute: typeof DashboardClientsRouteRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
+  DashboardAdminsIndexRoute: typeof DashboardAdminsIndexRoute
+  DashboardBrokersIndexRoute: typeof DashboardBrokersIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardClientsRouteRoute: DashboardClientsRouteRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAccountIndexRoute: DashboardAccountIndexRoute,
+  DashboardAdminsIndexRoute: DashboardAdminsIndexRoute,
+  DashboardBrokersIndexRoute: DashboardBrokersIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -119,9 +354,35 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
   PublicRouteRouteChildren,
 )
 
+interface BrokerPanelRouteRouteChildren {
+  BrokerPanelIndexRoute: typeof BrokerPanelIndexRoute
+  BrokerPanelAccountIndexRoute: typeof BrokerPanelAccountIndexRoute
+}
+
+const BrokerPanelRouteRouteChildren: BrokerPanelRouteRouteChildren = {
+  BrokerPanelIndexRoute: BrokerPanelIndexRoute,
+  BrokerPanelAccountIndexRoute: BrokerPanelAccountIndexRoute,
+}
+
+const BrokerPanelRouteRouteWithChildren =
+  BrokerPanelRouteRoute._addFileChildren(BrokerPanelRouteRouteChildren)
+
+interface BrokerPublicRouteRouteChildren {
+  BrokerPublicLoginIndexRoute: typeof BrokerPublicLoginIndexRoute
+}
+
+const BrokerPublicRouteRouteChildren: BrokerPublicRouteRouteChildren = {
+  BrokerPublicLoginIndexRoute: BrokerPublicLoginIndexRoute,
+}
+
+const BrokerPublicRouteRouteWithChildren =
+  BrokerPublicRouteRoute._addFileChildren(BrokerPublicRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
+  BrokerPanelRouteRoute: BrokerPanelRouteRouteWithChildren,
+  BrokerPublicRouteRoute: BrokerPublicRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
