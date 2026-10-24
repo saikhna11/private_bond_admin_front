@@ -46,6 +46,7 @@ export function PublicLayout({
     <div className="grid min-h-svh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <aside className="relative hidden overflow-hidden bg-linear-to-br from-brand-panel to-brand-panel-2 text-white lg:sticky lg:top-0 lg:flex lg:h-svh lg:flex-col">
         <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top_left,black,transparent_70%)]" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-brand-gradient" />
         <div className="absolute -right-32 -bottom-32 size-[28rem] rounded-full bg-gold/10 blur-3xl" />
         <div className="relative flex flex-1 flex-col justify-between p-10 xl:p-14">
           <Logo inverted />

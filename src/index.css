@@ -56,14 +56,14 @@
 }
 
 :root {
-    /* Ulzii & Co Capital (ucc.mn): deep brown #391611, orange #DD6938, rust #AB432C. */
+    /* Ulzii & Co Capital (ucc.mn): near-black wordmark, copper "II" gradient #A84028 → #F19670. */
     --background: #fbf8f5;
-    --foreground: #241310;
+    --foreground: #1a1311;
     --card: #ffffff;
-    --card-foreground: #241310;
+    --card-foreground: #1a1311;
     --popover: #ffffff;
-    --popover-foreground: #241310;
-    --primary: #b8492e;
+    --popover-foreground: #1a1311;
+    --primary: #b4502c;
     --primary-foreground: #ffffff;
     --secondary: #f6ece4;
     --secondary-foreground: #391611;
@@ -76,19 +76,19 @@
     --success-foreground: #ffffff;
     --warning: #d98a1f;
     --warning-foreground: #6b4005;
-    --gold: #dd6938;
+    --gold: #e8875f;
     --border: #ece2da;
     --input: #e4d8ce;
     --ring: #dd6938;
-    --chart-1: #b8492e;
+    --chart-1: #b4502c;
     --chart-2: #dd6938;
     --chart-3: #f0b48c;
     --chart-4: #391611;
     --chart-5: #8c7a72;
     --radius: 0.75rem;
     --sidebar: #ffffff;
-    --sidebar-foreground: #241310;
-    --sidebar-primary: #b8492e;
+    --sidebar-foreground: #1a1311;
+    --sidebar-primary: #b4502c;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #f8ece3;
     --sidebar-accent-foreground: #5a2318;
@@ -96,6 +96,7 @@
     --sidebar-ring: #dd6938;
     --brand-panel: #2a100c;
     --brand-panel-2: #4d1d15;
+    --brand-gradient: linear-gradient(135deg, #a84028 0%, #c05828 30%, #f19670 55%, #c05828 80%, #e8875f 100%);
 }
 
 .dark {
@@ -105,7 +106,7 @@
     --card-foreground: #f5ece6;
     --popover: #231a18;
     --popover-foreground: #f5ece6;
-    --primary: #e57a4c;
+    --primary: #e8875f;
     --primary-foreground: #1f0d09;
     --secondary: #2c2120;
     --secondary-foreground: #f2e6de;
@@ -118,23 +119,23 @@
     --success-foreground: #0b2418;
     --warning: #f0b14a;
     --warning-foreground: #2e1d03;
-    --gold: #f08a5d;
+    --gold: #f19670;
     --border: rgb(255 255 255 / 9%);
     --input: rgb(255 255 255 / 14%);
-    --ring: #e57a4c;
-    --chart-1: #e57a4c;
+    --ring: #e8875f;
+    --chart-1: #e8875f;
     --chart-2: #f0b48c;
     --chart-3: #4cc38a;
     --chart-4: #c9b6ae;
     --chart-5: #8c7a72;
     --sidebar: #1b1413;
     --sidebar-foreground: #f5ece6;
-    --sidebar-primary: #e57a4c;
+    --sidebar-primary: #e8875f;
     --sidebar-primary-foreground: #1f0d09;
     --sidebar-accent: #2e2220;
     --sidebar-accent-foreground: #f8e6da;
     --sidebar-border: rgb(255 255 255 / 8%);
-    --sidebar-ring: #e57a4c;
+    --sidebar-ring: #e8875f;
     --brand-panel: #1f0c09;
     --brand-panel-2: #3d1810;
 }
@@ -154,6 +155,9 @@
 @layer utilities {
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+  .bg-brand-gradient {
+    background-image: var(--brand-gradient);
   }
   .bg-grid {
     background-image:
