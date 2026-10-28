@@ -24,7 +24,6 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-/** The admin sign-in unless props name another panel's (the broker panel's). */
 export function LoginForm({
   signIn = login,
   meKey = authKeys.me(),

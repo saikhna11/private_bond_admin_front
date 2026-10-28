@@ -35,7 +35,7 @@ const adminHighlights: Highlight[] = [
 /** The sign-in screen; the admin panel's texts unless props give another panel's. */
 export function PublicLayout({
   eyebrow = 'Зөвхөн ажилтанд',
-  heading = 'Хувийн бондын платформын удирдлага',
+  heading = 'Бондын платформын удирдлага',
   highlights = adminHighlights,
 }: {
   eyebrow?: string;

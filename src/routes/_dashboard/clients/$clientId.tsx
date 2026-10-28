@@ -191,7 +191,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
                 title="Харилцагчийг хаах уу?"
                 description={
                   c.type === 'organization'
-                    ? 'Байгууллага болон бүх албан тушаалтнуудын нэвтрэлт шууд дуусна.'
+                    ? 'Байгууллага болон бүх хариуцагч ажилтан нэвтрэлт шууд дуусна.'
                     : 'Бүх нэвтрэлт нь шууд дуусч, дахин нэвтрэх боломжгүй болно.'
                 }
                 confirmLabel="Хаах"
@@ -591,10 +591,7 @@ function Members({ orgId }: { orgId: string }) {
   return (
     <Card className="gap-0 pb-0">
       <CardHeader className="pb-4">
-        <CardTitle>Албан тушаалтнууд</CardTitle>
-        <CardDescription>
-          {data ? `${data.total} албан тушаалтан` : 'Ачаалж байна'}
-        </CardDescription>
+        <CardTitle>Хариуцагч ажилчид</CardTitle>
       </CardHeader>
       <Table>
         <TableHeader>
@@ -619,7 +616,7 @@ function Members({ orgId }: { orgId: string }) {
                 colSpan={5}
                 className="py-8 text-center text-muted-foreground"
               >
-                Албан тушаалтан алга
+                Хариуцагч ажилтан алга
               </TableCell>
             </TableRow>
           ) : (

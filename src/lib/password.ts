@@ -23,7 +23,6 @@ export const passwordSchema = z
     message: 'Нууц үг шаардлага хангахгүй байна',
   });
 
-/** A 14-character password that passes the rule, from the browser's CSPRNG. */
 export function generatePassword(): string {
   const sets = [
     'ABCDEFGHJKLMNPQRSTUVWXYZ',
