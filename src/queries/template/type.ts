@@ -50,10 +50,12 @@ export const ContractVariableSchema = z.object({
 });
 export type ContractVariableType = z.infer<typeof ContractVariableSchema>;
 
+// z.guid, not z.uuid: the sample bonds and issuers have ids such as
+// 00000000-0000-0000-0000-000000000101, which carry no RFC 4122 version.
 const templateFields = {
-  id: z.uuid(),
-  user_id: z.uuid(),
-  bond_id: z.uuid(),
+  id: z.guid(),
+  user_id: z.guid(),
+  bond_id: z.guid(),
   ownership_type: OwnershipTypeSchema,
   language: LanguageSchema,
   name: z.string(),
@@ -85,7 +87,7 @@ export type TemplateFieldType = z.infer<typeof TemplateFieldSchema>;
 export const TemplateDetailSchema = z.object({
   ...templateFields,
   product: z.string(),
-  created_by: z.uuid().optional(),
+  created_by: z.guid().optional(),
   fields: z.array(TemplateFieldSchema),
   pictures: z.array(
     z.object({
