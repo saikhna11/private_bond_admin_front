@@ -40,7 +40,7 @@ ReactDOM.createRoot(rootElement).render(
   <StrictMode>
     <ThemeProvider
       attribute="class"
-      defaultTheme="light"
+      defaultTheme="system"
       enableSystem
       disableTransitionOnChange
     >
