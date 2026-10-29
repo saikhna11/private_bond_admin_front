@@ -66,3 +66,15 @@ export function deviceName(): string {
             : '';
   return os ? `${browser}, ${os}` : browser;
 }
+
+/** A decimal amount with thousands separators and its currency, "1,000,000.00 ₮" for MNT. */
+export function formatAmount(value: string, currency: string): string {
+  const n = Number(value);
+  const text = Number.isFinite(n)
+    ? n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : value;
+  return currency === 'MNT' ? `${text} ₮` : `${text} ${currency}`;
+}

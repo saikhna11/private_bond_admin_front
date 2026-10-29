@@ -77,6 +77,7 @@ export const TemplateSummarySchema = z.object({
   product: z.string(),
   fields: z.number(),
   mapped: z.number(),
+  contracts: z.number(),
 });
 export type TemplateSummaryType = z.infer<typeof TemplateSummarySchema>;
 

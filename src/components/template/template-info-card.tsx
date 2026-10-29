@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { DownloadIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,18 @@ export function TemplateInfoCard({
               <span className="font-mono">{t.product}</span> ·{' '}
               {ownershipLabel[t.ownership_type]} · {languageLabel[t.language]} ·
               оруулсан {formatDateTime(t.created_at)}
+              {t.contracts > 0 && (
+                <>
+                  {' · '}
+                  <Link
+                    to="/contracts"
+                    search={{ template: t.id }}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {t.contracts} гэрээ
+                  </Link>
+                </>
+              )}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
