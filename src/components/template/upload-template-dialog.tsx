@@ -225,18 +225,20 @@ export function UploadTemplateDialog({
                 control={form.control}
                 name="ttd"
                 render={({ field }) => (
-                  <label
-                    htmlFor="ttd"
-                    title="Худалдан авагчийн татвар төлөгчийн дугаар (ТТД) гэрээнд хэвлэгдэнэ"
-                    className="flex h-10 cursor-pointer items-center gap-2 self-end text-sm"
-                  >
-                    <Checkbox
-                      id="ttd"
-                      checked={field.value}
-                      onCheckedChange={(c) => field.onChange(c === true)}
-                    />
-                    ТТД-тэй
-                  </label>
+                  <FormField id="ttd" label="Татвар төлөгчийн дугаар">
+                    <label
+                      htmlFor="ttd"
+                      title="Худалдан авагчийн татвар төлөгчийн дугаар гэрээнд хэвлэгдэнэ"
+                      className="flex h-10 cursor-pointer items-center gap-2.5 rounded-md border border-input px-3 text-sm shadow-xs transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 dark:bg-input/30"
+                    >
+                      <Checkbox
+                        id="ttd"
+                        checked={field.value}
+                        onCheckedChange={(c) => field.onChange(c === true)}
+                      />
+                      Гэрээнд хэвлэнэ
+                    </label>
+                  </FormField>
                 )}
               />
             </div>
