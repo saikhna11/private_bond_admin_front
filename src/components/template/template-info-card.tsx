@@ -1,4 +1,4 @@
-import { CircleCheckIcon, CircleXIcon, DownloadIcon } from 'lucide-react';
+import { DownloadIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,12 +14,7 @@ import {
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
 
-const partyLabel: Record<string, string> = {
-  holder: 'Эзэмшигч',
-  co_holder: 'Хамтран эзэмшигч',
-};
-
-/** The template's name, product, status and signature pictures, with its actions. */
+/** The template's name, product and status, with its actions. */
 export function TemplateInfoCard({
   t,
   actions,
@@ -40,8 +35,8 @@ export function TemplateInfoCard({
   }
 
   return (
-    <Card className="py-0">
-      <CardContent className="flex flex-col gap-5 p-6">
+    <Card className="shrink-0 py-0">
+      <CardContent className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -63,24 +58,6 @@ export function TemplateInfoCard({
             </Button>
             {actions}
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {t.pictures.map((p) => (
-            <span
-              key={p.alt_text}
-              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs"
-            >
-              {p.found ? (
-                <CircleCheckIcon className="size-3.5 text-success" />
-              ) : (
-                <CircleXIcon className="size-3.5 text-destructive" />
-              )}
-              {partyLabel[p.party_type] ?? p.party_type}-ийн гарын үсгийн зураг
-              <code className="font-mono text-muted-foreground">
-                {p.alt_text}
-              </code>
-            </span>
-          ))}
         </div>
       </CardContent>
     </Card>

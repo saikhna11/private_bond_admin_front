@@ -13,7 +13,6 @@ import type {
   FieldMappingBody,
   FieldSource,
 } from '@/queries/template/type';
-import { fieldRowId } from './use-row-focus';
 import { VariableCombobox } from './variable-combobox';
 
 const sourceLabel: Record<FieldSource, string> = {
@@ -24,46 +23,40 @@ const sourceLabel: Record<FieldSource, string> = {
 
 /**
  * One placeholder and what fills it; editable while the template is a draft. An unmapped one
- * is marked, and a focused one highlighted while the problems list points at it.
+ * carries a dot.
  */
 export function FieldMappingRow({
   value,
   variables,
   changed,
-  focused,
   readOnly,
   onChange,
 }: {
   value: FieldMappingBody;
   variables: ContractVariableType[];
   changed: boolean;
-  focused: boolean;
   readOnly: boolean;
   onChange: (patch: Partial<FieldMappingBody>) => void;
 }) {
   const variable = variables.find((v) => v.key === value.variable);
   const unmapped = value.source === 'unmapped';
   return (
-    <TableRow
-      id={fieldRowId(value.placeholder)}
-      className={cn(
-        'transition-colors duration-500',
-        changed && 'bg-primary/5 hover:bg-primary/5',
-        unmapped && 'bg-warning/8 hover:bg-warning/12',
-        focused && 'bg-primary/15 hover:bg-primary/15',
-      )}
-    >
-      <TableCell
-        className={cn(
-          'border-l-2 border-l-transparent pl-4 align-top',
-          unmapped && 'border-l-warning',
-        )}
-      >
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-          {`{${value.placeholder}}`}
-        </code>
+    <TableRow className={cn(changed && 'bg-primary/5 hover:bg-primary/5')}>
+      <TableCell className="pl-4">
+        <span className="inline-flex items-center gap-2">
+          <span
+            title={unmapped ? 'Холбоогүй' : undefined}
+            className={cn(
+              'size-1.5 shrink-0 rounded-full',
+              unmapped ? 'bg-warning' : 'bg-transparent',
+            )}
+          />
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            {`{${value.placeholder}}`}
+          </code>
+        </span>
       </TableCell>
-      <TableCell className="w-44 align-top">
+      <TableCell className="w-44">
         {readOnly ? (
           <span className="text-sm text-muted-foreground">
             {sourceLabel[value.source]}
@@ -74,11 +67,7 @@ export function FieldMappingRow({
             onValueChange={(v) => onChange({ source: v as FieldSource })}
           >
             <SelectTrigger
-              className={cn(
-                'h-9! w-full',
-                unmapped &&
-                  'border-warning text-warning-foreground dark:text-warning',
-              )}
+              className={cn('h-9! w-full', unmapped && 'text-muted-foreground')}
             >
               <SelectValue />
             </SelectTrigger>
@@ -92,7 +81,7 @@ export function FieldMappingRow({
           </Select>
         )}
       </TableCell>
-      <TableCell className="pr-4 align-top">
+      <TableCell className="pr-4">
         {value.source === 'variable' &&
           (readOnly ? (
             <p className="text-sm">
@@ -121,11 +110,7 @@ export function FieldMappingRow({
               onChange={(e) => onChange({ fixed_value: e.target.value })}
             />
           ))}
-        {unmapped && (
-          <span className="text-sm text-warning-foreground dark:text-warning">
-            {readOnly ? '-' : '← Хувьсагч эсвэл тогтмол текст сонгоно уу'}
-          </span>
-        )}
+        {unmapped && <span className="text-sm text-muted-foreground">-</span>}
       </TableCell>
     </TableRow>
   );
