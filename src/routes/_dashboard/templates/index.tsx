@@ -107,7 +107,7 @@ function TemplatesPage() {
           error={error}
           dimmed={isPlaceholderData}
         />
-        {data && data.total > PAGE_SIZE && (
+        {data && data.total > 0 && (
           <Pagination
             page={search.page ?? 1}
             size={PAGE_SIZE}

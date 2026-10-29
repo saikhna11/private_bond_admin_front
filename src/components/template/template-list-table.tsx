@@ -18,7 +18,7 @@ import {
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
 
-const COLS = 7;
+const COLS = 6;
 
 /** The templates of one page; a row opens the template. */
 export function TemplateListTable({
@@ -41,7 +41,6 @@ export function TemplateListTable({
           <TableHead>Бүтээгдэхүүн</TableHead>
           <TableHead className="text-center">ТТД</TableHead>
           <TableHead>Хэл</TableHead>
-          <TableHead className="text-right">Гэрээ</TableHead>
           <TableHead>Төлөв</TableHead>
           <TableHead className="pr-4 text-right">Оруулсан</TableHead>
         </TableRow>
@@ -96,25 +95,6 @@ export function TemplateListTable({
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {languageLabel[t.language]}
-              </TableCell>
-              <TableCell className="text-right tabular">
-                {t.contracts > 0 ? (
-                  <button
-                    type="button"
-                    className="font-medium text-primary hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void navigate({
-                        to: '/contracts',
-                        search: { template: t.id },
-                      });
-                    }}
-                  >
-                    {t.contracts}
-                  </button>
-                ) : (
-                  <span className="text-muted-foreground">0</span>
-                )}
               </TableCell>
               <TableCell>
                 <TemplateStatusBadge status={t.status} />
