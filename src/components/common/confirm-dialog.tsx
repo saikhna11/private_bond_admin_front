@@ -12,6 +12,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+const toneClass = {
+  destructive: 'bg-destructive text-white hover:bg-destructive/90',
+  success: 'bg-success text-success-foreground hover:bg-success/90',
+  default: undefined,
+};
+
 export function ConfirmDialog({
   trigger,
   title,
@@ -29,7 +35,7 @@ export function ConfirmDialog({
   title: string;
   description: ReactNode;
   confirmLabel: string;
-  tone?: 'destructive' | 'success';
+  tone?: 'destructive' | 'success' | 'default';
   onConfirm: () => Promise<unknown>;
 }) {
   const [ownOpen, setOwnOpen] = useState(false);
@@ -62,11 +68,7 @@ export function ConfirmDialog({
             <Button variant="outline">Болих</Button>
           </DialogClose>
           <Button
-            className={
-              tone === 'success'
-                ? 'bg-success text-success-foreground hover:bg-success/90'
-                : 'bg-destructive text-white hover:bg-destructive/90'
-            }
+            className={toneClass[tone]}
             onClick={() => void confirm()}
             disabled={busy}
           >
