@@ -105,8 +105,14 @@ export const TemplateDetailSchema = z.object({
     }),
   ),
   problems: z.array(z.object({ code: z.string(), message: z.string() })),
+  /** How many contracts were drafted from it; one or more keeps it from changing. */
+  contracts: z.number(),
 });
 export type TemplateDetailType = z.infer<typeof TemplateDetailSchema>;
+
+/** Whether t's file and mapping can change, and it be deleted: a draft no contract uses. */
+export const templateEditable = (t: TemplateDetailType) =>
+  t.status === 'draft' && t.contracts === 0;
 
 export interface UploadTemplateBody {
   product: string;

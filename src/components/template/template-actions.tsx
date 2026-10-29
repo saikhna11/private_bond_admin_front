@@ -13,7 +13,10 @@ import {
   deleteTemplate,
   reopenTemplate,
 } from '@/queries/template/query';
-import type { TemplateDetailType } from '@/queries/template/type';
+import {
+  type TemplateDetailType,
+  templateEditable,
+} from '@/queries/template/type';
 import { ReplaceFileButton } from './replace-file-button';
 import { useTemplateAction } from './use-template-action';
 
@@ -34,7 +37,7 @@ export function TemplateActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {t.status === 'draft' && <ReplaceFileButton id={t.id} />}
+      {templateEditable(t) && <ReplaceFileButton id={t.id} />}
       {t.status !== 'active' && (
         <ConfirmDialog
           trigger={
@@ -68,7 +71,7 @@ export function TemplateActions({
           }
         />
       )}
-      {t.status === 'inactive' && (
+      {t.status === 'inactive' && t.contracts === 0 && (
         <ConfirmDialog
           trigger={
             <Button variant="outline">
@@ -85,7 +88,7 @@ export function TemplateActions({
           }
         />
       )}
-      {t.status === 'draft' && (
+      {templateEditable(t) && (
         <ConfirmDialog
           trigger={
             <Button variant="outline" className="text-destructive">

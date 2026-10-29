@@ -1,15 +1,18 @@
-import { CircleCheckIcon, TriangleAlertIcon } from "lucide-react";
-import type { ReactNode } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { TemplateDetailType } from "@/queries/template/type";
-import type { FieldMapping } from "./use-field-mapping";
+import { CircleCheckIcon, TriangleAlertIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  type TemplateDetailType,
+  templateEditable,
+} from '@/queries/template/type';
+import type { FieldMapping } from './use-field-mapping';
 
-const fieldsIncomplete = "contract.template_fields_incomplete";
-const signatureMissing = "contract.template_signature_missing";
+const fieldsIncomplete = 'contract.template_fields_incomplete';
+const signatureMissing = 'contract.template_signature_missing';
 
 const partyLabel: Record<string, string> = {
-  holder: "Эзэмшигчийн",
-  co_holder: "Хамтран эзэмшигчийн",
+  holder: 'Эзэмшигчийн',
+  co_holder: 'Хамтран эзэмшигчийн',
 };
 
 /**
@@ -23,7 +26,7 @@ export function TemplateProblems({
   t: TemplateDetailType;
   mapping: FieldMapping;
 }) {
-  if (t.status !== "draft") return null;
+  if (!templateEditable(t)) return null;
 
   const items: { key: string; body: ReactNode }[] = [];
   const left = mapping.unmapped.length;
@@ -34,7 +37,7 @@ export function TemplateProblems({
         <>
           <span className="font-medium text-foreground">
             {left} хоосон зай холбоогүй.
-          </span>{" "}
+          </span>{' '}
           Мөр бүрийн эх сурвалжийг сонгоод хадгална уу.
         </>
       ),
@@ -42,7 +45,7 @@ export function TemplateProblems({
   } else if (t.problems.some((p) => p.code === fieldsIncomplete)) {
     items.push({
       key: fieldsIncomplete,
-      body: "Бүх хоосон зай холбогдсон. Өөрчлөлтөө хадгална уу.",
+      body: 'Бүх хоосон зай холбогдсон. Өөрчлөлтөө хадгална уу.',
     });
   }
   for (const p of t.problems) {
@@ -56,11 +59,11 @@ export function TemplateProblems({
               <span className="font-medium text-foreground">
                 {partyLabel[pic.party_type] ?? pic.party_type} гарын үсгийн
                 зураг алга.
-              </span>{" "}
-              Word файлд зураг оруулж, Alt Text-д{" "}
+              </span>{' '}
+              Word файлд зураг оруулж, Alt Text-д{' '}
               <code className="rounded bg-muted px-1 font-mono text-xs">
                 {pic.alt_text}
-              </code>{" "}
+              </code>{' '}
               гэж бичээд файлаа солино уу.
             </>
           ),
