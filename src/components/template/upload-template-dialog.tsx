@@ -227,7 +227,7 @@ export function UploadTemplateDialog({
                 render={({ field }) => (
                   <label
                     htmlFor="ttd"
-                    className="flex h-10 cursor-pointer items-center gap-2.5 self-end rounded-md border border-input px-3 text-sm shadow-xs transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 dark:bg-input/30"
+                    className="flex h-10 cursor-pointer items-center gap-2 self-end whitespace-nowrap rounded-md border border-input px-2.5 text-sm shadow-xs transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 dark:bg-input/30"
                   >
                     <Checkbox
                       id="ttd"
