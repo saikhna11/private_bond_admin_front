@@ -61,6 +61,12 @@ export const deactivateTemplate = (id: string) =>
     { method: 'POST' },
   );
 
+/** Turns an inactive template back into a draft, to be changed and activated again. */
+export const reopenTemplate = (id: string) =>
+  fetchAndValidate(`contract-templates/${id}/reopen`, TemplateDetailSchema, {
+    method: 'POST',
+  });
+
 export const deleteTemplate = (id: string) =>
   fetchAndValidate(`contract-templates/${id}`, undefined, { method: 'DELETE' });
 

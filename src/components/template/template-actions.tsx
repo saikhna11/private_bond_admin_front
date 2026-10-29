@@ -1,17 +1,26 @@
 import { useNavigate } from '@tanstack/react-router';
-import { CircleCheckIcon, CircleOffIcon, Trash2Icon } from 'lucide-react';
+import {
+  CircleCheckIcon,
+  CircleOffIcon,
+  PencilIcon,
+  Trash2Icon,
+} from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   activateTemplate,
   deactivateTemplate,
   deleteTemplate,
+  reopenTemplate,
 } from '@/queries/template/query';
 import type { TemplateDetailType } from '@/queries/template/type';
 import { ReplaceFileButton } from './replace-file-button';
 import { useTemplateAction } from './use-template-action';
 
-/** What a template's status allows: a draft is changed, then activated or deleted. */
+/**
+ * What a template's status allows: a draft is changed, then activated or deleted; an active
+ * one is deactivated, and an inactive one reopened as a draft to be changed again.
+ */
 export function TemplateActions({
   t,
   dirty,
@@ -35,7 +44,7 @@ export function TemplateActions({
             </Button>
           }
           title="Загварыг идэвхжүүлэх үү?"
-          description={`${t.product} бүтээгдэхүүний шинэ гэрээ энэ загвараар үүснэ. Өмнөх идэвхтэй загвар идэвхгүй болно. Идэвхжүүлсэн загварыг өөрчлөх боломжгүй.`}
+          description={`${t.product} бүтээгдэхүүний шинэ гэрээ энэ загвараар үүснэ. Өмнөх идэвхтэй загвар идэвхгүй болно. Идэвхжүүлсэн загварыг засахын тулд эхлээд идэвхгүй болгоно.`}
           confirmLabel="Идэвхжүүлэх"
           tone="success"
           onConfirm={() =>
@@ -56,6 +65,23 @@ export function TemplateActions({
           confirmLabel="Идэвхгүй болгох"
           onConfirm={() =>
             act(() => deactivateTemplate(t.id), 'Загвар идэвхгүй боллоо')
+          }
+        />
+      )}
+      {t.status === 'inactive' && (
+        <ConfirmDialog
+          trigger={
+            <Button variant="outline">
+              <PencilIcon />
+              Засах
+            </Button>
+          }
+          title="Загварыг засах уу?"
+          description="Загвар ноорог болно. Утгыг засаад дахин идэвхжүүлэх хүртэл энэ загвараар гэрээ үүсэхгүй."
+          confirmLabel="Засах"
+          tone="default"
+          onConfirm={() =>
+            act(() => reopenTemplate(t.id), 'Загвар ноорог боллоо')
           }
         />
       )}

@@ -6,10 +6,12 @@ import { TemplateActions } from './template-actions';
 import { TemplateInfoCard } from './template-info-card';
 import { TemplateProblems } from './template-problems';
 import { useFieldMapping } from './use-field-mapping';
+import { useRowFocus } from './use-row-focus';
 
 /** A template as an admin maps and activates it. */
 export function TemplateDetail({ t }: { t: TemplateDetailType }) {
   const mapping = useFieldMapping(t);
+  const rowFocus = useRowFocus();
   return (
     <>
       <Link
@@ -23,8 +25,8 @@ export function TemplateDetail({ t }: { t: TemplateDetailType }) {
         t={t}
         actions={<TemplateActions t={t} dirty={mapping.dirty} />}
       />
-      <TemplateProblems t={t} />
-      <FieldMappingTable t={t} mapping={mapping} />
+      <TemplateProblems t={t} mapping={mapping} onFocusField={rowFocus.focus} />
+      <FieldMappingTable t={t} mapping={mapping} focused={rowFocus.focused} />
     </>
   );
 }

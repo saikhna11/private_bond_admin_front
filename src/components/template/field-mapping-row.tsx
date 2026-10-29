@@ -13,6 +13,7 @@ import type {
   FieldMappingBody,
   FieldSource,
 } from '@/queries/template/type';
+import { fieldRowId } from './use-row-focus';
 import { VariableCombobox } from './variable-combobox';
 
 const sourceLabel: Record<FieldSource, string> = {
@@ -21,24 +22,43 @@ const sourceLabel: Record<FieldSource, string> = {
   fixed: 'Тогтмол текст',
 };
 
-/** One placeholder and what fills it; editable while the template is a draft. */
+/**
+ * One placeholder and what fills it; editable while the template is a draft. An unmapped one
+ * is marked, and a focused one highlighted while the problems list points at it.
+ */
 export function FieldMappingRow({
   value,
   variables,
   changed,
+  focused,
   readOnly,
   onChange,
 }: {
   value: FieldMappingBody;
   variables: ContractVariableType[];
   changed: boolean;
+  focused: boolean;
   readOnly: boolean;
   onChange: (patch: Partial<FieldMappingBody>) => void;
 }) {
   const variable = variables.find((v) => v.key === value.variable);
+  const unmapped = value.source === 'unmapped';
   return (
-    <TableRow className={cn(changed && 'bg-primary/5 hover:bg-primary/5')}>
-      <TableCell className="pl-4 align-top">
+    <TableRow
+      id={fieldRowId(value.placeholder)}
+      className={cn(
+        'transition-colors duration-500',
+        changed && 'bg-primary/5 hover:bg-primary/5',
+        unmapped && 'bg-warning/8 hover:bg-warning/12',
+        focused && 'bg-primary/15 hover:bg-primary/15',
+      )}
+    >
+      <TableCell
+        className={cn(
+          'border-l-2 border-l-transparent pl-4 align-top',
+          unmapped && 'border-l-warning',
+        )}
+      >
         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
           {`{${value.placeholder}}`}
         </code>
@@ -53,7 +73,13 @@ export function FieldMappingRow({
             value={value.source}
             onValueChange={(v) => onChange({ source: v as FieldSource })}
           >
-            <SelectTrigger className="h-9! w-full">
+            <SelectTrigger
+              className={cn(
+                'h-9! w-full',
+                unmapped &&
+                  'border-warning text-warning-foreground dark:text-warning',
+              )}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -95,8 +121,10 @@ export function FieldMappingRow({
               onChange={(e) => onChange({ fixed_value: e.target.value })}
             />
           ))}
-        {value.source === 'unmapped' && (
-          <span className="text-sm text-muted-foreground">-</span>
+        {unmapped && (
+          <span className="text-sm text-warning-foreground dark:text-warning">
+            {readOnly ? '-' : '← Хувьсагч эсвэл тогтмол текст сонгоно уу'}
+          </span>
         )}
       </TableCell>
     </TableRow>

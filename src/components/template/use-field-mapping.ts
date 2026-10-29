@@ -43,6 +43,11 @@ export function useFieldMapping(t: TemplateDetailType) {
     [],
   );
 
+  // The placeholders still unmapped once the unsaved changes count, in document order.
+  const unmapped = t.fields
+    .filter((f) => mappingOf(f).source === 'unmapped')
+    .map((f) => f.placeholder);
+
   const pending = Object.values(changes);
   // A variable source waits for its variable before it can be saved.
   const incomplete = pending.some(
@@ -68,6 +73,7 @@ export function useFieldMapping(t: TemplateDetailType) {
     changes,
     mappingOf,
     change,
+    unmapped,
     dirty: pending.length > 0,
     incomplete,
     save,
