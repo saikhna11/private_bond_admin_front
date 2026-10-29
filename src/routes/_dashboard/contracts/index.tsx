@@ -18,7 +18,7 @@ import {
   contractStatusLabel,
 } from '@/queries/contract/type';
 import { templatesOptions } from '@/queries/template/options';
-import { ownershipLabel } from '@/queries/template/type';
+import { languageLabel, ownershipLabel } from '@/queries/template/type';
 
 const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
@@ -75,7 +75,7 @@ function ContractsPage() {
               allLabel="Бүх загвар"
               options={(templates?.items ?? []).map((t) => ({
                 value: t.id,
-                label: `${t.name} · ${ownershipLabel[t.ownership_type]}`,
+                label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
               }))}
             />
           </div>
