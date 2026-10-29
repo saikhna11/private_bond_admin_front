@@ -1,5 +1,4 @@
-import { Link } from '@tanstack/react-router';
-import { CheckIcon } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { TableEmpty, TableSkeletonRows } from '@/components/common/list-parts';
 import {
   Table,
@@ -17,7 +16,7 @@ import { ContractStatusBadge } from './contract-status-badge';
 
 const COLS = 6;
 
-/** The contracts of one page, each with its holder and the template it was drafted from. */
+/** The contracts of one page, each with its holder and kind; a row opens the contract. */
 export function ContractListTable({
   items,
   isPending,
@@ -29,13 +28,14 @@ export function ContractListTable({
   error: unknown;
   dimmed: boolean;
 }) {
+  const navigate = useNavigate();
   return (
     <Table className={dimmed ? 'opacity-60' : undefined}>
       <TableHeader>
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">Дугаар</TableHead>
           <TableHead>Эзэмшигч</TableHead>
-          <TableHead>Загвар</TableHead>
+          <TableHead>Төрөл</TableHead>
           <TableHead className="text-right">Дүн</TableHead>
           <TableHead>Төлөв</TableHead>
           <TableHead className="pr-4 text-right">Огноо</TableHead>
@@ -58,40 +58,27 @@ export function ContractListTable({
           />
         ) : (
           items.map((c) => (
-            <TableRow key={c.id}>
+            <TableRow
+              key={c.id}
+              className="cursor-pointer"
+              onClick={() =>
+                navigate({
+                  to: '/contracts/$contractId',
+                  params: { contractId: c.id },
+                })
+              }
+            >
               <TableCell className="pl-4 font-medium tabular">
                 {c.contract_no ?? (
                   <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
-              <TableCell>
-                <p className="font-medium">
-                  {[c.holder.last_name, c.holder.first_name]
-                    .filter(Boolean)
-                    .join(' ')}
-                </p>
-                <p className="text-xs text-muted-foreground tabular">
-                  {c.holder.register_no}
-                </p>
+              <TableCell className="font-medium">
+                {[c.holder.last_name, c.holder.first_name]
+                  .filter(Boolean)
+                  .join(' ')}
               </TableCell>
-              <TableCell>
-                <Link
-                  to="/templates/$templateId"
-                  params={{ templateId: c.template.id }}
-                  className="font-medium hover:underline"
-                >
-                  {c.template.name}
-                </Link>
-                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {ownershipLabel[c.ownership_type]}
-                  {c.template.ttd && (
-                    <>
-                      {' · ТТД'}
-                      <CheckIcon className="size-3 text-primary" />
-                    </>
-                  )}
-                </p>
-              </TableCell>
+              <TableCell>{ownershipLabel[c.ownership_type]}</TableCell>
               <TableCell className="text-right tabular">
                 {formatAmount(c.principal_amount, c.currency)}
               </TableCell>

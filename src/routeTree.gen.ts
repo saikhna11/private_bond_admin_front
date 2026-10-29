@@ -23,6 +23,7 @@ import { Route as DashboardBrokersIndexRouteImport } from './routes/_dashboard/b
 import { Route as DashboardClientsIndexRouteImport } from './routes/_dashboard/clients/index'
 import { Route as DashboardClientsClientIdRouteImport } from './routes/_dashboard/clients/$clientId'
 import { Route as DashboardContractsIndexRouteImport } from './routes/_dashboard/contracts/index'
+import { Route as DashboardContractsContractIdRouteImport } from './routes/_dashboard/contracts/$contractId'
 import { Route as DashboardTemplatesIndexRouteImport } from './routes/_dashboard/templates/index'
 import { Route as DashboardTemplatesTemplateIdRouteImport } from './routes/_dashboard/templates/$templateId'
 import { Route as PublicLoginIndexRouteImport } from './routes/_public/login/index'
@@ -99,6 +100,12 @@ const DashboardContractsIndexRoute = DashboardContractsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardContractsRouteRoute,
 } as any)
+const DashboardContractsContractIdRoute =
+  DashboardContractsContractIdRouteImport.update({
+    id: '/$contractId',
+    path: '/$contractId',
+    getParentRoute: () => DashboardContractsRouteRoute,
+  } as any)
 const DashboardTemplatesIndexRoute = DashboardTemplatesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/templates': typeof DashboardTemplatesRouteRouteWithChildren
   '/broker': typeof BrokerPublicRouteRouteWithChildren
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/account/': typeof DashboardAccountIndexRoute
   '/admins/': typeof DashboardAdminsIndexRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
   '/': typeof DashboardIndexRoute
   '/broker': typeof BrokerPanelIndexRoute
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/account': typeof DashboardAccountIndexRoute
   '/admins': typeof DashboardAdminsIndexRoute
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/broker/_public': typeof BrokerPublicRouteRouteWithChildren
   '/_dashboard/': typeof DashboardIndexRoute
   '/_dashboard/clients/$clientId': typeof DashboardClientsClientIdRoute
+  '/_dashboard/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/_dashboard/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/_dashboard/account/': typeof DashboardAccountIndexRoute
   '/_dashboard/admins/': typeof DashboardAdminsIndexRoute
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/broker'
     | '/clients/$clientId'
+    | '/contracts/$contractId'
     | '/templates/$templateId'
     | '/account/'
     | '/admins/'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/'
     | '/broker'
     | '/clients/$clientId'
+    | '/contracts/$contractId'
     | '/templates/$templateId'
     | '/account'
     | '/admins'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
     | '/broker/_public'
     | '/_dashboard/'
     | '/_dashboard/clients/$clientId'
+    | '/_dashboard/contracts/$contractId'
     | '/_dashboard/templates/$templateId'
     | '/_dashboard/account/'
     | '/_dashboard/admins/'
@@ -354,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardContractsIndexRouteImport
       parentRoute: typeof DashboardContractsRouteRoute
     }
+    '/_dashboard/contracts/$contractId': {
+      id: '/_dashboard/contracts/$contractId'
+      path: '/$contractId'
+      fullPath: '/contracts/$contractId'
+      preLoaderRoute: typeof DashboardContractsContractIdRouteImport
+      parentRoute: typeof DashboardContractsRouteRoute
+    }
     '/_dashboard/templates/': {
       id: '/_dashboard/templates/'
       path: '/'
@@ -415,11 +435,13 @@ const DashboardClientsRouteRouteWithChildren =
   )
 
 interface DashboardContractsRouteRouteChildren {
+  DashboardContractsContractIdRoute: typeof DashboardContractsContractIdRoute
   DashboardContractsIndexRoute: typeof DashboardContractsIndexRoute
 }
 
 const DashboardContractsRouteRouteChildren: DashboardContractsRouteRouteChildren =
   {
+    DashboardContractsContractIdRoute: DashboardContractsContractIdRoute,
     DashboardContractsIndexRoute: DashboardContractsIndexRoute,
   }
 
