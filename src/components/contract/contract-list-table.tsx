@@ -11,12 +11,15 @@ import {
 import { toApiError } from '@/lib/fetcher';
 import { formatAmount, formatDate } from '@/lib/format';
 import type { AdminContractType } from '@/queries/contract/type';
-import { ownershipLabel } from '@/queries/template/type';
+import { languageLabel, ownershipLabel } from '@/queries/template/type';
 import { ContractStatusBadge } from './contract-status-badge';
 
-const COLS = 6;
+const COLS = 7;
 
-/** The contracts of one page, each with its holder and kind; a row opens the contract. */
+/**
+ * The contracts of one page, each with its holder, kind and the language of its template; a
+ * row opens the contract.
+ */
 export function ContractListTable({
   items,
   isPending,
@@ -36,6 +39,7 @@ export function ContractListTable({
           <TableHead className="pl-4">Дугаар</TableHead>
           <TableHead>Эзэмшигч</TableHead>
           <TableHead>Төрөл</TableHead>
+          <TableHead>Хэл</TableHead>
           <TableHead className="text-right">Дүн</TableHead>
           <TableHead>Төлөв</TableHead>
           <TableHead className="pr-4 text-right">Огноо</TableHead>
@@ -79,6 +83,9 @@ export function ContractListTable({
                   .join(' ')}
               </TableCell>
               <TableCell>{ownershipLabel[c.ownership_type]}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {languageLabel[c.template.language]}
+              </TableCell>
               <TableCell className="text-right tabular">
                 {formatAmount(c.principal_amount, c.currency)}
               </TableCell>
