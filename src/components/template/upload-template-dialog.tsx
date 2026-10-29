@@ -134,6 +134,14 @@ export function UploadTemplateDialog({
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
+            <FormField id="name" label="Нэр" error={errors.name?.message}>
+              <Input
+                id="name"
+                className="h-10"
+                aria-invalid={!!errors.name}
+                {...form.register('name')}
+              />
+            </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 id="ownership_type"
@@ -268,14 +276,6 @@ export function UploadTemplateDialog({
                     }}
                   />
                 )}
-              />
-            </FormField>
-            <FormField id="name" label="Нэр" error={errors.name?.message}>
-              <Input
-                id="name"
-                className="h-10"
-                aria-invalid={!!errors.name}
-                {...form.register('name')}
               />
             </FormField>
           </FieldGroup>
