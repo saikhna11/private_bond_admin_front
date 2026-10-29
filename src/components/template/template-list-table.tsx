@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { CheckIcon } from 'lucide-react';
 import { TableEmpty, TableSkeletonRows } from '@/components/common/list-parts';
 import {
   Table,
@@ -16,9 +17,8 @@ import {
   type TemplateSummaryType,
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
-import { TtdBadge } from './ttd-badge';
 
-const COLS = 6;
+const COLS = 7;
 
 /** The templates of one page; a row opens the template. */
 export function TemplateListTable({
@@ -39,6 +39,7 @@ export function TemplateListTable({
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">Загвар</TableHead>
           <TableHead>Бүтээгдэхүүн</TableHead>
+          <TableHead className="text-center">ТТД</TableHead>
           <TableHead>Хэл</TableHead>
           <TableHead>Холбосон</TableHead>
           <TableHead>Төлөв</TableHead>
@@ -74,12 +75,25 @@ export function TemplateListTable({
             >
               <TableCell className="pl-4">
                 <p className="max-w-64 truncate font-medium">{t.name}</p>
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {ownershipLabel[t.ownership_type]}
-                  {t.ttd && <TtdBadge />}
                 </p>
               </TableCell>
-              <TableCell className="font-mono text-xs">{t.product}</TableCell>
+              <TableCell>
+                <span className="inline-flex rounded-md bg-muted px-2 py-1 text-sm font-medium">
+                  {t.product}
+                </span>
+              </TableCell>
+              <TableCell className="text-center">
+                {t.ttd ? (
+                  <CheckIcon
+                    aria-label="ТТД-тэй"
+                    className="mx-auto size-4 text-primary"
+                  />
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 {languageLabel[t.language]}
               </TableCell>
