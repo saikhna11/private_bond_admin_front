@@ -246,7 +246,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
             ? 'Байгууллага мэдээллээ бүрэн бөглөөгүй байна (нэр, үйл ажиллагаа, хаяг, албан тушаалтай албан тушаалтан).'
             : c.type === 'customer'
               ? 'Харилцагч мэдээллээ бүрэн бөглөөгүй байна (РД, утас, банкны данс).'
-              : 'Харилцагч мэдээллээ бүрэн бөглөөгүй байна (иргэншил, паспорт, утас).'}{' '}
+              : 'Харилцагч мэдээллээ бүрэн бөглөөгүй байна (иргэншил, паспорт, утас, банкны данс).'}{' '}
           Бөглөсний дараа баталгаажуулах боломжтой.
         </Notice>
       )}
@@ -358,7 +358,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
                 </>
               )}
             </dl>
-            {c.type === 'customer' && <BankAccount c={c} />}
+            {individual && <BankAccount c={c} />}
           </CardContent>
         </Card>
 
@@ -401,7 +401,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
   );
 }
 
-/** A customer's account for bond payments. */
+/** An individual's account for bond payments. */
 function BankAccount({ c }: { c: ClientDetailType }) {
   const b = c.bank_account;
   const holder = b ? `${b.holder_last_name} ${b.holder_first_name}` : '';
