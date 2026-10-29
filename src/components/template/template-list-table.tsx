@@ -18,7 +18,7 @@ import {
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
 
-const COLS = 6;
+const COLS = 7;
 
 /** The templates of one page; a row opens the template. */
 export function TemplateListTable({
@@ -38,6 +38,7 @@ export function TemplateListTable({
       <TableHeader>
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">Загвар</TableHead>
+          <TableHead>Төрөл</TableHead>
           <TableHead>Бүтээгдэхүүн</TableHead>
           <TableHead className="text-center">ТТД</TableHead>
           <TableHead>Хэл</TableHead>
@@ -74,10 +75,8 @@ export function TemplateListTable({
             >
               <TableCell className="pl-4">
                 <p className="max-w-64 truncate font-medium">{t.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {ownershipLabel[t.ownership_type]}
-                </p>
               </TableCell>
+              <TableCell>{ownershipLabel[t.ownership_type]}</TableCell>
               <TableCell>
                 <span className="inline-flex rounded-md bg-muted px-2 py-1 text-sm font-medium">
                   {t.product}

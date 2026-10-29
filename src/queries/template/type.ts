@@ -27,7 +27,7 @@ export type OwnershipType = z.infer<typeof OwnershipTypeSchema>;
 
 export const ownershipLabel: Record<OwnershipType, string> = {
   individual: 'Хувь хүн',
-  joint: 'Хамтран эзэмшигчтэй',
+  joint: 'Хамтран',
   minor: 'Хүүхэд',
   organization: 'Байгууллага',
 };
