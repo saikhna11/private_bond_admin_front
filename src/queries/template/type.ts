@@ -40,11 +40,9 @@ export const ownershipOrder: OwnershipType[] = [
   'organization',
 ];
 
-/** A product templates are uploaded for, with the ownership type its contracts name. */
+/** A product templates are uploaded for, of any ownership type. */
 export const ContractProductSchema = z.object({
   name: z.string(),
-  ownership_type: OwnershipTypeSchema,
-  co_holder: z.boolean(),
 });
 export type ContractProductType = z.infer<typeof ContractProductSchema>;
 
