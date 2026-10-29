@@ -58,6 +58,8 @@ const templateFields = {
   bond_id: z.guid(),
   ownership_type: OwnershipTypeSchema,
   language: LanguageSchema,
+  /** Whether the document prints the holder's taxpayer number (ТТД). */
+  ttd: z.boolean(),
   name: z.string(),
   status: TemplateStatusSchema,
   created_at: z.string(),
@@ -103,6 +105,7 @@ export type TemplateDetailType = z.infer<typeof TemplateDetailSchema>;
 export interface UploadTemplateBody {
   product: string;
   language: Language;
+  ttd: boolean;
   name: string;
   /** The .docx, base64-encoded. */
   file: string;

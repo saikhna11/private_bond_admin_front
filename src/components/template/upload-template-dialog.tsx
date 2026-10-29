@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { FormField } from '@/components/common/form-field';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
@@ -42,6 +43,7 @@ import {
 const schema = z.object({
   product: z.string().min(1, 'Бүтээгдэхүүнээ сонгоно уу'),
   language: LanguageSchema,
+  ttd: z.boolean(),
   name: z.string().trim().min(1, 'Загварын нэрээ оруулна уу').max(200),
   file: z
     .instanceof(File, { message: 'Word (.docx) файлаа сонгоно уу' })
@@ -68,7 +70,7 @@ export function UploadTemplateDialog({
   const { data: products } = useQuery(contractProductsOptions());
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { product: '', language: 'mn', name: '' },
+    defaultValues: { product: '', language: 'mn', ttd: false, name: '' },
   });
   const { errors, isSubmitting } = form.formState;
 
@@ -78,6 +80,7 @@ export function UploadTemplateDialog({
       const t = await uploadTemplate({
         product: values.product,
         language: values.language,
+        ttd: values.ttd,
         name: values.name,
         file: await fileToBase64(values.file),
       });
@@ -89,6 +92,7 @@ export function UploadTemplateDialog({
         !applyFieldErrors(e, form.setError, {
           product: 'product',
           language: 'language',
+          ttd: 'ttd',
           name: 'name',
           file: 'file',
         })
@@ -104,7 +108,7 @@ export function UploadTemplateDialog({
       onOpenChange={(o) => {
         setOpen(o);
         if (o) {
-          form.reset({ product: '', language: 'mn', name: '' });
+          form.reset({ product: '', language: 'mn', ttd: false, name: '' });
           setError(null);
         }
       }}
@@ -182,6 +186,32 @@ export function UploadTemplateDialog({
                 />
               </FormField>
             </div>
+            <Controller
+              control={form.control}
+              name="ttd"
+              render={({ field }) => (
+                <label
+                  htmlFor="ttd"
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-data-[state=checked]:border-primary/50 has-data-[state=checked]:bg-primary/5"
+                >
+                  <Checkbox
+                    id="ttd"
+                    className="mt-0.5"
+                    checked={field.value}
+                    onCheckedChange={(c) => field.onChange(c === true)}
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">
+                      ТТД-тэй загвар
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      Худалдан авагчийн татвар төлөгчийн дугаар (ТТД) гэрээнд
+                      хэвлэгдэнэ.
+                    </span>
+                  </span>
+                </label>
+              )}
+            />
             <FormField
               id="file"
               label="Word файл"

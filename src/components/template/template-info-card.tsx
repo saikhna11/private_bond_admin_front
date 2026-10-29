@@ -13,6 +13,7 @@ import {
   type TemplateDetailType,
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
+import { TtdBadge } from './ttd-badge';
 
 /** The template's name, product and status, with its actions. */
 export function TemplateInfoCard({
@@ -44,6 +45,7 @@ export function TemplateInfoCard({
                 {t.name}
               </h1>
               <TemplateStatusBadge status={t.status} />
+              {t.ttd && <TtdBadge />}
             </div>
             <p className="text-sm text-muted-foreground">
               <span className="font-mono">{t.product}</span> ·{' '}

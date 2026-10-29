@@ -16,6 +16,7 @@ import {
   type TemplateSummaryType,
 } from '@/queries/template/type';
 import { TemplateStatusBadge } from './template-status-badge';
+import { TtdBadge } from './ttd-badge';
 
 const COLS = 6;
 
@@ -73,8 +74,9 @@ export function TemplateListTable({
             >
               <TableCell className="pl-4">
                 <p className="max-w-64 truncate font-medium">{t.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   {ownershipLabel[t.ownership_type]}
+                  {t.ttd && <TtdBadge />}
                 </p>
               </TableCell>
               <TableCell className="font-mono text-xs">{t.product}</TableCell>
