@@ -27,10 +27,18 @@ export type OwnershipType = z.infer<typeof OwnershipTypeSchema>;
 
 export const ownershipLabel: Record<OwnershipType, string> = {
   individual: 'Хувь хүн',
-  joint: 'Хамтран эзэмшил',
+  joint: 'Хамтран эзэмшигчтэй',
+  minor: 'Хүүхдийн',
   organization: 'Байгууллага',
-  minor: 'Насанд хүрээгүй',
 };
+
+/** The ownership types in the order an admin picks them. */
+export const ownershipOrder: OwnershipType[] = [
+  'individual',
+  'joint',
+  'minor',
+  'organization',
+];
 
 /** A product templates are uploaded for, with the ownership type its contracts name. */
 export const ContractProductSchema = z.object({
@@ -104,6 +112,7 @@ export type TemplateDetailType = z.infer<typeof TemplateDetailSchema>;
 
 export interface UploadTemplateBody {
   product: string;
+  ownership_type: OwnershipType;
   language: Language;
   ttd: boolean;
   name: string;
@@ -125,10 +134,19 @@ export interface TemplateFilters {
   product?: string;
 }
 
-/** The party a party's variable reads, by the ownership types that name that party. */
+/** The ownership types whose contracts name each party a variable reads. */
+const partyOwnerships: Record<
+  NonNullable<ContractVariableType['party']>,
+  OwnershipType[]
+> = {
+  holder: ['individual', 'joint'],
+  co_holder: ['joint'],
+};
+
+/** Whether v can fill a template of ownership: a party's value only when it names that party. */
 export function variableFits(
   v: ContractVariableType,
   ownership: OwnershipType,
 ): boolean {
-  return v.party !== 'co_holder' || ownership === 'joint';
+  return !v.party || partyOwnerships[v.party].includes(ownership);
 }

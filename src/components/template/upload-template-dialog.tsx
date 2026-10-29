@@ -36,11 +36,14 @@ import {
   type Language,
   LanguageSchema,
   languageLabel,
+  type OwnershipType,
   ownershipLabel,
+  ownershipOrder,
   type TemplateDetailType,
 } from '@/queries/template/type';
 
 const schema = z.object({
+  ownership_type: z.enum(ownershipOrder, { message: 'Төрлөө сонгоно уу' }),
   product: z.string().min(1, 'Бүтээгдэхүүнээ сонгоно уу'),
   language: LanguageSchema,
   ttd: z.boolean(),
@@ -57,7 +60,7 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-/** Uploads a .docx as a new draft template of a product. */
+/** Uploads a .docx as a new draft template of a product and ownership type. */
 export function UploadTemplateDialog({
   trigger,
   onUploaded,
@@ -79,6 +82,7 @@ export function UploadTemplateDialog({
     try {
       const t = await uploadTemplate({
         product: values.product,
+        ownership_type: values.ownership_type,
         language: values.language,
         ttd: values.ttd,
         name: values.name,
@@ -91,6 +95,7 @@ export function UploadTemplateDialog({
       if (
         !applyFieldErrors(e, form.setError, {
           product: 'product',
+          ownership_type: 'ownership_type',
           language: 'language',
           ttd: 'ttd',
           name: 'name',
@@ -131,6 +136,37 @@ export function UploadTemplateDialog({
           <FieldGroup className="gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
+                id="ownership_type"
+                label="Төрөл"
+                error={errors.ownership_type?.message}
+              >
+                <Controller
+                  control={form.control}
+                  name="ownership_type"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(v) => field.onChange(v as OwnershipType)}
+                    >
+                      <SelectTrigger
+                        id="ownership_type"
+                        className="h-10! w-full"
+                        aria-invalid={!!errors.ownership_type}
+                      >
+                        <SelectValue placeholder="Сонгох" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ownershipOrder.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {ownershipLabel[o]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+              <FormField
                 id="product"
                 label="Бүтээгдэхүүн"
                 error={errors.product?.message}
@@ -150,7 +186,7 @@ export function UploadTemplateDialog({
                       <SelectContent>
                         {products?.map((p) => (
                           <SelectItem key={p.name} value={p.name}>
-                            {p.name} · {ownershipLabel[p.ownership_type]}
+                            {p.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -185,33 +221,25 @@ export function UploadTemplateDialog({
                   )}
                 />
               </FormField>
+              <Controller
+                control={form.control}
+                name="ttd"
+                render={({ field }) => (
+                  <label
+                    htmlFor="ttd"
+                    title="Худалдан авагчийн татвар төлөгчийн дугаар (ТТД) гэрээнд хэвлэгдэнэ"
+                    className="flex h-10 cursor-pointer items-center gap-2 self-end text-sm"
+                  >
+                    <Checkbox
+                      id="ttd"
+                      checked={field.value}
+                      onCheckedChange={(c) => field.onChange(c === true)}
+                    />
+                    ТТД-тэй
+                  </label>
+                )}
+              />
             </div>
-            <Controller
-              control={form.control}
-              name="ttd"
-              render={({ field }) => (
-                <label
-                  htmlFor="ttd"
-                  className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-data-[state=checked]:border-primary/50 has-data-[state=checked]:bg-primary/5"
-                >
-                  <Checkbox
-                    id="ttd"
-                    className="mt-0.5"
-                    checked={field.value}
-                    onCheckedChange={(c) => field.onChange(c === true)}
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-sm font-medium">
-                      ТТД-тэй загвар
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      Худалдан авагчийн татвар төлөгчийн дугаар (ТТД) гэрээнд
-                      хэвлэгдэнэ.
-                    </span>
-                  </span>
-                </label>
-              )}
-            />
             <FormField
               id="file"
               label="Word файл"
