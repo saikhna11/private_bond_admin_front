@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatDateTime } from '@/lib/format';
 import {
   type ContractPartyType,
   partyTypeLabel,
@@ -39,7 +40,8 @@ export function ContractPartiesCard({
             <TableHead>Нэр</TableHead>
             <TableHead>РД / Паспорт</TableHead>
             <TableHead>Утас</TableHead>
-            <TableHead className="pr-4">Гарын үсэг</TableHead>
+            <TableHead>Гарын үсэг</TableHead>
+            <TableHead className="pr-4">Огноо</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -53,8 +55,11 @@ export function ContractPartiesCard({
                 {p.register_no}
               </TableCell>
               <TableCell className="tabular">{p.phone ?? '-'}</TableCell>
-              <TableCell className="pr-4 text-sm">
+              <TableCell className="text-sm">
                 <PartySignatureState p={p} />
+              </TableCell>
+              <TableCell className="pr-4 text-sm text-muted-foreground tabular">
+                {formatDateTime(p.signed_at ?? p.declined_at) || '-'}
               </TableCell>
             </TableRow>
           ))}

@@ -45,10 +45,8 @@ export function FieldMappingTable({
   const { data: catalog = [] } = useQuery(contractVariablesOptions());
   const variables = catalog.filter((v) => variableFits(v, t.ownership_type));
   const readOnly = !templateEditable(t);
-  const hint =
-    t.contracts > 0
-      ? `Энэ загвараар ${t.contracts} гэрээ үүссэн тул өөрчлөх боломжгүй`
-      : readOnlyHint[t.status];
+  // A template contracts were drafted from never changes; the Гэрээ page counts them.
+  const hint = t.contracts > 0 ? '' : readOnlyHint[t.status];
   const total = t.fields.length;
   const mapped = total - mapping.unmapped.length;
   const [saving, setSaving] = useState(false);
@@ -84,7 +82,7 @@ export function FieldMappingTable({
             />
           </div>
         )}
-        {readOnly && (
+        {readOnly && hint && (
           <span className="text-sm text-muted-foreground">{hint}</span>
         )}
         <div className="ml-auto flex flex-wrap gap-2">
