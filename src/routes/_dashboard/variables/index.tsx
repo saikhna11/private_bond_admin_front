@@ -27,6 +27,13 @@ import {
 } from '@/queries/variable/type';
 import { WordCategorySchema, wordCategoryLabel } from '@/queries/word/type';
 
+// From md up the page fits the screen and only the table scrolls, under its header, with the
+// pages below it.
+const fitScreen =
+  'flex flex-col gap-6 md:h-[calc(100svh-var(--header-height)-4rem)] lg:h-[calc(100svh-var(--header-height)-5rem)]';
+const scrollArea =
+  'md:min-h-0 md:flex-1 max-md:[&_[data-slot=table-container]]:max-h-[70svh] [&_[data-slot=table-container]]:min-h-0 [&_[data-slot=table-container]]:flex-1 [&_[data-slot=table-container]]:overflow-auto';
+
 const searchSchema = z.object({
   tab: z.enum(['variables', 'words']).optional().catch(undefined),
   page: z.number().int().min(1).optional().catch(undefined),
@@ -65,7 +72,7 @@ function VariablesPage() {
   );
 
   return (
-    <>
+    <div className={fitScreen}>
       <PageTitle
         title="Хувьсагч"
         description="Загварын хоосон зайд холбогдох утгууд болон гэрээнд хэвлэгдэх үгс. Өөрчлөлт зөвхөн шинэ гэрээнд нөлөөлнө."
@@ -84,6 +91,7 @@ function VariablesPage() {
         }
       />
       <Tabs
+        className="shrink-0"
         value={words ? 'words' : 'variables'}
         onValueChange={(v) =>
           navigate({ search: { tab: v === 'words' ? 'words' : undefined } })
@@ -96,8 +104,8 @@ function VariablesPage() {
       </Tabs>
 
       {words ? (
-        <Card className="gap-0 py-0">
-          <div className="border-b p-4">
+        <Card className={`gap-0 py-0 ${scrollArea}`}>
+          <div className="shrink-0 border-b p-4">
             <Tabs
               value={search.category ?? 'bank'}
               onValueChange={(v) =>
@@ -116,8 +124,8 @@ function VariablesPage() {
           <WordListTable category={search.category ?? 'bank'} />
         </Card>
       ) : (
-        <Card className="gap-0 py-0">
-          <div className="flex flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
+        <Card className={`gap-0 py-0 ${scrollArea}`}>
+          <div className="flex shrink-0 flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
             <Tabs
               value={search.view ?? 'all'}
               onValueChange={(v) =>
@@ -167,6 +175,6 @@ function VariablesPage() {
           )}
         </Card>
       )}
-    </>
+    </div>
   );
 }

@@ -44,7 +44,7 @@ export function WordListTable({ category }: { category: WordCategory }) {
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_var(--color-border)]">
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">{wordCategoryLabel[category]}</TableHead>
           <TableHead>Монгол загварт</TableHead>
