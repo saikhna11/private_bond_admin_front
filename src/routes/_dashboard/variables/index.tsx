@@ -117,7 +117,7 @@ function VariablesPage() {
         </Card>
       ) : (
         <Card className="gap-0 py-0">
-          <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
             <Tabs
               value={search.view ?? 'all'}
               onValueChange={(v) =>

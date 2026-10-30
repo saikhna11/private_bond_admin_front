@@ -26,9 +26,10 @@ export function DashboardLayout({
       }
     >
       {sidebar}
-      <SidebarInset>
+      {/* min-w-0: a wide table scrolls inside its card instead of widening the page. */}
+      <SidebarInset className="min-w-0">
         <AppHeader />
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+        <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
           <Outlet />
         </div>
       </SidebarInset>

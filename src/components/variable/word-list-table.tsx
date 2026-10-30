@@ -66,9 +66,11 @@ export function WordListTable({ category }: { category: WordCategory }) {
         ) : (
           data.map((w) => (
             <TableRow key={w.code}>
-              <TableCell className="pl-4 font-medium">{wordName(w)}</TableCell>
-              <TableCell>{w.value_mn}</TableCell>
-              <TableCell>{w.value_en}</TableCell>
+              <TableCell className="pl-4 font-medium whitespace-normal">
+                {wordName(w)}
+              </TableCell>
+              <TableCell className="whitespace-normal">{w.value_mn}</TableCell>
+              <TableCell className="whitespace-normal">{w.value_en}</TableCell>
               <TableCell className="pr-4">
                 <div className="flex justify-end">
                   <WordFormDialog
