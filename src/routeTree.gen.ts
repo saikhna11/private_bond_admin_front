@@ -26,6 +26,7 @@ import { Route as DashboardContractsIndexRouteImport } from './routes/_dashboard
 import { Route as DashboardContractsContractIdRouteImport } from './routes/_dashboard/contracts/$contractId'
 import { Route as DashboardTemplatesIndexRouteImport } from './routes/_dashboard/templates/index'
 import { Route as DashboardTemplatesTemplateIdRouteImport } from './routes/_dashboard/templates/$templateId'
+import { Route as DashboardVariablesIndexRouteImport } from './routes/_dashboard/variables/index'
 import { Route as PublicLoginIndexRouteImport } from './routes/_public/login/index'
 import { Route as BrokerPanelIndexRouteImport } from './routes/broker/_panel/index'
 import { Route as BrokerPanelAccountIndexRouteImport } from './routes/broker/_panel/account/index'
@@ -117,6 +118,11 @@ const DashboardTemplatesTemplateIdRoute =
     path: '/$templateId',
     getParentRoute: () => DashboardTemplatesRouteRoute,
   } as any)
+const DashboardVariablesIndexRoute = DashboardVariablesIndexRouteImport.update({
+  id: '/variables/',
+  path: '/variables/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const PublicLoginIndexRoute = PublicLoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/clients/': typeof DashboardClientsIndexRoute
   '/contracts/': typeof DashboardContractsIndexRoute
   '/templates/': typeof DashboardTemplatesIndexRoute
+  '/variables/': typeof DashboardVariablesIndexRoute
   '/login/': typeof PublicLoginIndexRoute
   '/broker/': typeof BrokerPanelIndexRoute
   '/broker/account/': typeof BrokerPanelAccountIndexRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/clients': typeof DashboardClientsIndexRoute
   '/contracts': typeof DashboardContractsIndexRoute
   '/templates': typeof DashboardTemplatesIndexRoute
+  '/variables': typeof DashboardVariablesIndexRoute
   '/login': typeof PublicLoginIndexRoute
   '/broker/account': typeof BrokerPanelAccountIndexRoute
   '/broker/login': typeof BrokerPublicLoginIndexRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_dashboard/clients/': typeof DashboardClientsIndexRoute
   '/_dashboard/contracts/': typeof DashboardContractsIndexRoute
   '/_dashboard/templates/': typeof DashboardTemplatesIndexRoute
+  '/_dashboard/variables/': typeof DashboardVariablesIndexRoute
   '/_public/login/': typeof PublicLoginIndexRoute
   '/broker/_panel/': typeof BrokerPanelIndexRoute
   '/broker/_panel/account/': typeof BrokerPanelAccountIndexRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/clients/'
     | '/contracts/'
     | '/templates/'
+    | '/variables/'
     | '/login/'
     | '/broker/'
     | '/broker/account/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/contracts'
     | '/templates'
+    | '/variables'
     | '/login'
     | '/broker/account'
     | '/broker/login'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/_dashboard/clients/'
     | '/_dashboard/contracts/'
     | '/_dashboard/templates/'
+    | '/_dashboard/variables/'
     | '/_public/login/'
     | '/broker/_panel/'
     | '/broker/_panel/account/'
@@ -388,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTemplatesTemplateIdRouteImport
       parentRoute: typeof DashboardTemplatesRouteRoute
     }
+    '/_dashboard/variables/': {
+      id: '/_dashboard/variables/'
+      path: '/variables'
+      fullPath: '/variables/'
+      preLoaderRoute: typeof DashboardVariablesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/_public/login/': {
       id: '/_public/login/'
       path: '/login'
@@ -474,6 +493,7 @@ interface DashboardRouteRouteChildren {
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
   DashboardAdminsIndexRoute: typeof DashboardAdminsIndexRoute
   DashboardBrokersIndexRoute: typeof DashboardBrokersIndexRoute
+  DashboardVariablesIndexRoute: typeof DashboardVariablesIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -484,6 +504,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
   DashboardAdminsIndexRoute: DashboardAdminsIndexRoute,
   DashboardBrokersIndexRoute: DashboardBrokersIndexRoute,
+  DashboardVariablesIndexRoute: DashboardVariablesIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

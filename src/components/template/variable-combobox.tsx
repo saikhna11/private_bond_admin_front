@@ -82,6 +82,11 @@ export function VariableCombobox({
                           {v.key}
                           {v.row && ' · хуваарийн мөр'}
                         </p>
+                        {v.custom && v.value_mn && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {v.value_mn}
+                          </p>
+                        )}
                       </div>
                     </CommandItem>
                   ))}

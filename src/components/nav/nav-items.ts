@@ -1,5 +1,6 @@
 import type { LinkProps } from '@tanstack/react-router';
 import {
+  BracesIcon,
   BriefcaseIcon,
   FileSignatureIcon,
   FileTextIcon,
@@ -29,6 +30,7 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
       { title: 'Брокерууд', to: '/brokers', icon: BriefcaseIcon },
       { title: 'Гэрээ', to: '/contracts', icon: FileSignatureIcon },
       { title: 'Гэрээний загвар', to: '/templates', icon: FileTextIcon },
+      { title: 'Хувьсагч', to: '/variables', icon: BracesIcon },
       { title: 'Админууд', to: '/admins', icon: ShieldIcon, superOnly: true },
     ],
   },

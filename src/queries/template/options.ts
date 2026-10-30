@@ -31,7 +31,7 @@ export function templateOptions(id: string) {
   });
 }
 
-// The products and the catalog change only with a backend release.
+// The products change only with a backend release.
 export function contractProductsOptions() {
   return queryOptions({
     queryKey: templateKeys.products,
@@ -40,10 +40,12 @@ export function contractProductsOptions() {
   });
 }
 
+// The catalog changes with a backend release and when an admin's variable does, which
+// invalidates it.
 export function contractVariablesOptions() {
   return queryOptions({
     queryKey: templateKeys.variables,
     queryFn: getContractVariables,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60,
   });
 }

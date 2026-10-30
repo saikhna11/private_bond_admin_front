@@ -46,13 +46,19 @@ export const ContractProductSchema = z.object({
 });
 export type ContractProductType = z.infer<typeof ContractProductSchema>;
 
-/** A value of a contract a placeholder can be mapped to; a row one repeats the schedule's row. */
+/**
+ * A value of a contract a placeholder can be mapped to; a row one repeats the schedule's row.
+ * A custom one is an admin's, with the texts it prints.
+ */
 export const ContractVariableSchema = z.object({
   key: z.string(),
   group: z.string(),
   label: z.string(),
   party: z.enum(['holder', 'co_holder']).optional(),
   row: z.boolean(),
+  custom: z.boolean(),
+  value_mn: z.string().optional(),
+  value_en: z.string().optional(),
 });
 export type ContractVariableType = z.infer<typeof ContractVariableSchema>;
 
