@@ -85,10 +85,16 @@ export function FieldMappingRow({
         {value.source === 'variable' &&
           (readOnly ? (
             <p className="text-sm">
-              {variable?.label ?? value.variable}
-              <span className="ml-2 font-mono text-[11px] text-muted-foreground">
-                {value.variable}
-              </span>
+              {variable ? (
+                <>
+                  {variable.label}
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {variable.group}
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">Олдсонгүй</span>
+              )}
             </p>
           ) : (
             <VariableCombobox

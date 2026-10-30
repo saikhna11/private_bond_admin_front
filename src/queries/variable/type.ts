@@ -1,31 +1,48 @@
 import z from 'zod';
 
-/** The prefix of every admin's variable key; the admin writes the rest. */
-export const customPrefix = 'custom.';
+export const VariableKindSchema = z.enum(['system', 'custom']);
+export type VariableKind = z.infer<typeof VariableKindSchema>;
+
+export const variableKindLabel: Record<VariableKind, string> = {
+  system: 'Систем',
+  custom: 'Нэмэлт',
+};
 
 /**
- * A variable an admin defines: a text every template can print, the Mongolian value in a
- * Mongolian template, the English one in an English template (the Mongolian one when empty).
- * templates counts the templates that map it; one mapped cannot be deleted.
+ * A variable as the variables page lists it, without the key templates map it by: a system
+ * one is computed from the contract, a custom one prints the texts an admin keeps (the
+ * Mongolian one in a Mongolian template, the English one in an English template, the
+ * Mongolian one while it is empty). templates counts the templates that map it.
  */
-export const CustomVariableSchema = z.object({
+export const AdminVariableSchema = z.object({
   id: z.uuid(),
-  key: z.string(),
+  kind: VariableKindSchema,
   label: z.string(),
   group: z.string(),
-  value_mn: z.string(),
-  value_en: z.string(),
+  hint: z.string(),
+  value_mn: z.string().optional(),
+  value_en: z.string().optional(),
   templates: z.number(),
-  created_at: z.string(),
   updated_at: z.string().optional(),
 });
-export type CustomVariableType = z.infer<typeof CustomVariableSchema>;
+export type AdminVariableType = z.infer<typeof AdminVariableSchema>;
 
-/** What an admin writes of their variable; key only when creating it. */
-export interface CustomVariableBody {
-  key?: string;
+/** The page's tabs: every variable, one kind, or the ones no template maps. */
+export const VariableViewSchema = z.enum(['all', 'system', 'custom', 'unused']);
+export type VariableView = z.infer<typeof VariableViewSchema>;
+
+export interface VariableFilters {
+  page?: number;
+  view?: VariableView;
+  group?: string;
+  q?: string;
+}
+
+/** What an admin writes of a variable; a system one takes only its label, group and hint. */
+export interface VariableBody {
   label: string;
   group?: string;
-  value_mn: string;
+  hint?: string;
+  value_mn?: string;
   value_en?: string;
 }

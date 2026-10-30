@@ -17,7 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { ContractVariableType } from '@/queries/template/type';
 
-/** Picks a variable of the catalog, by group, searching its label and key. */
+/** Picks a variable of the catalog, by group, searching its label, note and value. */
 export function VariableCombobox({
   value,
   variables,
@@ -54,7 +54,7 @@ export function VariableCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) min-w-80 p-0">
         <Command>
-          <CommandInput placeholder="Хайх: нэр, дүн, holder.phone" />
+          <CommandInput placeholder="Хайх: нэр, огноо, дүн" />
           <CommandList>
             <CommandEmpty>Хувьсагч олдсонгүй</CommandEmpty>
             {groups.map((group) => (
@@ -64,7 +64,8 @@ export function VariableCombobox({
                   .map((v) => (
                     <CommandItem
                       key={v.key}
-                      value={`${v.label} ${v.key}`}
+                      // Searched by what admins read; the key only keeps it unique.
+                      value={`${v.label} ${v.hint} ${v.value_mn ?? ''} ${v.key}`}
                       onSelect={() => {
                         onChange(v.key);
                         setOpen(false);
@@ -78,13 +79,14 @@ export function VariableCombobox({
                       />
                       <div className="min-w-0">
                         <p className="truncate">{v.label}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
-                          {v.key}
-                          {v.row && ' · хуваарийн мөр'}
-                        </p>
-                        {v.custom && v.value_mn && (
+                        {(v.custom ? v.value_mn : v.hint) && (
                           <p className="truncate text-xs text-muted-foreground">
-                            {v.value_mn}
+                            {v.custom ? v.value_mn : v.hint}
+                          </p>
+                        )}
+                        {v.row && (
+                          <p className="text-xs text-muted-foreground">
+                            Хүснэгтийн мөр бүрт давтагдана
                           </p>
                         )}
                       </div>

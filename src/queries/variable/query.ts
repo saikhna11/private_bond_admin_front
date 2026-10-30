@@ -1,23 +1,38 @@
 import * as z from 'zod';
 import fetchAndValidate from '@/lib/fetcher';
-import { type CustomVariableBody, CustomVariableSchema } from './type';
+import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
+import {
+  AdminVariableSchema,
+  type VariableBody,
+  type VariableFilters,
+} from './type';
 
-export const getCustomVariables = () =>
-  fetchAndValidate('contract-custom-variables', z.array(CustomVariableSchema));
+export const getVariables = (f: VariableFilters) => {
+  const view = f.view ?? 'all';
+  return fetchAndValidate(
+    `variables${listQuery({
+      page: f.page,
+      size: PAGE_SIZE,
+      kind: view === 'system' || view === 'custom' ? view : undefined,
+      unused: view === 'unused' ? 'true' : undefined,
+      group: f.group,
+      q: f.q,
+    })}`,
+    pageSchema(AdminVariableSchema),
+  );
+};
 
-export const createCustomVariable = (body: CustomVariableBody) =>
-  fetchAndValidate('contract-custom-variables', CustomVariableSchema, {
-    method: 'POST',
-    body,
-  });
+export const getVariableGroups = () =>
+  fetchAndValidate('variable-groups', z.array(z.string()));
 
-export const updateCustomVariable = (id: string, body: CustomVariableBody) =>
-  fetchAndValidate(`contract-custom-variables/${id}`, CustomVariableSchema, {
+export const createVariable = (body: VariableBody) =>
+  fetchAndValidate('variables', AdminVariableSchema, { method: 'POST', body });
+
+export const updateVariable = (id: string, body: VariableBody) =>
+  fetchAndValidate(`variables/${id}`, AdminVariableSchema, {
     method: 'PUT',
     body,
   });
 
-export const deleteCustomVariable = (id: string) =>
-  fetchAndValidate(`contract-custom-variables/${id}`, undefined, {
-    method: 'DELETE',
-  });
+export const deleteVariable = (id: string) =>
+  fetchAndValidate(`variables/${id}`, undefined, { method: 'DELETE' });

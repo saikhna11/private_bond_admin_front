@@ -1,5 +1,6 @@
 import { PencilIcon } from 'lucide-react';
 import { TableEmpty, TableSkeletonRows } from '@/components/common/list-parts';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -10,37 +11,40 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toApiError } from '@/lib/fetcher';
-import type {
-  CustomVariableBody,
-  CustomVariableType,
+import {
+  type AdminVariableType,
+  type VariableBody,
+  variableKindLabel,
 } from '@/queries/variable/type';
 import { DeleteVariableButton } from './delete-variable-button';
 import { VariableFormDialog } from './variable-form-dialog';
+import { VariableValue } from './variable-value';
 
-const COLS = 6;
+const COLS = 5;
 
-/** The admins' variables, each with its values, the templates mapping it and its actions. */
+/** One page of the variables, each with its value, the templates mapping it and its actions. */
 export function VariableListTable({
   items,
   isPending,
   error,
+  dimmed,
   onUpdate,
   onDelete,
 }: {
-  items?: CustomVariableType[];
+  items?: AdminVariableType[];
   isPending: boolean;
   error: unknown;
-  onUpdate: (id: string, body: CustomVariableBody) => Promise<unknown>;
+  dimmed: boolean;
+  onUpdate: (id: string, body: VariableBody) => Promise<unknown>;
   onDelete: (id: string) => Promise<unknown>;
 }) {
   return (
-    <Table>
+    <Table className={dimmed ? 'opacity-60' : undefined}>
       <TableHeader>
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">Хувьсагч</TableHead>
           <TableHead>Бүлэг</TableHead>
-          <TableHead>Монгол утга</TableHead>
-          <TableHead>Англи утга</TableHead>
+          <TableHead>Утга</TableHead>
           <TableHead className="text-right">Загвар</TableHead>
           <TableHead className="w-24 pr-4" />
         </TableRow>
@@ -57,34 +61,32 @@ export function VariableListTable({
         ) : !items?.length ? (
           <TableEmpty
             cols={COLS}
-            title="Хувьсагч алга"
-            text="Гаргагч, андеррайтерын нэр, данс зэрэг олон загварт давтагддаг текстийг энд нэг удаа бичнэ."
+            title="Хувьсагч олдсонгүй"
+            text="Шүүлтүүрээ өөрчилж үзнэ үү."
           />
         ) : (
           items.map((v) => (
             <TableRow key={v.id}>
               <TableCell className="pl-4">
-                <p className="font-medium">{v.label}</p>
-                <p className="font-mono text-[11px] text-muted-foreground">
-                  {v.key}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{v.label}</p>
+                  {v.kind === 'custom' && (
+                    <Badge variant="secondary" className="font-normal">
+                      {variableKindLabel.custom}
+                    </Badge>
+                  )}
+                </div>
+                {v.hint && (
+                  <p className="max-w-96 truncate text-xs text-muted-foreground">
+                    {v.hint}
+                  </p>
+                )}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {v.group || '-'}
               </TableCell>
               <TableCell>
-                <p className="max-w-72 truncate" title={v.value_mn}>
-                  {v.value_mn || (
-                    <span className="text-muted-foreground">(хоосон)</span>
-                  )}
-                </p>
-              </TableCell>
-              <TableCell>
-                <p className="max-w-72 truncate" title={v.value_en}>
-                  {v.value_en || (
-                    <span className="text-muted-foreground">Монгол утгаар</span>
-                  )}
-                </p>
+                <VariableValue variable={v} />
               </TableCell>
               <TableCell className="tabular text-right text-muted-foreground">
                 {v.templates}
@@ -100,7 +102,9 @@ export function VariableListTable({
                       </Button>
                     }
                   />
-                  <DeleteVariableButton variable={v} onDelete={onDelete} />
+                  {v.kind === 'custom' && (
+                    <DeleteVariableButton variable={v} onDelete={onDelete} />
+                  )}
                 </div>
               </TableCell>
             </TableRow>

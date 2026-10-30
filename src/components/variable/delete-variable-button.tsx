@@ -8,14 +8,14 @@ import {
 } from '@/components/ui/tooltip';
 import { toApiError } from '@/lib/fetcher';
 import { showToast } from '@/lib/utils';
-import type { CustomVariableType } from '@/queries/variable/type';
+import type { AdminVariableType } from '@/queries/variable/type';
 
-/** Deletes a variable after asking; one a template maps cannot be deleted. */
+/** Deletes an admin's variable after asking; one a template maps cannot be deleted. */
 export function DeleteVariableButton({
   variable: v,
   onDelete,
 }: {
-  variable: CustomVariableType;
+  variable: AdminVariableType;
   onDelete: (id: string) => Promise<unknown>;
 }) {
   if (v.templates > 0) {
@@ -43,12 +43,7 @@ export function DeleteVariableButton({
         </Button>
       }
       title="Хувьсагч устгах уу?"
-      description={
-        <>
-          <code className="font-mono text-xs">{v.key}</code> бүрмөсөн устна.
-          Үүссэн гэрээ түүний утгыг хадгална.
-        </>
-      }
+      description={`«${v.label}» бүрмөсөн устна. Үүссэн гэрээ түүний утгыг хадгална.`}
       confirmLabel="Устгах"
       onConfirm={async () => {
         try {

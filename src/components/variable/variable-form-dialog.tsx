@@ -18,39 +18,22 @@ import {
 } from '@/components/ui/dialog';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from '@/components/ui/input-group';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
-import { cn } from '@/lib/utils';
-import {
-  type CustomVariableBody,
-  type CustomVariableType,
-  customPrefix,
-} from '@/queries/variable/type';
+import type { AdminVariableType, VariableBody } from '@/queries/variable/type';
 
 const schema = z.object({
-  key: z
-    .string()
-    .trim()
-    .max(57)
-    .regex(
-      /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/,
-      'Жижиг латин үсэг, тоо, _ ашиглана; хэсгүүдийг цэгээр холбоно (issuer_name)',
-    ),
   label: z.string().trim().min(1, 'Нэрээ оруулна уу').max(100),
   group: z.string().trim().max(50),
+  hint: z.string().trim().max(200),
   value_mn: z.string().max(1000),
   value_en: z.string().max(1000),
 });
 type Values = z.infer<typeof schema>;
 
 /**
- * Creates an admin's variable, or changes one: all but its key, which templates map it by.
+ * Creates an admin's variable, or changes one: a system variable's name, group and note, an
+ * admin's values too.
  */
 export function VariableFormDialog({
   variable,
@@ -58,17 +41,17 @@ export function VariableFormDialog({
   onSubmit,
 }: {
   /** The variable to change; left out to create one. */
-  variable?: CustomVariableType;
+  variable?: AdminVariableType;
   trigger: ReactNode;
-  onSubmit: (body: CustomVariableBody) => Promise<unknown>;
+  onSubmit: (body: VariableBody) => Promise<unknown>;
 }) {
-  const editing = !!variable;
+  const system = variable?.kind === 'system';
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const defaults = (): Values => ({
-    key: variable ? variable.key.slice(customPrefix.length) : '',
     label: variable?.label ?? '',
     group: variable?.group ?? '',
+    hint: variable?.hint ?? '',
     value_mn: variable?.value_mn ?? '',
     value_en: variable?.value_en ?? '',
   });
@@ -82,24 +65,20 @@ export function VariableFormDialog({
     setError(null);
     try {
       await onSubmit({
-        key: editing ? undefined : v.key,
         label: v.label,
         group: v.group || undefined,
-        value_mn: v.value_mn,
-        value_en: v.value_en || undefined,
+        hint: v.hint || undefined,
+        value_mn: system ? undefined : v.value_mn,
+        value_en: system ? undefined : v.value_en || undefined,
       });
       setOpen(false);
     } catch (err) {
       const e = toApiError(err);
-      if (e.code === 'contract.variable_key_taken') {
-        form.setError('key', { message: e.message });
-        return;
-      }
       if (
         applyFieldErrors(e, form.setError, {
-          key: 'key',
           label: 'label',
           group: 'group',
+          hint: 'hint',
           value_mn: 'value_mn',
           value_en: 'value_en',
         })
@@ -130,43 +109,17 @@ export function VariableFormDialog({
         >
           <DialogHeader>
             <DialogTitle>
-              {editing ? 'Хувьсагч засах' : 'Шинэ хувьсагч'}
+              {variable ? 'Хувьсагч засах' : 'Шинэ хувьсагч'}
             </DialogTitle>
             <DialogDescription>
-              {editing
-                ? 'Шинэ утга дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин утгаа хадгална.'
-                : 'Загварын хоосон зайг энэ хувьсагчтай холбоход утга нь гэрээнд хэвлэгдэнэ.'}
+              {system
+                ? 'Утгыг систем гэрээний мэдээллээс бодно. Нэр, бүлэг, тайлбарыг нь засна.'
+                : variable
+                  ? 'Шинэ утга дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин утгаа хадгална.'
+                  : 'Загварын хоосон зайг энэ хувьсагчтай холбоход утга нь гэрээнд хэвлэгдэнэ.'}
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
-            <FormField
-              id="key"
-              label="Түлхүүр"
-              error={errors.key?.message}
-              hint={editing ? 'Түлхүүр өөрчлөгдөхгүй.' : undefined}
-            >
-              <InputGroup className="h-10">
-                <InputGroupAddon>
-                  <InputGroupText className="font-mono">
-                    {customPrefix}
-                  </InputGroupText>
-                </InputGroupAddon>
-                <InputGroupInput
-                  id="key"
-                  autoComplete="off"
-                  className={cn(
-                    'font-mono',
-                    editing && 'text-muted-foreground',
-                  )}
-                  placeholder="issuer_name"
-                  readOnly={editing}
-                  // Read only when editing: the dialog focuses the name instead.
-                  tabIndex={editing ? -1 : undefined}
-                  aria-invalid={!!errors.key}
-                  {...form.register('key')}
-                />
-              </InputGroup>
-            </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField id="label" label="Нэр" error={errors.label?.message}>
                 <Input
@@ -193,31 +146,49 @@ export function VariableFormDialog({
               </FormField>
             </div>
             <FormField
-              id="value_mn"
-              label="Монгол утга"
-              error={errors.value_mn?.message}
-            >
-              <Input
-                id="value_mn"
-                className="h-10"
-                aria-invalid={!!errors.value_mn}
-                {...form.register('value_mn')}
-              />
-            </FormField>
-            <FormField
-              id="value_en"
-              label="Англи утга"
+              id="hint"
+              label="Тайлбар"
               optional
-              error={errors.value_en?.message}
-              hint="Хоосон бол англи загварт монгол утга хэвлэгдэнэ."
+              error={errors.hint?.message}
+              hint="Холбохдоо нэрийн доор харагдана: жишээ эсвэл тэмдэглэл."
             >
               <Input
-                id="value_en"
+                id="hint"
                 className="h-10"
-                aria-invalid={!!errors.value_en}
-                {...form.register('value_en')}
+                aria-invalid={!!errors.hint}
+                {...form.register('hint')}
               />
             </FormField>
+            {!system && (
+              <>
+                <FormField
+                  id="value_mn"
+                  label="Монгол утга"
+                  error={errors.value_mn?.message}
+                >
+                  <Input
+                    id="value_mn"
+                    className="h-10"
+                    aria-invalid={!!errors.value_mn}
+                    {...form.register('value_mn')}
+                  />
+                </FormField>
+                <FormField
+                  id="value_en"
+                  label="Англи утга"
+                  optional
+                  error={errors.value_en?.message}
+                  hint="Хоосон бол англи загварт монгол утга хэвлэгдэнэ."
+                >
+                  <Input
+                    id="value_en"
+                    className="h-10"
+                    aria-invalid={!!errors.value_en}
+                    {...form.register('value_en')}
+                  />
+                </FormField>
+              </>
+            )}
           </FieldGroup>
           <ApiErrorAlert error={error} />
           <DialogFooter>
@@ -228,7 +199,7 @@ export function VariableFormDialog({
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2Icon className="animate-spin" />}
-              {editing ? 'Хадгалах' : 'Нэмэх'}
+              {variable ? 'Хадгалах' : 'Нэмэх'}
             </Button>
           </DialogFooter>
         </form>

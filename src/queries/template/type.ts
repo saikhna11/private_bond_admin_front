@@ -54,6 +54,7 @@ export const ContractVariableSchema = z.object({
   key: z.string(),
   group: z.string(),
   label: z.string(),
+  hint: z.string(),
   party: z.enum(['holder', 'co_holder']).optional(),
   row: z.boolean(),
   custom: z.boolean(),
