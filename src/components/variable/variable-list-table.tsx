@@ -1,6 +1,5 @@
 import { PencilIcon } from 'lucide-react';
 import { TableEmpty, TableSkeletonRows } from '@/components/common/list-parts';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -11,13 +10,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toApiError } from '@/lib/fetcher';
-import {
-  type AdminVariableType,
-  type VariableBody,
-  variableKindLabel,
-} from '@/queries/variable/type';
+import type { AdminVariableType, VariableBody } from '@/queries/variable/type';
 import { DeleteVariableButton } from './delete-variable-button';
 import { VariableFormDialog } from './variable-form-dialog';
+import { VariableKindBadge } from './variable-kind-badge';
 import { VariableValue } from './variable-value';
 
 const COLS = 5;
@@ -70,11 +66,7 @@ export function VariableListTable({
               <TableCell className="pl-4">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{v.label}</p>
-                  {!v.builtin && (
-                    <Badge variant="secondary" className="font-normal">
-                      {variableKindLabel[v.kind]}
-                    </Badge>
-                  )}
+                  {!v.builtin && <VariableKindBadge kind={v.kind} />}
                 </div>
                 {v.hint && (
                   <p className="max-w-96 truncate text-xs text-muted-foreground">

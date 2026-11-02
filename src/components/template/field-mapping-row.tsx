@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { VariableKindBadge } from '@/components/variable/variable-kind-badge';
 import { cn } from '@/lib/utils';
 import type {
   ContractVariableType,
@@ -86,12 +87,13 @@ export function FieldMappingRow({
           (readOnly ? (
             <p className="text-sm">
               {variable ? (
-                <>
+                <span className="inline-flex items-center gap-2">
+                  <VariableKindBadge kind={variable.kind} compact />
                   {variable.label}
                   <span className="ml-2 text-xs text-muted-foreground">
                     {variable.group}
                   </span>
-                </>
+                </span>
               ) : (
                 <span className="text-muted-foreground">Олдсонгүй</span>
               )}
