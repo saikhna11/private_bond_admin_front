@@ -68,8 +68,10 @@ export interface VariableBody {
 }
 
 /**
- * What a field variable picks from: the sources, the contract and each type of party, with
- * their fields and the formats each prints in, and every format with an example.
+ * What a field variable picks from: the sources, the contract, the holder and the co-holder,
+ * with their fields and the formats each prints in, and every format with an example. A
+ * party's fields are its person's columns a comment names and the service's special ones;
+ * note says whose persons have one, such as citizens only.
  */
 export const VariableFieldCatalogSchema = z.object({
   sources: z.array(
@@ -80,6 +82,7 @@ export const VariableFieldCatalogSchema = z.object({
         z.object({
           key: z.string(),
           label: z.string(),
+          note: z.string().optional(),
           formats: z.array(z.string()),
         }),
       ),

@@ -101,6 +101,9 @@ export function VariableFieldPicker({
             {source?.fields.map((f) => (
               <SelectItem key={f.key} value={f.key}>
                 {f.label}
+                {f.note && (
+                  <span className="text-muted-foreground"> · {f.note}</span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>
