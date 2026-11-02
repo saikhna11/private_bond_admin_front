@@ -137,6 +137,7 @@ function VariablesPage() {
               <TabsList className="w-full sm:w-fit">
                 <TabsTrigger value="all">Бүгд</TabsTrigger>
                 <TabsTrigger value="system">Систем</TabsTrigger>
+                <TabsTrigger value="field">Талбар</TabsTrigger>
                 <TabsTrigger value="custom">Нэмэлт</TabsTrigger>
                 <TabsTrigger value="unused">Ашиглаагүй</TabsTrigger>
               </TabsList>

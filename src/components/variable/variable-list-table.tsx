@@ -70,9 +70,9 @@ export function VariableListTable({
               <TableCell className="pl-4">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{v.label}</p>
-                  {v.kind === 'custom' && (
+                  {!v.builtin && (
                     <Badge variant="secondary" className="font-normal">
-                      {variableKindLabel.custom}
+                      {variableKindLabel[v.kind]}
                     </Badge>
                   )}
                 </div>
@@ -102,7 +102,7 @@ export function VariableListTable({
                       </Button>
                     }
                   />
-                  {v.kind === 'custom' && (
+                  {!v.builtin && (
                     <DeleteVariableButton variable={v} onDelete={onDelete} />
                   )}
                 </div>

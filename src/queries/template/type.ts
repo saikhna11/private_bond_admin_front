@@ -48,14 +48,22 @@ export type ContractProductType = z.infer<typeof ContractProductSchema>;
 
 /**
  * A value of a contract a placeholder can be mapped to; a row one repeats the schedule's row.
- * A custom one is an admin's, with the texts it prints.
+ * A field one reads a field of the contract or of a party (source, field) in a format; a
+ * custom one is an admin's, with the texts it prints. party is the party it is read from.
  */
 export const ContractVariableSchema = z.object({
   key: z.string(),
   group: z.string(),
   label: z.string(),
   hint: z.string(),
-  party: z.enum(['holder', 'co_holder']).optional(),
+  kind: z.enum(['system', 'field', 'custom']),
+  builtin: z.boolean(),
+  source: z.string().optional(),
+  field: z.string().optional(),
+  format: z.string().optional(),
+  party: z
+    .enum(['holder', 'co_holder', 'minor', 'guardian', 'organization'])
+    .optional(),
   row: z.boolean(),
   custom: z.boolean(),
   value_mn: z.string().optional(),
@@ -152,6 +160,9 @@ const partyOwnerships: Record<
 > = {
   holder: ['individual', 'joint'],
   co_holder: ['joint'],
+  minor: ['minor'],
+  guardian: ['minor'],
+  organization: ['organization'],
 };
 
 /** Whether v can fill a template of ownership: a party's value only when it names that party. */

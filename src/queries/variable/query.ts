@@ -4,6 +4,7 @@ import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
 import {
   AdminVariableSchema,
   type VariableBody,
+  VariableFieldCatalogSchema,
   type VariableFilters,
 } from './type';
 
@@ -13,7 +14,7 @@ export const getVariables = (f: VariableFilters) => {
     `variables${listQuery({
       page: f.page,
       size: PAGE_SIZE,
-      kind: view === 'system' || view === 'custom' ? view : undefined,
+      kind: view === 'all' || view === 'unused' ? undefined : view,
       unused: view === 'unused' ? 'true' : undefined,
       group: f.group,
       q: f.q,
@@ -24,6 +25,9 @@ export const getVariables = (f: VariableFilters) => {
 
 export const getVariableGroups = () =>
   fetchAndValidate('variable-groups', z.array(z.string()));
+
+export const getVariableFields = () =>
+  fetchAndValidate('variable-fields', VariableFieldCatalogSchema);
 
 export const createVariable = (body: VariableBody) =>
   fetchAndValidate('variables', AdminVariableSchema, { method: 'POST', body });
