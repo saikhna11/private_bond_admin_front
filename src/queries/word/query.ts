@@ -19,3 +19,15 @@ export const updateWord = (
     ContractWordSchema,
     { method: 'PUT', body },
   );
+
+export const createWord = (body: {
+  category: WordCategory;
+  code: string;
+  value_mn: string;
+  value_en: string;
+}) => fetchAndValidate('words', ContractWordSchema, { method: 'POST', body });
+
+export const deleteWord = (category: WordCategory, code: string) =>
+  fetchAndValidate(`words/${category}/${encodeURIComponent(code)}`, undefined, {
+    method: 'DELETE',
+  });

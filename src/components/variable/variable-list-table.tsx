@@ -11,7 +11,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toApiError } from '@/lib/fetcher';
-import type { AdminVariableType, VariableBody } from '@/queries/variable/type';
+import {
+  type AdminVariableType,
+  type VariableBody,
+  variableKindLabel,
+} from '@/queries/variable/type';
 import { DeleteVariableButton } from './delete-variable-button';
 import { VariableFormDialog } from './variable-form-dialog';
 import { VariableValue } from './variable-value';
@@ -66,9 +70,9 @@ export function VariableListTable({
               <TableCell className="pl-4">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{v.label}</p>
-                  {!v.builtin && v.kind !== 'custom' && (
+                  {!v.builtin && (
                     <Badge variant="secondary" className="font-normal">
-                      Нэмсэн
+                      {variableKindLabel[v.kind]}
                     </Badge>
                   )}
                 </div>

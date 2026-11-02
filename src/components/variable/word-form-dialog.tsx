@@ -20,32 +20,45 @@ import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
-import type { ContractWordType } from '@/queries/word/type';
+import {
+  type ContractWordType,
+  type WordCategory,
+  wordCodeField,
+} from '@/queries/word/type';
 
 const schema = z.object({
+  code: z.string().trim().max(100),
   value_mn: z.string().trim().min(1, 'Монгол утгаа оруулна уу').max(200),
   value_en: z.string().trim().min(1, 'Англи утгаа оруулна уу').max(200),
 });
 type Values = z.infer<typeof schema>;
 
-/** Corrects what the contracts print for a word, in both languages. */
+/**
+ * Corrects what the contracts print for a word, in both languages, or adds an admin's word of
+ * category with its code when word is left out.
+ */
 export function WordFormDialog({
   word,
+  category,
   title,
   trigger,
   onSubmit,
 }: {
-  word: ContractWordType;
-  /** What the word is, as the table names it. */
+  /** The word to correct; left out to add one. */
+  word?: ContractWordType;
+  category: WordCategory;
+  /** What the word is, as the table names it, or what adding one is called. */
   title: string;
   trigger: ReactNode;
   onSubmit: (body: Values) => Promise<unknown>;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const codeField = word ? undefined : wordCodeField[category];
   const defaults = (): Values => ({
-    value_mn: word.value_mn,
-    value_en: word.value_en,
+    code: word?.code ?? '',
+    value_mn: word?.value_mn ?? '',
+    value_en: word?.value_en ?? '',
   });
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -55,6 +68,10 @@ export function WordFormDialog({
 
   async function submit(v: Values) {
     setError(null);
+    if (codeField && !v.code) {
+      form.setError('code', { message: 'Энэ талбарыг бөглөнө үү' });
+      return;
+    }
     try {
       await onSubmit(v);
       setOpen(false);
@@ -62,6 +79,7 @@ export function WordFormDialog({
       const e = toApiError(err);
       if (
         applyFieldErrors(e, form.setError, {
+          code: 'code',
           value_mn: 'value_mn',
           value_en: 'value_en',
         })
@@ -93,17 +111,33 @@ export function WordFormDialog({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
-              Шинэ үг дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин үгээ
-              хадгална.
+              {word
+                ? 'Шинэ үг дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин үгээ хадгална.'
+                : 'Гэрээний өгөгдөлд энэ код байвал гэрээнд энэ үг хэвлэгдэнэ.'}
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
+            {codeField && (
+              <FormField
+                id="code"
+                label={codeField.label}
+                error={errors.code?.message}
+                hint={codeField.hint}
+              >
+                <Input
+                  id="code"
+                  className="h-10"
+                  aria-invalid={!!errors.code}
+                  {...form.register('code')}
+                />
+              </FormField>
+            )}
             <FormField
               id="value_mn"
               label="Монгол загварт"
               error={errors.value_mn?.message}
               hint={
-                word.category === 'bank'
+                category === 'bank'
                   ? 'Загвар «банк» гэдгийг өөрөө нэмдэг тул үггүй бичнэ.'
                   : undefined
               }
@@ -137,7 +171,7 @@ export function WordFormDialog({
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2Icon className="animate-spin" />}
-              Хадгалах
+              {word ? 'Хадгалах' : 'Нэмэх'}
             </Button>
           </DialogFooter>
         </form>

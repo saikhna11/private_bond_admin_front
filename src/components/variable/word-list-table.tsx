@@ -13,12 +13,13 @@ import {
 import { toApiError } from '@/lib/fetcher';
 import { showToast } from '@/lib/utils';
 import { wordKeys, wordsOptions } from '@/queries/word/options';
-import { updateWord } from '@/queries/word/query';
+import { deleteWord, updateWord } from '@/queries/word/query';
 import {
   type ContractWordType,
   type WordCategory,
   wordCategoryLabel,
 } from '@/queries/word/type';
+import { DeleteWordButton } from './delete-word-button';
 import { WordFormDialog } from './word-form-dialog';
 
 const COLS = 4;
@@ -42,6 +43,12 @@ export function WordListTable({ category }: { category: WordCategory }) {
     showToast('success', 'Үг хадгалагдлаа');
   }
 
+  async function remove(w: ContractWordType) {
+    await deleteWord(w.category, w.code);
+    await queryClient.invalidateQueries({ queryKey: wordKeys.all });
+    showToast('success', 'Үг устлаа');
+  }
+
   return (
     <Table>
       <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_var(--color-border)]">
@@ -49,7 +56,7 @@ export function WordListTable({ category }: { category: WordCategory }) {
           <TableHead className="pl-4">{wordCategoryLabel[category]}</TableHead>
           <TableHead>Монгол загварт</TableHead>
           <TableHead>Англи загварт</TableHead>
-          <TableHead className="w-16 pr-4" />
+          <TableHead className="w-24 pr-4" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -72,9 +79,10 @@ export function WordListTable({ category }: { category: WordCategory }) {
               <TableCell className="whitespace-normal">{w.value_mn}</TableCell>
               <TableCell className="whitespace-normal">{w.value_en}</TableCell>
               <TableCell className="pr-4">
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-1">
                   <WordFormDialog
                     word={w}
+                    category={w.category}
                     title={wordName(w)}
                     onSubmit={(body) => save(w, body)}
                     trigger={
@@ -83,6 +91,13 @@ export function WordListTable({ category }: { category: WordCategory }) {
                       </Button>
                     }
                   />
+                  {!w.builtin && (
+                    <DeleteWordButton
+                      word={w}
+                      name={wordName(w)}
+                      onDelete={remove}
+                    />
+                  )}
                 </div>
               </TableCell>
             </TableRow>

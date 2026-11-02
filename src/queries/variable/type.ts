@@ -1,11 +1,13 @@
 import z from 'zod';
-import { WordCategorySchema, wordCategoryLabel } from '@/queries/word/type';
 
 export const VariableKindSchema = z.enum(['system', 'field', 'custom']);
 export type VariableKind = z.infer<typeof VariableKindSchema>;
 
-/** The dynamic kinds, whose value a contract's data gives: the computed and the field ones. */
-export const dynamicKinds: VariableKind[] = ['system', 'field'];
+export const variableKindLabel: Record<VariableKind, string> = {
+  system: 'Систем',
+  field: 'Талбар',
+  custom: 'Тогтмол текст',
+};
 
 /**
  * A variable as the variables page lists it, without the key templates map it by: a system
@@ -32,26 +34,20 @@ export const AdminVariableSchema = z.object({
 });
 export type AdminVariableType = z.infer<typeof AdminVariableSchema>;
 
-/** The variables tab's views: every dynamic variable, one kind, or the ones no template maps. */
-export const VariableViewSchema = z.enum(['all', 'system', 'field', 'unused']);
+/** The variables tab's views: every variable, one kind, or the ones no template maps. */
+export const VariableViewSchema = z.enum([
+  'all',
+  'system',
+  'field',
+  'custom',
+  'unused',
+]);
 export type VariableView = z.infer<typeof VariableViewSchema>;
 
-/** The dynamic kinds view lists. */
+/** The kinds view lists: one, or every kind (none named). */
 export function viewKinds(view: VariableView): VariableKind[] {
-  return view === 'system' || view === 'field' ? [view] : dynamicKinds;
+  return view === 'all' || view === 'unused' ? [] : [view];
 }
-
-/** The static values tab's tabs: the admins' fixed texts, then each category of words. */
-export const StaticCategorySchema = z.enum([
-  'text',
-  ...WordCategorySchema.options,
-]);
-export type StaticCategory = z.infer<typeof StaticCategorySchema>;
-
-export const staticCategoryLabel: Record<StaticCategory, string> = {
-  text: 'Тогтмол текст',
-  ...wordCategoryLabel,
-};
 
 /** A page of the variables of kinds, only the ones no template maps when unused. */
 export interface VariableFilters {

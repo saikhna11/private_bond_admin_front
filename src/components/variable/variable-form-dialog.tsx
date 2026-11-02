@@ -29,6 +29,7 @@ import {
   VariableKindSchema,
 } from '@/queries/variable/type';
 import { VariableFieldPicker } from './variable-field-picker';
+import { VariableKindChoice } from './variable-kind-choice';
 
 const schema = z
   .object({
@@ -144,7 +145,7 @@ export function VariableFormDialog({
 }: {
   /** The variable to change; left out to create one. */
   variable?: AdminVariableType;
-  /** What a new one is: a field variable or a fixed text. */
+  /** What a new one starts as, a field variable or a fixed text, until the admin picks. */
   create?: NonNullable<VariableBody['kind']>;
   trigger: ReactNode;
   onSubmit: (body: VariableBody) => Promise<unknown>;
@@ -218,12 +219,23 @@ export function VariableFormDialog({
           className="flex flex-col gap-5"
         >
           <DialogHeader>
-            <DialogTitle>{textsOf(variable, create)[0]}</DialogTitle>
+            <DialogTitle>
+              {textsOf(variable, kind === 'custom' ? 'custom' : 'field')[0]}
+            </DialogTitle>
             <DialogDescription>
-              {textsOf(variable, create)[1]}
+              {textsOf(variable, kind === 'custom' ? 'custom' : 'field')[1]}
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
+            {!variable && (
+              <VariableKindChoice
+                value={kind === 'custom' ? 'custom' : 'field'}
+                onChange={(k) => {
+                  form.setValue('kind', k);
+                  form.clearErrors();
+                }}
+              />
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField id="label" label="Нэр" error={errors.label?.message}>
                 <Input
