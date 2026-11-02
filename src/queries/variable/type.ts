@@ -1,13 +1,11 @@
 import z from 'zod';
+import { WordCategorySchema, wordCategoryLabel } from '@/queries/word/type';
 
 export const VariableKindSchema = z.enum(['system', 'field', 'custom']);
 export type VariableKind = z.infer<typeof VariableKindSchema>;
 
-export const variableKindLabel: Record<VariableKind, string> = {
-  system: 'Систем',
-  field: 'Талбар',
-  custom: 'Нэмэлт',
-};
+/** The dynamic kinds, whose value a contract's data gives: the computed and the field ones. */
+export const dynamicKinds: VariableKind[] = ['system', 'field'];
 
 /**
  * A variable as the variables page lists it, without the key templates map it by: a system
@@ -34,19 +32,32 @@ export const AdminVariableSchema = z.object({
 });
 export type AdminVariableType = z.infer<typeof AdminVariableSchema>;
 
-/** The page's tabs: every variable, one kind, or the ones no template maps. */
-export const VariableViewSchema = z.enum([
-  'all',
-  'system',
-  'field',
-  'custom',
-  'unused',
-]);
+/** The variables tab's views: every dynamic variable, one kind, or the ones no template maps. */
+export const VariableViewSchema = z.enum(['all', 'system', 'field', 'unused']);
 export type VariableView = z.infer<typeof VariableViewSchema>;
 
+/** The dynamic kinds view lists. */
+export function viewKinds(view: VariableView): VariableKind[] {
+  return view === 'system' || view === 'field' ? [view] : dynamicKinds;
+}
+
+/** The static values tab's tabs: the admins' fixed texts, then each category of words. */
+export const StaticCategorySchema = z.enum([
+  'text',
+  ...WordCategorySchema.options,
+]);
+export type StaticCategory = z.infer<typeof StaticCategorySchema>;
+
+export const staticCategoryLabel: Record<StaticCategory, string> = {
+  text: 'Тогтмол текст',
+  ...wordCategoryLabel,
+};
+
+/** A page of the variables of kinds, only the ones no template maps when unused. */
 export interface VariableFilters {
+  kinds: VariableKind[];
+  unused?: boolean;
   page?: number;
-  view?: VariableView;
   group?: string;
   q?: string;
 }

@@ -29,7 +29,6 @@ import {
   VariableKindSchema,
 } from '@/queries/variable/type';
 import { VariableFieldPicker } from './variable-field-picker';
-import { VariableKindChoice } from './variable-kind-choice';
 
 const schema = z
   .object({
@@ -87,17 +86,66 @@ function bodyOf(v: Values, variable?: AdminVariableType): VariableBody {
   };
 }
 
+/** The titles and notes of the dialog, by what it creates or changes. */
+const texts = {
+  createField: [
+    'Шинэ хувьсагч',
+    'Гэрээ эсвэл талын мэдээллийг сонгосон форматаар хэвлэнэ: гэрээ бүрт өөрийн утгаар бөглөгдөнө.',
+  ],
+  createCustom: [
+    'Шинэ тогтмол текст',
+    'Таны бичсэн текст загварын хоосон зайд холбоход бүх гэрээнд ижилхэн хэвлэгдэнэ.',
+  ],
+  system: [
+    'Хувьсагч засах',
+    'Утгыг систем гэрээний мэдээллээс бодно. Нэр, бүлэг, тайлбарыг нь засна.',
+  ],
+  builtin: [
+    'Хувьсагч засах',
+    'Ямар мэдээллийг хэвлэхийг систем тогтооно. Нэр, бүлэг, тайлбарыг нь засна.',
+  ],
+  field: [
+    'Хувьсагч засах',
+    'Шинэ утга дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин утгаа хадгална.',
+  ],
+  custom: [
+    'Тогтмол текст засах',
+    'Шинэ утга дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин утгаа хадгална.',
+  ],
+} as const;
+
+/** Which of texts the dialog shows for variable, or for a new one of kind create. */
+function textsOf(
+  variable: AdminVariableType | undefined,
+  create: NonNullable<VariableBody['kind']>,
+) {
+  if (!variable) {
+    return create === 'custom' ? texts.createCustom : texts.createField;
+  }
+  if (variable.kind === 'system') {
+    return texts.system;
+  }
+  if (variable.builtin) {
+    return texts.builtin;
+  }
+  return variable.kind === 'custom' ? texts.custom : texts.field;
+}
+
 /**
- * Creates an admin's variable, a field of the contract or a party in a format or a text, or
- * changes one: a builtin variable's name, group and note, an admin's field or texts too.
+ * Creates an admin's variable of kind create, a field of the contract or a party in a format
+ * or a fixed text, or changes one: a builtin variable's name, group and note, an admin's field
+ * or texts too.
  */
 export function VariableFormDialog({
   variable,
+  create = 'field',
   trigger,
   onSubmit,
 }: {
   /** The variable to change; left out to create one. */
   variable?: AdminVariableType;
+  /** What a new one is: a field variable or a fixed text. */
+  create?: NonNullable<VariableBody['kind']>;
   trigger: ReactNode;
   onSubmit: (body: VariableBody) => Promise<unknown>;
 }) {
@@ -106,7 +154,7 @@ export function VariableFormDialog({
   const [error, setError] = useState<ApiError | null>(null);
   const { data: catalog } = useQuery(variableFieldsOptions());
   const defaults = (): Values => ({
-    kind: variable?.kind ?? 'field',
+    kind: variable?.kind ?? create,
     label: variable?.label ?? '',
     group: variable?.group ?? '',
     hint: variable?.hint ?? '',
@@ -170,29 +218,12 @@ export function VariableFormDialog({
           className="flex flex-col gap-5"
         >
           <DialogHeader>
-            <DialogTitle>
-              {variable ? 'Хувьсагч засах' : 'Шинэ хувьсагч'}
-            </DialogTitle>
+            <DialogTitle>{textsOf(variable, create)[0]}</DialogTitle>
             <DialogDescription>
-              {kind === 'system'
-                ? 'Утгыг систем гэрээний мэдээллээс бодно. Нэр, бүлэг, тайлбарыг нь засна.'
-                : builtin
-                  ? 'Ямар мэдээллийг хэвлэхийг систем тогтооно. Нэр, бүлэг, тайлбарыг нь засна.'
-                  : variable
-                    ? 'Шинэ утга дараагийн гэрээнээс хэвлэгдэнэ. Үүссэн гэрээ хуучин утгаа хадгална.'
-                    : 'Загварын хоосон зайг энэ хувьсагчтай холбоход утга нь гэрээнд хэвлэгдэнэ.'}
+              {textsOf(variable, create)[1]}
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
-            {!variable && (
-              <VariableKindChoice
-                value={kind === 'custom' ? 'custom' : 'field'}
-                onChange={(k) => {
-                  form.setValue('kind', k);
-                  form.clearErrors();
-                }}
-              />
-            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField id="label" label="Нэр" error={errors.label?.message}>
                 <Input

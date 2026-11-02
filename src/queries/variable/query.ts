@@ -6,25 +6,27 @@ import {
   type VariableBody,
   VariableFieldCatalogSchema,
   type VariableFilters,
+  type VariableKind,
 } from './type';
 
-export const getVariables = (f: VariableFilters) => {
-  const view = f.view ?? 'all';
-  return fetchAndValidate(
+export const getVariables = (f: VariableFilters) =>
+  fetchAndValidate(
     `variables${listQuery({
       page: f.page,
       size: PAGE_SIZE,
-      kind: view === 'all' || view === 'unused' ? undefined : view,
-      unused: view === 'unused' ? 'true' : undefined,
+      kind: f.kinds.join(','),
+      unused: f.unused ? 'true' : undefined,
       group: f.group,
       q: f.q,
     })}`,
     pageSchema(AdminVariableSchema),
   );
-};
 
-export const getVariableGroups = () =>
-  fetchAndValidate('variable-groups', z.array(z.string()));
+export const getVariableGroups = (kinds: VariableKind[]) =>
+  fetchAndValidate(
+    `variable-groups${listQuery({ kind: kinds.join(',') })}`,
+    z.array(z.string()),
+  );
 
 export const getVariableFields = () =>
   fetchAndValidate('variable-fields', VariableFieldCatalogSchema);

@@ -25,7 +25,12 @@ export function useVariableActions() {
     create: async (body: VariableBody) => {
       await createVariable(body);
       await refresh();
-      showToast('success', 'Хувьсагч нэмэгдлээ');
+      showToast(
+        'success',
+        body.kind === 'custom'
+          ? 'Тогтмол текст нэмэгдлээ'
+          : 'Хувьсагч нэмэгдлээ',
+      );
     },
     update: async (id: string, body: VariableBody) => {
       await updateVariable(id, body);

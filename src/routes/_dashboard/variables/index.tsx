@@ -1,31 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
-import {
-  FilterSelect,
-  Pagination,
-  SearchInput,
-} from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StaticValueTabs } from '@/components/variable/static-value-tabs';
 import { useVariableActions } from '@/components/variable/use-variable-actions';
 import { VariableFormDialog } from '@/components/variable/variable-form-dialog';
-import { VariableListTable } from '@/components/variable/variable-list-table';
+import { VariableListPanel } from '@/components/variable/variable-list-panel';
 import { WordListTable } from '@/components/variable/word-list-table';
-import { PAGE_SIZE } from '@/lib/types';
 import {
-  variableGroupsOptions,
-  variablesOptions,
-} from '@/queries/variable/options';
-import {
-  type VariableFilters,
+  StaticCategorySchema,
   VariableViewSchema,
+  viewKinds,
 } from '@/queries/variable/type';
-import { WordCategorySchema, wordCategoryLabel } from '@/queries/word/type';
 
 // From md up the page fits the screen and only the table scrolls, under its header, with the
 // pages below it.
@@ -35,12 +25,12 @@ const scrollArea =
   'md:min-h-0 md:flex-1 max-md:[&_[data-slot=table-container]]:max-h-[70svh] [&_[data-slot=table-container]]:min-h-0 [&_[data-slot=table-container]]:flex-1 [&_[data-slot=table-container]]:overflow-auto';
 
 const searchSchema = z.object({
-  tab: z.enum(['variables', 'words']).optional().catch(undefined),
+  tab: z.enum(['variables', 'static']).optional().catch(undefined),
   page: z.number().int().min(1).optional().catch(undefined),
   view: VariableViewSchema.optional().catch(undefined),
   group: z.string().optional().catch(undefined),
   q: z.string().optional().catch(undefined),
-  category: WordCategorySchema.optional().catch(undefined),
+  category: StaticCategorySchema.optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_dashboard/variables/')({
@@ -53,32 +43,26 @@ function VariablesPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const actions = useVariableActions();
-  const words = search.tab === 'words';
-  const filters: VariableFilters = {
-    page: search.page,
-    view: search.view,
-    group: search.group,
-    q: search.q,
-  };
-  const { data, isPending, error, isPlaceholderData } = useQuery({
-    ...variablesOptions(filters),
-    enabled: !words,
-  });
-  const { data: groups } = useQuery(variableGroupsOptions());
+  const fixed = search.tab === 'static';
+  const category = search.category ?? 'text';
+  const view = search.view ?? 'all';
   const setFilter = useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
     [navigate],
   );
+  const onPage = (page: number) =>
+    navigate({ search: (prev) => ({ ...prev, page }) });
 
   return (
     <div className={fitScreen}>
       <PageTitle
         title="Хувьсагч"
-        description="Загварын хоосон зайд холбогдох утгууд болон гэрээнд хэвлэгдэх үгс. Өөрчлөлт зөвхөн шинэ гэрээнд нөлөөлнө."
+        description="Загварын хоосон зайд холбогдох утгууд: хувьсагч гэрээ бүрийн мэдээллээс уншигдана, тогтмол утга бүх гэрээнд ижил. Өөрчлөлт зөвхөн шинэ гэрээнд нөлөөлнө."
         action={
-          !words && (
+          !fixed ? (
             <VariableFormDialog
+              create="field"
               onSubmit={actions.create}
               trigger={
                 <Button>
@@ -87,93 +71,100 @@ function VariablesPage() {
                 </Button>
               }
             />
+          ) : (
+            category === 'text' && (
+              <VariableFormDialog
+                create="custom"
+                onSubmit={actions.create}
+                trigger={
+                  <Button>
+                    <PlusIcon />
+                    Тогтмол текст нэмэх
+                  </Button>
+                }
+              />
+            )
           )
         }
       />
       <Tabs
         className="shrink-0"
-        value={words ? 'words' : 'variables'}
+        value={fixed ? 'static' : 'variables'}
         onValueChange={(v) =>
-          navigate({ search: { tab: v === 'words' ? 'words' : undefined } })
+          navigate({ search: { tab: v === 'static' ? 'static' : undefined } })
         }
       >
         <TabsList>
           <TabsTrigger value="variables">Хувьсагч</TabsTrigger>
-          <TabsTrigger value="words">Үгс</TabsTrigger>
+          <TabsTrigger value="static">Тогтмол утга</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {words ? (
+      {fixed ? (
         <Card className={`gap-0 py-0 ${scrollArea}`}>
-          <div className="shrink-0 border-b p-4">
-            <Tabs
-              value={search.category ?? 'bank'}
-              onValueChange={(v) =>
-                setFilter({ category: WordCategorySchema.parse(v) })
+          {category === 'text' ? (
+            <VariableListPanel
+              filters={{
+                kinds: ['custom'],
+                page: search.page,
+                group: search.group,
+                q: search.q,
+              }}
+              tabs={
+                <StaticValueTabs
+                  value={category}
+                  onChange={(c) =>
+                    navigate({ search: { tab: 'static', category: c } })
+                  }
+                />
               }
-            >
-              <TabsList className="w-full sm:w-fit">
-                {WordCategorySchema.options.map((c) => (
-                  <TabsTrigger key={c} value={c}>
-                    {wordCategoryLabel[c]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-          <WordListTable category={search.category ?? 'bank'} />
+              onFilter={setFilter}
+              onPage={onPage}
+            />
+          ) : (
+            <>
+              <div className="shrink-0 border-b p-4">
+                <StaticValueTabs
+                  value={category}
+                  onChange={(c) =>
+                    navigate({ search: { tab: 'static', category: c } })
+                  }
+                />
+              </div>
+              <WordListTable category={category} />
+            </>
+          )}
         </Card>
       ) : (
         <Card className={`gap-0 py-0 ${scrollArea}`}>
-          <div className="flex shrink-0 flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
-            <Tabs
-              value={search.view ?? 'all'}
-              onValueChange={(v) =>
-                setFilter({
-                  view: v === 'all' ? undefined : VariableViewSchema.parse(v),
-                })
-              }
-            >
-              <TabsList className="w-full sm:w-fit">
-                <TabsTrigger value="all">Бүгд</TabsTrigger>
-                <TabsTrigger value="system">Систем</TabsTrigger>
-                <TabsTrigger value="field">Талбар</TabsTrigger>
-                <TabsTrigger value="custom">Нэмэлт</TabsTrigger>
-                <TabsTrigger value="unused">Ашиглаагүй</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <SearchInput
-                value={search.q ?? ''}
-                onChange={(q) => setFilter({ q: q || undefined })}
-                placeholder="Нэр, утгаар хайх"
-              />
-              <FilterSelect
-                value={search.group}
-                onChange={(group) => setFilter({ group })}
-                allLabel="Бүх бүлэг"
-                options={(groups ?? []).map((g) => ({ value: g, label: g }))}
-              />
-            </div>
-          </div>
-          <VariableListTable
-            items={data?.items}
-            isPending={isPending}
-            error={error}
-            dimmed={isPlaceholderData}
-            onUpdate={actions.update}
-            onDelete={actions.remove}
+          <VariableListPanel
+            filters={{
+              kinds: viewKinds(view),
+              unused: view === 'unused',
+              page: search.page,
+              group: search.group,
+              q: search.q,
+            }}
+            tabs={
+              <Tabs
+                value={view}
+                onValueChange={(v) =>
+                  setFilter({
+                    view: v === 'all' ? undefined : VariableViewSchema.parse(v),
+                  })
+                }
+              >
+                <TabsList className="w-full sm:w-fit">
+                  <TabsTrigger value="all">Бүгд</TabsTrigger>
+                  <TabsTrigger value="system">Систем</TabsTrigger>
+                  <TabsTrigger value="field">Талбар</TabsTrigger>
+                  <TabsTrigger value="unused">Ашиглаагүй</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            }
+            onFilter={setFilter}
+            onPage={onPage}
           />
-          {data && data.total > 0 && (
-            <Pagination
-              page={search.page ?? 1}
-              size={PAGE_SIZE}
-              total={data.total}
-              onPage={(page) =>
-                navigate({ search: (prev) => ({ ...prev, page }) })
-              }
-            />
-          )}
         </Card>
       )}
     </div>
