@@ -76,8 +76,9 @@ export function VariableCombobox({
                   .map((v) => (
                     <CommandItem
                       key={v.key}
-                      // Searched by what admins read; the key only keeps it unique.
-                      value={`${v.label} ${v.hint} ${v.value_mn ?? ''} ${v.kind === 'field' ? describeField(catalog, v) : ''} ${v.key}`}
+                      // Searched by what admins read, a field's description only where it shows: the
+                      // fuzzy search finds stray letters in a long text. The key only keeps it unique.
+                      value={`${v.label} ${v.hint} ${v.value_mn ?? ''} ${v.kind === 'field' && !v.hint ? describeField(catalog, v) : ''} ${v.key}`}
                       onSelect={() => {
                         onChange(v.key);
                         setOpen(false);
