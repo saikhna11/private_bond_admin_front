@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteRouteImport } from './routes/_dashboard/route'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
+import { Route as DashboardBondsRouteRouteImport } from './routes/_dashboard/bonds/route'
 import { Route as DashboardClientsRouteRouteImport } from './routes/_dashboard/clients/route'
 import { Route as DashboardContractsRouteRouteImport } from './routes/_dashboard/contracts/route'
 import { Route as DashboardIssuersRouteRouteImport } from './routes/_dashboard/issuers/route'
@@ -23,6 +24,9 @@ import { Route as DashboardAdminsIndexRouteImport } from './routes/_dashboard/ad
 import { Route as DashboardBankAccountsRouteImport } from './routes/_dashboard/bank/accounts'
 import { Route as DashboardBankStatementRouteImport } from './routes/_dashboard/bank/statement'
 import { Route as DashboardBankTransfersRouteImport } from './routes/_dashboard/bank/transfers'
+import { Route as DashboardBondsIndexRouteImport } from './routes/_dashboard/bonds/index'
+import { Route as DashboardBondsBondIdRouteImport } from './routes/_dashboard/bonds/$bondId'
+import { Route as DashboardBondsNewRouteImport } from './routes/_dashboard/bonds/new'
 import { Route as DashboardBrokersIndexRouteImport } from './routes/_dashboard/brokers/index'
 import { Route as DashboardClientsIndexRouteImport } from './routes/_dashboard/clients/index'
 import { Route as DashboardClientsClientIdRouteImport } from './routes/_dashboard/clients/$clientId'
@@ -49,6 +53,11 @@ const PublicRouteRoute = PublicRouteRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBondsRouteRoute = DashboardBondsRouteRouteImport.update({
+  id: '/bonds',
+  path: '/bonds',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardClientsRouteRoute = DashboardClientsRouteRouteImport.update({
@@ -105,6 +114,21 @@ const DashboardBankTransfersRoute = DashboardBankTransfersRouteImport.update({
   id: '/bank/transfers',
   path: '/bank/transfers',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBondsIndexRoute = DashboardBondsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardBondsRouteRoute,
+} as any)
+const DashboardBondsBondIdRoute = DashboardBondsBondIdRouteImport.update({
+  id: '/$bondId',
+  path: '/$bondId',
+  getParentRoute: () => DashboardBondsRouteRoute,
+} as any)
+const DashboardBondsNewRoute = DashboardBondsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DashboardBondsRouteRoute,
 } as any)
 const DashboardBrokersIndexRoute = DashboardBrokersIndexRouteImport.update({
   id: '/brokers/',
@@ -183,6 +207,7 @@ const BrokerPublicLoginIndexRoute = BrokerPublicLoginIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
+  '/bonds': typeof DashboardBondsRouteRouteWithChildren
   '/clients': typeof DashboardClientsRouteRouteWithChildren
   '/contracts': typeof DashboardContractsRouteRouteWithChildren
   '/issuers': typeof DashboardIssuersRouteRouteWithChildren
@@ -191,12 +216,15 @@ export interface FileRoutesByFullPath {
   '/bank/accounts': typeof DashboardBankAccountsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
+  '/bonds/$bondId': typeof DashboardBondsBondIdRoute
+  '/bonds/new': typeof DashboardBondsNewRoute
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
   '/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/issuers/$issuerId': typeof DashboardIssuersIssuerIdRoute
   '/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/account/': typeof DashboardAccountIndexRoute
   '/admins/': typeof DashboardAdminsIndexRoute
+  '/bonds/': typeof DashboardBondsIndexRoute
   '/brokers/': typeof DashboardBrokersIndexRoute
   '/clients/': typeof DashboardClientsIndexRoute
   '/contracts/': typeof DashboardContractsIndexRoute
@@ -214,12 +242,15 @@ export interface FileRoutesByTo {
   '/bank/accounts': typeof DashboardBankAccountsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
+  '/bonds/$bondId': typeof DashboardBondsBondIdRoute
+  '/bonds/new': typeof DashboardBondsNewRoute
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
   '/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/issuers/$issuerId': typeof DashboardIssuersIssuerIdRoute
   '/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/account': typeof DashboardAccountIndexRoute
   '/admins': typeof DashboardAdminsIndexRoute
+  '/bonds': typeof DashboardBondsIndexRoute
   '/brokers': typeof DashboardBrokersIndexRoute
   '/clients': typeof DashboardClientsIndexRoute
   '/contracts': typeof DashboardContractsIndexRoute
@@ -234,6 +265,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dashboard': typeof DashboardRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_dashboard/bonds': typeof DashboardBondsRouteRouteWithChildren
   '/_dashboard/clients': typeof DashboardClientsRouteRouteWithChildren
   '/_dashboard/contracts': typeof DashboardContractsRouteRouteWithChildren
   '/_dashboard/issuers': typeof DashboardIssuersRouteRouteWithChildren
@@ -244,12 +276,15 @@ export interface FileRoutesById {
   '/_dashboard/bank/accounts': typeof DashboardBankAccountsRoute
   '/_dashboard/bank/statement': typeof DashboardBankStatementRoute
   '/_dashboard/bank/transfers': typeof DashboardBankTransfersRoute
+  '/_dashboard/bonds/$bondId': typeof DashboardBondsBondIdRoute
+  '/_dashboard/bonds/new': typeof DashboardBondsNewRoute
   '/_dashboard/clients/$clientId': typeof DashboardClientsClientIdRoute
   '/_dashboard/contracts/$contractId': typeof DashboardContractsContractIdRoute
   '/_dashboard/issuers/$issuerId': typeof DashboardIssuersIssuerIdRoute
   '/_dashboard/templates/$templateId': typeof DashboardTemplatesTemplateIdRoute
   '/_dashboard/account/': typeof DashboardAccountIndexRoute
   '/_dashboard/admins/': typeof DashboardAdminsIndexRoute
+  '/_dashboard/bonds/': typeof DashboardBondsIndexRoute
   '/_dashboard/brokers/': typeof DashboardBrokersIndexRoute
   '/_dashboard/clients/': typeof DashboardClientsIndexRoute
   '/_dashboard/contracts/': typeof DashboardContractsIndexRoute
@@ -265,6 +300,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bonds'
     | '/clients'
     | '/contracts'
     | '/issuers'
@@ -273,12 +309,15 @@ export interface FileRouteTypes {
     | '/bank/accounts'
     | '/bank/statement'
     | '/bank/transfers'
+    | '/bonds/$bondId'
+    | '/bonds/new'
     | '/clients/$clientId'
     | '/contracts/$contractId'
     | '/issuers/$issuerId'
     | '/templates/$templateId'
     | '/account/'
     | '/admins/'
+    | '/bonds/'
     | '/brokers/'
     | '/clients/'
     | '/contracts/'
@@ -296,12 +335,15 @@ export interface FileRouteTypes {
     | '/bank/accounts'
     | '/bank/statement'
     | '/bank/transfers'
+    | '/bonds/$bondId'
+    | '/bonds/new'
     | '/clients/$clientId'
     | '/contracts/$contractId'
     | '/issuers/$issuerId'
     | '/templates/$templateId'
     | '/account'
     | '/admins'
+    | '/bonds'
     | '/brokers'
     | '/clients'
     | '/contracts'
@@ -315,6 +357,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_dashboard'
     | '/_public'
+    | '/_dashboard/bonds'
     | '/_dashboard/clients'
     | '/_dashboard/contracts'
     | '/_dashboard/issuers'
@@ -325,12 +368,15 @@ export interface FileRouteTypes {
     | '/_dashboard/bank/accounts'
     | '/_dashboard/bank/statement'
     | '/_dashboard/bank/transfers'
+    | '/_dashboard/bonds/$bondId'
+    | '/_dashboard/bonds/new'
     | '/_dashboard/clients/$clientId'
     | '/_dashboard/contracts/$contractId'
     | '/_dashboard/issuers/$issuerId'
     | '/_dashboard/templates/$templateId'
     | '/_dashboard/account/'
     | '/_dashboard/admins/'
+    | '/_dashboard/bonds/'
     | '/_dashboard/brokers/'
     | '/_dashboard/clients/'
     | '/_dashboard/contracts/'
@@ -371,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/bonds': {
+      id: '/_dashboard/bonds'
+      path: '/bonds'
+      fullPath: '/bonds'
+      preLoaderRoute: typeof DashboardBondsRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/_dashboard/clients': {
@@ -449,6 +502,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/bank/transfers'
       preLoaderRoute: typeof DashboardBankTransfersRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/bonds/': {
+      id: '/_dashboard/bonds/'
+      path: '/'
+      fullPath: '/bonds/'
+      preLoaderRoute: typeof DashboardBondsIndexRouteImport
+      parentRoute: typeof DashboardBondsRouteRoute
+    }
+    '/_dashboard/bonds/$bondId': {
+      id: '/_dashboard/bonds/$bondId'
+      path: '/$bondId'
+      fullPath: '/bonds/$bondId'
+      preLoaderRoute: typeof DashboardBondsBondIdRouteImport
+      parentRoute: typeof DashboardBondsRouteRoute
+    }
+    '/_dashboard/bonds/new': {
+      id: '/_dashboard/bonds/new'
+      path: '/new'
+      fullPath: '/bonds/new'
+      preLoaderRoute: typeof DashboardBondsNewRouteImport
+      parentRoute: typeof DashboardBondsRouteRoute
     }
     '/_dashboard/brokers/': {
       id: '/_dashboard/brokers/'
@@ -551,6 +625,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardBondsRouteRouteChildren {
+  DashboardBondsBondIdRoute: typeof DashboardBondsBondIdRoute
+  DashboardBondsNewRoute: typeof DashboardBondsNewRoute
+  DashboardBondsIndexRoute: typeof DashboardBondsIndexRoute
+}
+
+const DashboardBondsRouteRouteChildren: DashboardBondsRouteRouteChildren = {
+  DashboardBondsBondIdRoute: DashboardBondsBondIdRoute,
+  DashboardBondsNewRoute: DashboardBondsNewRoute,
+  DashboardBondsIndexRoute: DashboardBondsIndexRoute,
+}
+
+const DashboardBondsRouteRouteWithChildren =
+  DashboardBondsRouteRoute._addFileChildren(DashboardBondsRouteRouteChildren)
+
 interface DashboardClientsRouteRouteChildren {
   DashboardClientsClientIdRoute: typeof DashboardClientsClientIdRoute
   DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
@@ -614,6 +703,7 @@ const DashboardTemplatesRouteRouteWithChildren =
   )
 
 interface DashboardRouteRouteChildren {
+  DashboardBondsRouteRoute: typeof DashboardBondsRouteRouteWithChildren
   DashboardClientsRouteRoute: typeof DashboardClientsRouteRouteWithChildren
   DashboardContractsRouteRoute: typeof DashboardContractsRouteRouteWithChildren
   DashboardIssuersRouteRoute: typeof DashboardIssuersRouteRouteWithChildren
@@ -629,6 +719,7 @@ interface DashboardRouteRouteChildren {
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardBondsRouteRoute: DashboardBondsRouteRouteWithChildren,
   DashboardClientsRouteRoute: DashboardClientsRouteRouteWithChildren,
   DashboardContractsRouteRoute: DashboardContractsRouteRouteWithChildren,
   DashboardIssuersRouteRoute: DashboardIssuersRouteRouteWithChildren,

@@ -23,3 +23,6 @@ export function saveBlob(blob: Blob, name: string) {
 
 /** The largest .docx the API takes. */
 export const MAX_TEMPLATE_BYTES = 5 * 1024 * 1024;
+
+/** The largest file a bond takes, a prospectus file or its cover. */
+export const MAX_BOND_FILE_BYTES = 20 * 1024 * 1024;

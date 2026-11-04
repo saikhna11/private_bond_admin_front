@@ -1,0 +1,94 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { ArrowLeftIcon, Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
+import { BondFormFields } from '@/components/bond/bond-form-fields';
+import { RateOptionMatrix } from '@/components/bond/rate-option-matrix';
+import {
+  type BondFormValues,
+  bondBody,
+  bondFieldNames,
+  rateOptionBodies,
+  useBondForm,
+} from '@/components/bond/use-bond-form';
+import { ApiErrorAlert } from '@/components/common/api-error-alert';
+import { PageTitle } from '@/components/common/page-title';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { FieldLegend, FieldSet } from '@/components/ui/field';
+import { type ApiError, toApiError } from '@/lib/fetcher';
+import { applyFieldErrors } from '@/lib/form-errors';
+import { showToast } from '@/lib/utils';
+import { bondKeys } from '@/queries/bond/options';
+import { createBond } from '@/queries/bond/query';
+
+export const Route = createFileRoute('/_dashboard/bonds/new')({
+  component: NewBondPage,
+  staticData: { crumb: 'Шинэ бонд' },
+});
+
+function NewBondPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const form = useBondForm();
+  const [error, setError] = useState<ApiError | null>(null);
+
+  async function submit(v: BondFormValues) {
+    setError(null);
+    try {
+      const d = await createBond({
+        ...bondBody(v),
+        rate_options: rateOptionBodies(v),
+      });
+      showToast('success', 'Бонд бүртгэгдлээ');
+      await queryClient.invalidateQueries({ queryKey: bondKeys.all });
+      await navigate({ to: '/bonds/$bondId', params: { bondId: d.id } });
+    } catch (err) {
+      const e = toApiError(err);
+      if (!applyFieldErrors(e, form.setError, bondFieldNames)) setError(e);
+    }
+  }
+
+  return (
+    <>
+      <Link
+        to="/bonds"
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeftIcon className="size-4" />
+        Бонд
+      </Link>
+      <PageTitle
+        title="Бонд бүртгэх"
+        description="Бонд гаргагч түр нэг байна: бонд гаргагчийн бүртгэл гарахад сонгодог болно."
+      />
+      <Card>
+        <CardContent>
+          <form
+            onSubmit={form.handleSubmit(submit)}
+            noValidate
+            className="flex flex-col gap-8"
+          >
+            <BondFormFields form={form} />
+            <FieldSet>
+              <FieldLegend>Хүүгийн нөхцөл</FieldLegend>
+              <RateOptionMatrix form={form} />
+            </FieldSet>
+            <ApiErrorAlert error={error} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" asChild>
+                <Link to="/bonds">Болих</Link>
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="animate-spin" />
+                )}
+                Бүртгэх
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </>
+  );
+}

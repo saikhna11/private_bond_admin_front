@@ -33,6 +33,7 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
       { title: 'Харилцагчид', to: '/clients', icon: UsersIcon },
       { title: 'Брокерууд', to: '/brokers', icon: BriefcaseIcon },
       { title: 'Бонд гаргагчид', to: '/issuers', icon: Building2Icon },
+      { title: 'Бонд', to: '/bonds', icon: LandmarkIcon },
       { title: 'Гэрээ', to: '/contracts', icon: FileSignatureIcon },
       { title: 'Гэрээний загвар', to: '/templates', icon: FileTextIcon },
       { title: 'Хувьсагч', to: '/variables', icon: BracesIcon },

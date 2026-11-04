@@ -1,0 +1,83 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
+import { type BondDetailType, interestMethodLabel } from '@/queries/bond/type';
+import { BondEditDialog } from './bond-edit-dialog';
+import { BondSalesStatusBadge } from './bond-sales-status-badge';
+import { BondStateActions } from './bond-state-actions';
+
+function Term({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="tabular truncate text-sm font-medium">{value}</dd>
+    </div>
+  );
+}
+
+/** A bond's name, sales status and terms, with its actions. */
+export function BondInfoCard({ b }: { b: BondDetailType }) {
+  const amount = (v: string) => formatAmount(v, b.currency);
+  return (
+    <Card className="py-0">
+      <CardContent className="space-y-6 p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-muted px-2 py-1 font-mono text-sm font-medium">
+                {b.code}
+              </span>
+              <h1 className="truncate text-2xl font-semibold tracking-tight">
+                {b.name}
+              </h1>
+              <BondSalesStatusBadge status={b.sales_status} />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Бүртгэсэн {formatDateTime(b.created_at)}
+              {b.updated_at && ` · засварласан ${formatDateTime(b.updated_at)}`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <BondStateActions b={b} />
+            <BondEditDialog b={b} />
+          </div>
+        </div>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+          <Term label="Нийт босгох дүн" value={amount(b.total_amount)} />
+          <Term
+            label="Хамгийн бага худалдан авалт"
+            value={amount(b.min_purchase)}
+          />
+          <Term label="Худалдан авах нэгж" value={amount(b.purchase_unit)} />
+          <Term
+            label="Нэг хөрөнгө оруулагчийн дээд дүн"
+            value={b.investor_cap ? amount(b.investor_cap) : 'Хязгааргүй'}
+          />
+          <Term
+            label="Борлуулалт"
+            value={`${formatDate(b.sale_start)} - ${b.sale_end ? formatDate(b.sale_end) : 'хугацаагүй'}`}
+          />
+          <Term
+            label="Хүү тооцох арга"
+            value={interestMethodLabel[b.interest_method]}
+          />
+          <Term label="Бонд гаргагчийн төлбөрийн цаг" value={b.issuer_cutoff} />
+          <Term
+            label="Батлан даалт, барьцаа"
+            value={b.has_guarantee ? 'Тийм' : 'Үгүй'}
+          />
+          <Term
+            label="Хугацаанаас өмнө гарах шимтгэл"
+            value={`${b.exit_fee_rate}%`}
+          />
+          <Term label="Алданги, хоногт" value={`${b.penalty_rate}%`} />
+        </dl>
+        {b.prospectus && (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Танилцуулга</p>
+            <p className="whitespace-pre-line text-sm">{b.prospectus}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
