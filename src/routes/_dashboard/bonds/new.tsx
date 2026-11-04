@@ -40,7 +40,7 @@ function NewBondPage() {
         ...bondBody(v),
         rate_options: rateOptionBodies(v),
       });
-      showToast('success', 'Бонд бүртгэгдлээ');
+      showToast('success', 'Бонд ноорог болж хадгалагдлаа');
       await queryClient.invalidateQueries({ queryKey: bondKeys.all });
       await navigate({ to: '/bonds/$bondId', params: { bondId: d.id } });
     } catch (err) {
@@ -60,7 +60,7 @@ function NewBondPage() {
       </Link>
       <PageTitle
         title="Бонд бүртгэх"
-        description="Бонд гаргагч түр нэг байна: бонд гаргагчийн бүртгэл гарахад сонгодог болно."
+        description="Бонд ноорог болж хадгалагдана: харилцагчид харагдахгүй. Нүүр зураг, танилцуулгын файлаа оруулж шалгаад нийтэлнэ."
       />
       <Card>
         <CardContent>

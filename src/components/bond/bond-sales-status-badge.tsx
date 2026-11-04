@@ -1,5 +1,6 @@
 import {
   CircleCheckIcon,
+  CircleDashedIcon,
   CircleOffIcon,
   CirclePauseIcon,
   ClockIcon,
@@ -11,6 +12,10 @@ const styles: Record<
   SalesStatus,
   { className: string; Icon: typeof CircleCheckIcon }
 > = {
+  draft: {
+    className: 'bg-warning/15 text-warning-foreground dark:text-warning',
+    Icon: CircleDashedIcon,
+  },
   upcoming: { className: 'bg-primary/10 text-primary', Icon: ClockIcon },
   selling: { className: 'bg-success/12 text-success', Icon: CircleCheckIcon },
   paused: {

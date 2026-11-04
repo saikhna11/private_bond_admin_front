@@ -46,6 +46,7 @@ export const frequencyMonths: Record<Frequency, number> = {
 };
 
 export const SalesStatusSchema = z.enum([
+  'draft',
   'upcoming',
   'selling',
   'paused',
@@ -54,13 +55,23 @@ export const SalesStatusSchema = z.enum([
 export type SalesStatus = z.infer<typeof SalesStatusSchema>;
 
 export const salesStatusLabel: Record<SalesStatus, string> = {
+  draft: 'Ноорог',
   upcoming: 'Удахгүй',
   selling: 'Захиалга авч буй',
   paused: 'Түр хаасан',
   closed: 'Хаагдсан',
 };
 
-export const ManualStateSchema = z.enum(['none', 'paused', 'closed']);
+/**
+ * Where staff have a bond: a draft customers never see, active (sold by its dates), paused,
+ * or closed for good.
+ */
+export const ManualStateSchema = z.enum([
+  'draft',
+  'active',
+  'paused',
+  'closed',
+]);
 export type ManualState = z.infer<typeof ManualStateSchema>;
 
 export const PURCHASE_UNITS = ['100000', '500000', '1000000'] as const;
