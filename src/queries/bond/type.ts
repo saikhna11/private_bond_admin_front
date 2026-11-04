@@ -89,8 +89,8 @@ export const MAX_PROSPECTUS_FILES = 5;
  */
 export const BondSchema = z.object({
   id: z.uuid(),
-  // The temporary issuer's id is all zeros but one, which z.uuid() refuses.
   bond_issuer_id: z.string(),
+  bond_issuer_name: z.string(),
   code: z.string(),
   name: z.string(),
   currency: CurrencySchema,
@@ -154,6 +154,7 @@ export interface RateOptionBody {
 
 /** What an admin writes of a bond; left-out cap and last day of sales mean none. */
 export interface BondBody {
+  bond_issuer_id: string;
   code: string;
   name: string;
   currency: Currency;

@@ -13,7 +13,7 @@ import { formatAmount, formatDate } from '@/lib/format';
 import type { BondType } from '@/queries/bond/type';
 import { BondSalesStatusBadge } from './bond-sales-status-badge';
 
-const COLS = 6;
+const COLS = 7;
 
 /** The bonds of one page; a row opens the bond. */
 export function BondListTable({
@@ -34,6 +34,7 @@ export function BondListTable({
         <TableRow className="bg-muted/40 hover:bg-muted/40">
           <TableHead className="pl-4">Код</TableHead>
           <TableHead>Нэр</TableHead>
+          <TableHead>Бонд гаргагч</TableHead>
           <TableHead className="text-right">Нийт дүн</TableHead>
           <TableHead>Борлуулалт</TableHead>
           <TableHead>Төлөв</TableHead>
@@ -71,6 +72,11 @@ export function BondListTable({
               </TableCell>
               <TableCell>
                 <p className="max-w-64 truncate font-medium">{b.name}</p>
+              </TableCell>
+              <TableCell>
+                <p className="max-w-56 truncate text-muted-foreground">
+                  {b.bond_issuer_name}
+                </p>
               </TableCell>
               <TableCell className="tabular text-right">
                 {formatAmount(b.total_amount, b.currency)}

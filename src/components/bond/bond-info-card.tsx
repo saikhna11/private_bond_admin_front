@@ -19,7 +19,7 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
   const amount = (v: string) => formatAmount(v, b.currency);
   return (
     <Card className="py-0">
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="@container space-y-6 p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -32,7 +32,7 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
               <BondSalesStatusBadge status={b.sales_status} />
             </div>
             <p className="text-sm text-muted-foreground">
-              Бүртгэсэн {formatDateTime(b.created_at)}
+              {b.bond_issuer_name} · бүртгэсэн {formatDateTime(b.created_at)}
               {b.updated_at && ` · засварласан ${formatDateTime(b.updated_at)}`}
             </p>
           </div>
@@ -41,7 +41,7 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
             <BondEditDialog b={b} />
           </div>
         </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
           <Term label="Нийт босгох дүн" value={amount(b.total_amount)} />
           <Term
             label="Хамгийн бага худалдан авалт"

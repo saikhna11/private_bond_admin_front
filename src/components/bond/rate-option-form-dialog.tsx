@@ -28,12 +28,14 @@ import {
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
 import {
+  type Frequency,
   FrequencySchema,
   frequencyLabel,
   type RateOptionBody,
   type RateOptionType,
 } from '@/queries/bond/type';
-import { rateOptionSchema } from './rate-option-rules';
+import { rateOptionSchema, snapTerm } from './rate-option-rules';
+import { TermSelect } from './term-select';
 
 type Values = z.infer<typeof rateOptionSchema>;
 
@@ -60,6 +62,16 @@ export function RateOptionFormDialog({
     defaultValues: defaults(),
   });
   const { errors, isSubmitting } = form.formState;
+  const frequency = form.watch('interest_frequency');
+
+  /** Moves the terms onto the ones frequency takes, keeping the range in order. */
+  function setFrequency(f: Frequency) {
+    const min = snapTerm(form.getValues('term_min_months'), f);
+    const max = Math.max(snapTerm(form.getValues('term_max_months'), f), min);
+    form.setValue('interest_frequency', f);
+    form.setValue('term_min_months', min);
+    form.setValue('term_max_months', max);
+  }
 
   async function submit(v: Values) {
     setError(null);
@@ -103,64 +115,77 @@ export function RateOptionFormDialog({
               {option ? 'Нөхцөл засах' : 'Хүүгийн нөхцөл нэмэх'}
             </DialogTitle>
             <DialogDescription>
-              Хугацаа нь давтамжид хуваагдана; ижил давтамжтай нөхцлүүдийн муж
-              давхцахгүй. Өөрчлөлт зөвхөн шинэ худалдан авалтад үйлчилнэ.
+              Эхлээд давтамжаа сонгоно: хугацаа нь давтамжийн үржвэр сар байна.
+              Ижил давтамжтай нөхцлүүдийн муж давхцахгүй. Өөрчлөлт зөвхөн шинэ
+              худалдан авалтад үйлчилнэ.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="interest_frequency" label="Хүү төлөх давтамж">
+              <Select
+                value={frequency}
+                onValueChange={(v) => setFrequency(v as Frequency)}
+              >
+                <SelectTrigger id="interest_frequency" className="h-10! w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FrequencySchema.options.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {frequencyLabel[f]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 id="term_min_months"
-                label="Доод хугацаа (сар)"
+                label="Доод хугацаа"
                 error={errors.term_min_months?.message}
               >
-                <Input
-                  id="term_min_months"
-                  type="number"
-                  min={1}
-                  className="tabular h-10"
-                  aria-invalid={!!errors.term_min_months}
-                  {...form.register('term_min_months', { valueAsNumber: true })}
+                <Controller
+                  control={form.control}
+                  name="term_min_months"
+                  render={({ field }) => (
+                    <TermSelect
+                      id="term_min_months"
+                      label="Доод хугацаа"
+                      frequency={frequency}
+                      value={field.value}
+                      invalid={!!errors.term_min_months}
+                      onChange={(t) => {
+                        field.onChange(t);
+                        if (form.getValues('term_max_months') < t) {
+                          form.setValue('term_max_months', t);
+                        }
+                      }}
+                    />
+                  )}
                 />
               </FormField>
               <FormField
                 id="term_max_months"
-                label="Дээд хугацаа (сар)"
+                label="Дээд хугацаа"
                 error={errors.term_max_months?.message}
               >
-                <Input
-                  id="term_max_months"
-                  type="number"
-                  min={1}
-                  className="tabular h-10"
-                  aria-invalid={!!errors.term_max_months}
-                  {...form.register('term_max_months', { valueAsNumber: true })}
+                <Controller
+                  control={form.control}
+                  name="term_max_months"
+                  render={({ field }) => (
+                    <TermSelect
+                      id="term_max_months"
+                      label="Дээд хугацаа"
+                      frequency={frequency}
+                      from={form.watch('term_min_months')}
+                      value={field.value}
+                      invalid={!!errors.term_max_months}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </FormField>
             </div>
-            <FormField id="interest_frequency" label="Хүү төлөх давтамж">
-              <Controller
-                control={form.control}
-                name="interest_frequency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id="interest_frequency"
-                      className="h-10! w-full"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FrequencySchema.options.map((f) => (
-                        <SelectItem key={f} value={f}>
-                          {frequencyLabel[f]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FormField>
             <FormField
               id="annual_rate"
               label="Жилийн хүү (%)"

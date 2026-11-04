@@ -58,74 +58,76 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-      <Card>
-        <CardHeader>
-          <CardTitle>Нүүр зураг</CardTitle>
-          <CardDescription>
-            PNG эсвэл JPEG, шинэ нь хуучныг солино
-          </CardDescription>
-          <CardAction className="flex gap-1">
-            {cover && remove(cover, 'Нүүр зургийг')}
-            <BondFileUploadButton
-              bondId={b.id}
-              kind="cover"
-              label={cover ? 'Солих' : 'Оруулах'}
-            />
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <BondCoverPreview bondId={b.id} cover={cover} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Танилцуулгын файл</CardTitle>
-          <CardDescription>
-            PDF, PNG, JPEG; {prospectus.length}/{MAX_PROSPECTUS_FILES}
-          </CardDescription>
-          <CardAction>
-            <BondFileUploadButton
-              bondId={b.id}
-              kind="prospectus"
-              label="Файл нэмэх"
-              disabled={prospectus.length >= MAX_PROSPECTUS_FILES}
-            />
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {prospectus.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Танилцуулгын файл алга.
-            </p>
-          ) : (
-            <ul className="divide-y rounded-lg border">
-              {prospectus.map((f) => (
-                <li key={f.id} className="flex items-center gap-3 px-3 py-2">
-                  <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {f.file_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {sizeLabel(f.size_bytes)} · {formatDate(f.created_at)}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Татах"
-                    onClick={() => void download(f)}
-                  >
-                    <DownloadIcon />
-                  </Button>
-                  {remove(f, 'Файлыг')}
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+    <div className="@container">
+      <div className="grid gap-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Нүүр зураг</CardTitle>
+            <CardDescription>
+              PNG эсвэл JPEG, шинэ нь хуучныг солино
+            </CardDescription>
+            <CardAction className="flex gap-1">
+              {cover && remove(cover, 'Нүүр зургийг')}
+              <BondFileUploadButton
+                bondId={b.id}
+                kind="cover"
+                label={cover ? 'Солих' : 'Оруулах'}
+              />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <BondCoverPreview bondId={b.id} cover={cover} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Танилцуулгын файл</CardTitle>
+            <CardDescription>
+              PDF, PNG, JPEG; {prospectus.length}/{MAX_PROSPECTUS_FILES}
+            </CardDescription>
+            <CardAction>
+              <BondFileUploadButton
+                bondId={b.id}
+                kind="prospectus"
+                label="Файл нэмэх"
+                disabled={prospectus.length >= MAX_PROSPECTUS_FILES}
+              />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {prospectus.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Танилцуулгын файл алга.
+              </p>
+            ) : (
+              <ul className="divide-y rounded-lg border">
+                {prospectus.map((f) => (
+                  <li key={f.id} className="flex items-center gap-3 px-3 py-2">
+                    <FileIcon className="size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {f.file_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {sizeLabel(f.size_bytes)} · {formatDate(f.created_at)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Татах"
+                      onClick={() => void download(f)}
+                    >
+                      <DownloadIcon />
+                    </Button>
+                    {remove(f, 'Файлыг')}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

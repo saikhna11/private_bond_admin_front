@@ -62,7 +62,7 @@ function NewBondPage() {
         title="Бонд бүртгэх"
         description="Бонд ноорог болж хадгалагдана: харилцагчид харагдахгүй. Нүүр зураг, танилцуулгын файлаа оруулж шалгаад нийтэлнэ."
       />
-      <Card>
+      <Card className="w-full max-w-4xl">
         <CardContent>
           <form
             onSubmit={form.handleSubmit(submit)}

@@ -23,6 +23,7 @@ const percent = z
 
 const schema = z
   .object({
+    bond_issuer_id: z.string().min(1, 'Бонд гаргагч сонгоно уу'),
     code: z
       .string()
       .trim()
@@ -99,6 +100,7 @@ export type BondFormValues = z.infer<typeof schema>;
 
 /** The form's names of the API's body fields, for its field errors. */
 export const bondFieldNames = {
+  bond_issuer_id: 'bond_issuer_id',
   code: 'code',
   name: 'name',
   total_amount: 'total_amount',
@@ -121,6 +123,7 @@ function digits(s: string | undefined): string {
 /** The form of a new bond, with one empty rate option, or of bond b's terms. */
 export function bondDefaults(b?: BondDetailType): BondFormValues {
   return {
+    bond_issuer_id: b?.bond_issuer_id ?? '',
     code: b?.code ?? '',
     name: b?.name ?? '',
     currency: b?.currency ?? 'MNT',
@@ -153,6 +156,7 @@ export function emptyRateOption(): BondFormValues['rate_options'][number] {
 /** The bond's body; an empty cap or last day of sales is left out, meaning none. */
 export function bondBody(v: BondFormValues): BondBody {
   return {
+    bond_issuer_id: v.bond_issuer_id,
     code: v.code,
     name: v.name,
     currency: v.currency,

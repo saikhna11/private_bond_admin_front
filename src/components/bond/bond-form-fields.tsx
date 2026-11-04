@@ -19,9 +19,21 @@ import {
   PURCHASE_UNITS,
 } from '@/queries/bond/type';
 import { AmountInput } from './amount-input';
+import { BondIssuerPicker } from './bond-issuer-picker';
 import type { BondFormValues } from './use-bond-form';
 
-/** A bond's terms (bond.md 3.2): what it is, its amounts, its dates and the rest. */
+/** Two columns once the form is 36rem wide, whatever the screen: a page or a dialog. */
+const ROW = 'grid gap-4 @xl/field-group:grid-cols-2';
+
+/** "= 4 нэгж" for an amount that is a whole number of units, else nothing. */
+function unitsOf(amount: string, unit: string): string | undefined {
+  if (!/^\d+$/.test(amount) || amount === '0') return undefined;
+  const a = BigInt(amount);
+  const u = BigInt(unit);
+  return a % u === 0n ? `= ${(a / u).toLocaleString('en-US')} нэгж` : undefined;
+}
+
+/** A bond's terms (bond.md 3.2): its issuer, what it is, its amounts, its dates and the rest. */
 export function BondFormFields({
   form,
 }: {
@@ -29,44 +41,67 @@ export function BondFormFields({
 }) {
   const { errors } = form.formState;
   const currency = form.watch('currency');
+  const unit = form.watch('purchase_unit');
   const amountField = (
     name: 'total_amount' | 'min_purchase' | 'investor_cap',
     label: string,
     hint?: string,
-  ) => (
-    <FormField
-      id={name}
-      label={label}
-      error={errors[name]?.message}
-      hint={hint}
-      optional={name === 'investor_cap'}
-    >
-      <Controller
-        control={form.control}
-        name={name}
-        render={({ field }) => (
-          <AmountInput
-            id={name}
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            aria-invalid={!!errors[name]}
-          />
-        )}
-      />
-    </FormField>
-  );
+  ) => {
+    const units = unitsOf(form.watch(name), unit);
+    return (
+      <FormField
+        id={name}
+        label={label}
+        error={errors[name]?.message}
+        hint={units && hint ? `${units} · ${hint}` : (units ?? hint)}
+        optional={name === 'investor_cap'}
+      >
+        <Controller
+          control={form.control}
+          name={name}
+          render={({ field }) => (
+            <AmountInput
+              id={name}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              aria-invalid={!!errors[name]}
+            />
+          )}
+        />
+      </FormField>
+    );
+  };
 
   return (
     <FieldGroup className="gap-8">
       <FieldSet>
         <FieldLegend>Бонд</FieldLegend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          id="bond_issuer_id"
+          label="Бонд гаргагч"
+          error={errors.bond_issuer_id?.message}
+        >
+          <Controller
+            control={form.control}
+            name="bond_issuer_id"
+            render={({ field }) => (
+              <BondIssuerPicker
+                id="bond_issuer_id"
+                value={field.value}
+                onChange={field.onChange}
+                currency={currency}
+                invalid={!!errors.bond_issuer_id}
+              />
+            )}
+          />
+        </FormField>
+        <div className={ROW}>
           <FormField
             id="code"
             label="Код"
             error={errors.code?.message}
-            hint="Гэрээний дугаарт орно: MFG-26/001. Гэрээтэй болсны дараа өөрчлөгдөхгүй."
+            hint="Гэрээний дугаарт орно: MFG-26/001"
           >
             <Input
               id="code"
@@ -132,16 +167,11 @@ export function BondFormFields({
 
       <FieldSet>
         <FieldLegend>Дүн ({currency})</FieldLegend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {amountField(
-            'total_amount',
-            'Нийт босгох дүн',
-            'Нэгжийн үржвэр, хамгийн бага дүнгээс багагүй',
-          )}
+        <div className={ROW}>
           <FormField
             id="purchase_unit"
             label="Худалдан авах нэгж"
-            hint="Дүн энэ тооны үржвэр байна"
+            hint="Нэг нэгжийн үнэ: худалдан авалт бүхэл нэгжээр. 500,000 бол 1,000,000, 1,500,000 болно, 1,250,000 болохгүй."
           >
             <Controller
               control={form.control}
@@ -164,19 +194,24 @@ export function BondFormFields({
           </FormField>
           {amountField('min_purchase', 'Хамгийн бага худалдан авалт')}
           {amountField(
+            'total_amount',
+            'Нийт босгох дүн',
+            'хамгийн бага дүнгээс багагүй',
+          )}
+          {amountField(
             'investor_cap',
             'Нэг хөрөнгө оруулагчийн дээд дүн',
-            'Хоосон бол хязгааргүй',
+            'хоосон бол хязгааргүй',
           )}
         </div>
       </FieldSet>
 
       <FieldSet>
-        <FieldLegend>Хугацаа</FieldLegend>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <FieldLegend>Борлуулалт</FieldLegend>
+        <div className={ROW}>
           <FormField
             id="sale_start"
-            label="Борлуулалт эхлэх"
+            label="Эхлэх огноо"
             error={errors.sale_start?.message}
           >
             <Input
@@ -189,7 +224,7 @@ export function BondFormFields({
           </FormField>
           <FormField
             id="sale_end"
-            label="Борлуулалт дуусах"
+            label="Дуусах огноо"
             optional
             error={errors.sale_end?.message}
             hint="Хоосон бол дүүрэх эсвэл хаах хүртэл"
@@ -202,11 +237,17 @@ export function BondFormFields({
               {...form.register('sale_end')}
             />
           </FormField>
+        </div>
+      </FieldSet>
+
+      <FieldSet>
+        <FieldLegend>Нэмэлт нөхцөл</FieldLegend>
+        <div className={ROW}>
           <FormField
             id="issuer_cutoff"
             label="Бонд гаргагчийн төлбөрийн цаг"
             error={errors.issuer_cutoff?.message}
-            hint="Төлөх өдрөө энэ цагаас өмнө"
+            hint="Төлөх өдрөө энэ цагаас өмнө шилжүүлнэ"
           >
             <Input
               id="issuer_cutoff"
@@ -216,12 +257,6 @@ export function BondFormFields({
               {...form.register('issuer_cutoff')}
             />
           </FormField>
-        </div>
-      </FieldSet>
-
-      <FieldSet>
-        <FieldLegend>Нэмэлт нөхцөл</FieldLegend>
-        <div className="grid gap-4 sm:grid-cols-3">
           <FormField
             id="exit_fee_rate"
             label="Хугацаанаас өмнө гарах шимтгэл (%)"
@@ -254,7 +289,7 @@ export function BondFormFields({
             render={({ field }) => (
               <label
                 htmlFor="has_guarantee"
-                className="flex h-10 cursor-pointer items-center gap-2 self-end whitespace-nowrap rounded-md border border-input px-2.5 text-sm shadow-xs transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 dark:bg-input/30"
+                className="flex h-10 cursor-pointer items-center gap-2 self-end rounded-md border border-input px-2.5 text-sm shadow-xs transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 dark:bg-input/30"
               >
                 <Checkbox
                   id="has_guarantee"
