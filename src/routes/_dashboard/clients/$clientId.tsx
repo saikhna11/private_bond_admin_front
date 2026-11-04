@@ -2,16 +2,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
+  BadgeCheckIcon,
   BanIcon,
   CircleCheckIcon,
   CircleXIcon,
   InfoIcon,
   LockOpenIcon,
   PercentIcon,
+  SendIcon,
+  ShieldAlertIcon,
   Trash2Icon,
   TriangleAlertIcon,
 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import { TransferDialog } from '@/components/bank/transfer-dialog';
 import { RejectDialog } from '@/components/client/reject-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Pagination } from '@/components/common/list-parts';
@@ -358,7 +362,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
                 </>
               )}
             </dl>
-            {individual && <BankAccount c={c} />}
+            {(individual || c.type === 'organization') && <BankAccount c={c} />}
           </CardContent>
         </Card>
 
@@ -401,16 +405,18 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
   );
 }
 
-/** An individual's account for bond payments. */
+/** The account bond payments go to: an individual's, or an organization's in its name. */
 function BankAccount({ c }: { c: ClientDetailType }) {
   const b = c.bank_account;
-  const holder = b ? `${b.holder_last_name} ${b.holder_first_name}` : '';
-  const owner = [c.last_name, c.first_name].filter(Boolean).join(' ');
+  const organization = c.type === 'organization';
+  const holder = b?.holder_account_name ?? '';
+  const owner = organization
+    ? (c.name ?? '')
+    : [c.last_name, c.first_name].filter(Boolean).join(' ');
   // Worth a look in review: payments to someone else's account.
-  const differs =
-    !!b &&
-    (b.holder_last_name.toLowerCase() !== (c.last_name ?? '').toLowerCase() ||
-      b.holder_first_name.toLowerCase() !== (c.first_name ?? '').toLowerCase());
+  const differs = !!b && holder.trim().toLowerCase() !== owner.toLowerCase();
+  const verified = b?.status === 'verified';
+  const reason = b?.status ? verificationError[b.status] : undefined;
 
   return (
     <>
@@ -418,26 +424,96 @@ function BankAccount({ c }: { c: ClientDetailType }) {
         Банкны данс
       </h3>
       {b ? (
-        <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-          <Info label="Банк" value={b.bank_name} />
-          <Info label="Дансны дугаар" value={b.account_number} mono />
-          <Info label="IBAN" value={b.iban.toUpperCase()} mono />
-          <div className="space-y-1">
-            <Info label="Эзэмшигч" value={holder} />
-            {differs && (
-              <p className="flex items-center gap-1 text-xs text-warning-foreground dark:text-warning">
-                <TriangleAlertIcon className="size-3.5" />
-                Харилцагчийн нэртэй ({owner}) таарахгүй байна
-              </p>
-            )}
-          </div>
-        </dl>
+        <>
+          <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+            <Info label="Банк" value={b.bank_name} />
+            <Info label="Дансны дугаар" value={b.account_number} mono />
+            <Info label="IBAN" value={b.iban.toUpperCase()} mono />
+            <div className="space-y-1">
+              <Info label="Эзэмшигч" value={holder} />
+              {differs && (
+                <p className="flex items-center gap-1 text-xs text-warning-foreground dark:text-warning">
+                  <TriangleAlertIcon className="size-3.5" />
+                  Харилцагчийн нэртэй ({owner}) таарахгүй байна
+                </p>
+              )}
+            </div>
+          </dl>
+
+          {organization ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Байгууллагын дансыг банкаар шалгах, шилжүүлэг илгээх боломж
+              удахгүй нэмэгдэнэ.
+            </p>
+          ) : (
+            <>
+              <div
+                className={
+                  verified
+                    ? 'mt-4 flex items-start gap-3 rounded-xl border border-success/30 bg-success/5 p-4'
+                    : 'mt-4 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/5 p-4'
+                }
+              >
+                <span
+                  className={
+                    verified
+                      ? 'flex size-9 shrink-0 items-center justify-center rounded-lg bg-success/12 text-success'
+                      : 'flex size-9 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-foreground dark:text-warning'
+                  }
+                >
+                  {verified ? (
+                    <BadgeCheckIcon className="size-4.5" />
+                  ) : (
+                    <ShieldAlertIcon className="size-4.5" />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-sm font-medium">
+                    {verified
+                      ? 'Данс банкны бүртгэлээр баталгаажсан'
+                      : 'Данс баталгаажаагүй'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {verified
+                      ? 'Шилжүүлэг хийх боломжтой.'
+                      : reason
+                        ? reason
+                        : 'Эхний шилжүүлгийн өмнө банкны CAM-аар автоматаар шалгана.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <TransferDialog
+                  initialUserId={c.id}
+                  trigger={
+                    <Button>
+                      <SendIcon />
+                      Шилжүүлэг илгээх
+                    </Button>
+                  }
+                />
+                <Button variant="outline" asChild>
+                  <Link to="/bank/transfers" search={{ user_id: c.id }}>
+                    Шилжүүлгүүд
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )}
+        </>
       ) : (
         <p className="text-sm text-muted-foreground">Банкны данс оруулаагүй.</p>
       )}
     </>
   );
 }
+
+/** Why the bank's last check failed, in the reviewer's words. */
+const verificationError: Record<string, string> = {
+  mismatch: 'Банкны бүртгэл дэх нэр дансны эзэмшигчийн нэртэй таарахгүй байна.',
+  not_found: 'Банкнаас энэ данс олдсонгүй.',
+};
 
 const taxLabels: Record<TaxExemptStatus, { label: string; className: string }> =
   {

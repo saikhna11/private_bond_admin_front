@@ -48,6 +48,14 @@ const createSchema = z.object({
   password: passwordSchema,
 });
 
+/** A bond issuer's member: the phone may be left out. */
+const createOptionalPhoneSchema = createSchema.extend({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^(\d{8})?$/, 'Утасны дугаар 8 оронтой байна'),
+});
+
 const editSchema = z.object({
   ...base,
   email: z.string(),
@@ -60,6 +68,8 @@ export function StaffFormDialog({
   mode,
   noun,
   withPosition,
+  phoneOptional,
+  description,
   initial,
   trigger,
   onSubmit,
@@ -68,6 +78,10 @@ export function StaffFormDialog({
   /** "брокер" or "админ". */
   noun: string;
   withPosition: boolean;
+  /** Lets the phone be left empty when creating (a bond issuer's member). */
+  phoneOptional?: boolean;
+  /** Replaces the create dialog's description. */
+  description?: string;
   initial?: Partial<StaffValues>;
   trigger: ReactNode;
   onSubmit: (values: StaffValues) => Promise<unknown>;
@@ -83,7 +97,13 @@ export function StaffFormDialog({
     password: mode === 'create' ? generatePassword() : '',
   });
   const form = useForm<StaffValues>({
-    resolver: zodResolver(mode === 'create' ? createSchema : editSchema),
+    resolver: zodResolver(
+      mode === 'edit'
+        ? editSchema
+        : phoneOptional
+          ? createOptionalPhoneSchema
+          : createSchema,
+    ),
     defaultValues: defaults(),
   });
   const { errors, isSubmitting } = form.formState;
@@ -145,7 +165,8 @@ export function StaffFormDialog({
             </DialogTitle>
             <DialogDescription>
               {mode === 'create'
-                ? 'Анхны нууц үгийг өөрөө дамжуулна. Систем имэйл илгээхгүй.'
+                ? (description ??
+                  'Анхны нууц үгийг өөрөө дамжуулна. Систем имэйл илгээхгүй.')
                 : 'Имэйл, утсыг өөрчлөх боломжгүй.'}
             </DialogDescription>
           </DialogHeader>
@@ -195,6 +216,7 @@ export function StaffFormDialog({
                 <FormField
                   id="phone"
                   label="Утас"
+                  optional={phoneOptional}
                   error={errors.phone?.message}
                 >
                   <Input

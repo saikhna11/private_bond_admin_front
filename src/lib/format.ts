@@ -32,6 +32,23 @@ export function formatDate(value?: string | null): string {
   return `${p.year}.${p.month}.${p.day}`;
 }
 
+/** A calendar day the API writes as YYYY-MM-DD, shown as 2026.10.22. */
+export function formatDay(value?: string | null): string {
+  return value ? value.replaceAll('-', '.') : '';
+}
+
+/** A decimal string from the API, shown as 1,234,567.89 MNT. */
+export function formatMoney(value: string | number, currency = 'MNT'): string {
+  const n = Number(value);
+  const shown = Number.isFinite(n)
+    ? new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(n)
+    : String(value);
+  return `${shown} ${currency}`;
+}
+
 /** "4:59" for a countdown in seconds. */
 export function formatSeconds(total: number): string {
   const s = Math.max(0, Math.ceil(total));

@@ -28,8 +28,11 @@ export const BankAccountSchema = z.object({
   bank_name: z.string(),
   account_number: z.string(),
   iban: z.string(),
-  holder_last_name: z.string(),
-  holder_first_name: z.string(),
+  /** The name the account is held in: the person's, or the organization's. */
+  holder_account_name: z.string(),
+  status: z
+    .enum(['unverified', 'verified', 'mismatch', 'not_found'])
+    .optional(),
 });
 
 export const TaxExemptStatusSchema = z.enum([
