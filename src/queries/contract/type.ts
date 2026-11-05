@@ -2,7 +2,8 @@ import z from 'zod';
 import { LanguageSchema, OwnershipTypeSchema } from '@/queries/template/type';
 
 export const ContractStatusSchema = z.enum([
-  'pending_signature',
+  'pending_customer_signature',
+  'pending_issuer_signature',
   'rendering',
   'signed',
   'cancelled',
@@ -12,7 +13,8 @@ export const ContractStatusSchema = z.enum([
 export type ContractStatus = z.infer<typeof ContractStatusSchema>;
 
 export const contractStatusLabel: Record<ContractStatus, string> = {
-  pending_signature: 'Гарын үсэг хүлээж буй',
+  pending_customer_signature: 'Харилцагчийн гарын үсэг хүлээж буй',
+  pending_issuer_signature: 'Бонд гаргагчийн гарын үсэг хүлээж буй',
   rendering: 'PDF бэлтгэж буй',
   signed: 'Байгуулсан',
   cancelled: 'Татгалзсан',
@@ -51,6 +53,7 @@ export const PartyTypeSchema = z.enum([
   'guardian',
   'minor',
   'organization',
+  'issuer',
 ]);
 export type PartyType = z.infer<typeof PartyTypeSchema>;
 
@@ -60,6 +63,7 @@ export const partyTypeLabel: Record<PartyType, string> = {
   guardian: 'Асран хамгаалагч',
   minor: 'Хүүхэд',
   organization: 'Байгууллага',
+  issuer: 'Бонд гаргагч',
 };
 
 export const InterestFrequencySchema = z.enum([

@@ -5,7 +5,8 @@ import { InfoItem } from './info-item';
 /** The date the contract's status turns on: its signing deadline, or when it ended. */
 export function ContractStatusDate({ c }: { c: AdminContractDetailType }) {
   switch (c.status) {
-    case 'pending_signature':
+    case 'pending_customer_signature':
+    case 'pending_issuer_signature':
       return (
         <InfoItem
           label="Гарын үсэг зурах хугацаа"

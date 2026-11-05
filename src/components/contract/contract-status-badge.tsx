@@ -16,7 +16,11 @@ const styles: Record<
   ContractStatus,
   { className: string; Icon: typeof CircleCheckIcon }
 > = {
-  pending_signature: {
+  pending_customer_signature: {
+    className: 'bg-warning/15 text-warning-foreground dark:text-warning',
+    Icon: ClockIcon,
+  },
+  pending_issuer_signature: {
     className: 'bg-warning/15 text-warning-foreground dark:text-warning',
     Icon: ClockIcon,
   },

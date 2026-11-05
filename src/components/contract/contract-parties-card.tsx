@@ -14,7 +14,12 @@ import {
 } from '@/queries/contract/type';
 import { PartySignatureState } from './party-signature-state';
 
+/** A party's name; the issuer's with its director, who signs for it. */
 function nameOf(p: ContractPartyType) {
+  const person = [p.last_name, p.first_name].filter(Boolean).join(' ');
+  if (p.type === 'issuer' && p.organization_name) {
+    return person ? `${p.organization_name} · ${person}` : p.organization_name;
+  }
   return (
     p.organization_name ||
     [p.last_name, p.first_name].filter(Boolean).join(' ') ||
