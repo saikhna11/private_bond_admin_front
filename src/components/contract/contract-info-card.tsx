@@ -6,7 +6,9 @@ import {
   paymentSourceLabel,
 } from '@/queries/contract/type';
 import { languageLabel, ownershipLabel } from '@/queries/template/type';
+import { ContractDeclineNote } from './contract-decline-note';
 import { ContractDocumentButton } from './contract-document-button';
+import { ContractRefundNote } from './contract-refund-note';
 import { ContractStatusBadge } from './contract-status-badge';
 import { ContractStatusDate } from './contract-status-date';
 import { ContractStatusNote } from './contract-status-note';
@@ -14,7 +16,8 @@ import { InfoItem } from './info-item';
 
 /**
  * The contract's number and status, its kind, template and the template's language, its
- * payment and dates, with its PDF download.
+ * payment and dates, with its PDF download; who declined it and why, and the refund a paid
+ * one that ended needs.
  */
 export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
   return (
@@ -59,6 +62,8 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
           <ContractStatusDate c={c} />
         </dl>
         <ContractStatusNote c={c} />
+        <ContractDeclineNote c={c} />
+        <ContractRefundNote c={c} />
       </CardContent>
     </Card>
   );

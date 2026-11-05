@@ -17,7 +17,7 @@ export function ContractDetail({ c }: { c: AdminContractDetailType }) {
         Гэрээ
       </Link>
       <ContractInfoCard c={c} />
-      <ContractPartiesCard parties={c.parties} />
+      <ContractPartiesCard parties={c.parties} underwriter={c.underwriter} />
       <ContractTermsCard c={c} />
     </>
   );

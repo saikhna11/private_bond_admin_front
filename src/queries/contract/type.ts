@@ -18,7 +18,7 @@ export const contractStatusLabel: Record<ContractStatus, string> = {
   rendering: 'PDF бэлтгэж буй',
   signed: 'Байгуулсан',
   cancelled: 'Татгалзсан',
-  expired: 'Хугацаа дууссан',
+  expired: 'Хугацаа хэтэрсэн',
   failed: 'Алдаатай',
 };
 
@@ -126,6 +126,8 @@ export const AdminContractDetailSchema = z.object({
   signature_deadline: z.string().optional(),
   cancel_reason: z.enum(['declined', 'expired']).optional(),
   cancelled_at: z.string().optional(),
+  /** Why the bond issuer's director declined it; absent when a client declined it. */
+  decline_reason: z.string().optional(),
   signed_at: z.string().optional(),
   created_at: z.string(),
   template: z.object({
@@ -137,6 +139,8 @@ export const AdminContractDetailSchema = z.object({
   parties: z.array(ContractPartySchema),
   render_attempts: z.number(),
   render_error: z.string().optional(),
+  /** The underwriter the contract names beside its parties; it does not sign. */
+  underwriter: z.string(),
 });
 export type AdminContractDetailType = z.infer<typeof AdminContractDetailSchema>;
 

@@ -4,13 +4,13 @@ import { InfoItem } from './info-item';
 
 /**
  * The date the contract's status turns on: its signing deadline, which a paid contract
- * outlives, or when it ended.
+ * outlives only while its clients sign, or when it ended.
  */
 export function ContractStatusDate({ c }: { c: AdminContractDetailType }) {
   switch (c.status) {
     case 'pending_customer_signature':
     case 'pending_issuer_signature':
-      if (c.paid_on) return null;
+      if (c.paid_on && c.status === 'pending_customer_signature') return null;
       return (
         <InfoItem
           label="Гарын үсэг зурах хугацаа"
@@ -34,7 +34,7 @@ export function ContractStatusDate({ c }: { c: AdminContractDetailType }) {
     case 'expired':
       return (
         <InfoItem
-          label="Хугацаа дууссан огноо"
+          label="Хугацаа хэтэрсэн огноо"
           value={formatDateTime(c.cancelled_at)}
         />
       );

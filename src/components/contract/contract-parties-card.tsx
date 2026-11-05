@@ -27,11 +27,16 @@ function nameOf(p: ContractPartyType) {
   );
 }
 
-/** The people and organizations the contract names, and where each stands on signing. */
+/**
+ * The people and organizations the contract names, and where each stands on signing, then
+ * the underwriter, which it names beside them and which does not sign.
+ */
 export function ContractPartiesCard({
   parties,
+  underwriter,
 }: {
   parties: ContractPartyType[];
+  underwriter: string;
 }) {
   return (
     <Card className="gap-0 py-0">
@@ -68,6 +73,20 @@ export function ContractPartiesCard({
               </TableCell>
             </TableRow>
           ))}
+          <TableRow>
+            <TableCell className="pl-4 text-muted-foreground">
+              Андеррайтер
+            </TableCell>
+            <TableCell className="font-medium">{underwriter}</TableCell>
+            <TableCell>-</TableCell>
+            <TableCell>-</TableCell>
+            <TableCell className="text-sm text-muted-foreground">
+              Зурахгүй
+            </TableCell>
+            <TableCell className="pr-4 text-sm text-muted-foreground">
+              -
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </Card>

@@ -109,7 +109,7 @@ export interface UpdateIssuerMemberBody {
 }
 
 export const memberRoleLabel: Record<IssuerMemberRole, string> = {
-  director: 'Захирал',
+  director: 'Гүйцэтгэх захирал',
   staff: 'Ажилтан',
 };
 
