@@ -43,6 +43,7 @@ export const IssuerSummarySchema = z.object({
   id: z.string(),
   name: z.string(),
   register_number: z.string(),
+  state_register_number: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -78,6 +79,7 @@ export interface IssuerBankAccountBody {
 export interface CreateIssuerBody {
   name: string;
   register_number: string;
+  state_register_number: string;
   director: IssuerMemberBody;
   bank_accounts?: (IssuerBankAccountBody & { currency: Currency })[];
 }
@@ -85,6 +87,7 @@ export interface CreateIssuerBody {
 export interface UpdateIssuerBody {
   name?: string;
   register_number?: string;
+  state_register_number?: string;
 }
 
 export interface UpdateIssuerMemberBody {

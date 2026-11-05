@@ -147,6 +147,10 @@ function IssuerDetail({ issuer }: { issuer: IssuerType }) {
               Бонд гаргагч · РД{' '}
               <span className="tabular font-mono">
                 {issuer.register_number}
+              </span>{' '}
+              · Улсын бүртгэл{' '}
+              <span className="tabular font-mono">
+                {issuer.state_register_number}
               </span>
             </p>
           </div>

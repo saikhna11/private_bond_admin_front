@@ -38,6 +38,10 @@ const company = {
     .string()
     .trim()
     .regex(/^\d{7}$/, 'Регистрийн дугаар 7 оронтой тоо байна'),
+  state_register_number: z
+    .string()
+    .trim()
+    .regex(/^\d{20}$/, 'Улсын бүртгэлийн дугаар 20 оронтой тоо байна'),
 };
 
 const createSchema = z
@@ -77,6 +81,7 @@ type EditValues = z.input<typeof editSchema>;
 const createDefaults = (): CreateValues => ({
   name: '',
   register_number: '',
+  state_register_number: '',
   director: {
     last_name: '',
     first_name: '',
@@ -114,6 +119,7 @@ export function CreateIssuerDialog({
       await onSubmit({
         name: v.name.trim(),
         register_number: v.register_number.trim(),
+        state_register_number: v.state_register_number.trim(),
         director: {
           email: d.email.trim(),
           phone: d.phone.trim() || undefined,
@@ -147,6 +153,7 @@ export function CreateIssuerDialog({
         applyFieldErrors(e, form.setError, {
           name: 'name',
           register_number: 'register_number',
+          state_register_number: 'state_register_number',
           'director.email': 'director.email',
           'director.phone': 'director.phone',
           'director.last_name': 'director.last_name',
@@ -219,6 +226,20 @@ export function CreateIssuerDialog({
                 />
               </FormField>
             </div>
+            <FormField
+              id="state_register_number"
+              label="Улсын бүртгэлийн дугаар"
+              error={errors.state_register_number?.message}
+            >
+              <Input
+                id="state_register_number"
+                inputMode="numeric"
+                maxLength={20}
+                className="tabular h-10"
+                aria-invalid={!!errors.state_register_number}
+                {...form.register('state_register_number')}
+              />
+            </FormField>
 
             <Separator />
             <p className="text-sm font-semibold">Захирал</p>
@@ -383,6 +404,7 @@ export function EditIssuerDialog({
   const defaults = () => ({
     name: issuer.name,
     register_number: issuer.register_number,
+    state_register_number: issuer.state_register_number,
   });
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
@@ -396,6 +418,7 @@ export function EditIssuerDialog({
       await onSubmit({
         name: v.name.trim(),
         register_number: v.register_number.trim(),
+        state_register_number: v.state_register_number.trim(),
       });
       setOpen(false);
     } catch (err) {
@@ -432,7 +455,9 @@ export function EditIssuerDialog({
         >
           <DialogHeader>
             <DialogTitle>Компанийн мэдээлэл засах</DialogTitle>
-            <DialogDescription>Нэр, регистрийн дугаар.</DialogDescription>
+            <DialogDescription>
+              Нэр, регистрийн дугаар, улсын бүртгэлийн дугаар.
+            </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
             <FormField
@@ -459,6 +484,20 @@ export function EditIssuerDialog({
                 className="tabular h-10"
                 aria-invalid={!!errors.register_number}
                 {...form.register('register_number')}
+              />
+            </FormField>
+            <FormField
+              id="edit_state_register_number"
+              label="Улсын бүртгэлийн дугаар"
+              error={errors.state_register_number?.message}
+            >
+              <Input
+                id="edit_state_register_number"
+                inputMode="numeric"
+                maxLength={20}
+                className="tabular h-10"
+                aria-invalid={!!errors.state_register_number}
+                {...form.register('state_register_number')}
               />
             </FormField>
           </FieldGroup>
