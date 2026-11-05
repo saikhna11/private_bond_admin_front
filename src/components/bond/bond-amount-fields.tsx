@@ -1,16 +1,16 @@
-import { Controller, type UseFormReturn } from "react-hook-form";
-import { FormField } from "@/components/common/form-field";
+import { Controller, type UseFormReturn } from 'react-hook-form';
+import { FormField } from '@/components/common/form-field';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { CurrencySchema } from "@/queries/bond/type";
-import { AmountInput } from "./amount-input";
-import { BondFormSection } from "./bond-form-section";
-import type { BondFormValues } from "./use-bond-form";
+} from '@/components/ui/select';
+import { CurrencySchema } from '@/queries/bond/type';
+import { AmountInput } from './amount-input';
+import { BondFormSection } from './bond-form-section';
+import type { BondFormValues } from './use-bond-form';
 
 const currencies = CurrencySchema.options.map((c) => ({ value: c, label: c }));
 
@@ -20,18 +20,18 @@ export function BondAmountFields({
   form: UseFormReturn<BondFormValues>;
 }) {
   const { errors } = form.formState;
-  const currency = form.watch("currency");
-  const rawUnit = form.watch("purchase_unit");
+  const currency = form.watch('currency');
+  const rawUnit = form.watch('purchase_unit');
 
   const amountField = (
-    name: "total_amount" | "min_purchase" | "investor_cap",
+    name: 'total_amount' | 'min_purchase' | 'investor_cap',
     label: string,
   ) => (
     <FormField
       id={name}
       label={label}
       error={errors[name]?.message}
-      optional={name === "investor_cap"}
+      optional={name === 'investor_cap'}
     >
       <Controller
         control={form.control}
@@ -44,7 +44,7 @@ export function BondAmountFields({
             onBlur={field.onBlur}
             unit={rawUnit || 1}
             currency={currency}
-            placeholder={name === "investor_cap" ? "Хязгааргүй" : undefined}
+            placeholder={name === 'investor_cap' ? 'Хязгааргүй' : undefined}
             aria-invalid={!!errors[name]}
           />
         )}
@@ -106,10 +106,10 @@ export function BondAmountFields({
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        {amountField("min_purchase", "Хамгийн бага худалдан авалт")}
-        {amountField("investor_cap", "Нэг хөрөнгө оруулагчийн дээд дүн")}
+        {amountField('min_purchase', 'Хамгийн бага худалдан авалт')}
+        {amountField('investor_cap', 'Нэг хөрөнгө оруулагчийн дээд дүн')}
       </div>
-      {amountField("total_amount", "Нийт босгох дүн")}
+      {amountField('total_amount', 'Нийт босгох дүн')}
     </BondFormSection>
   );
 }

@@ -1,11 +1,11 @@
-import { Controller, type UseFormReturn } from "react-hook-form";
-import { FormField } from "@/components/common/form-field";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { BondFormSection } from "./bond-form-section";
-import { PercentInput } from "./percent-input";
-import type { BondFormValues } from "./use-bond-form";
+import { Controller, type UseFormReturn } from 'react-hook-form';
+import { FormField } from '@/components/common/form-field';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { BondFormSection } from './bond-form-section';
+import { PercentInput } from './percent-input';
+import type { BondFormValues } from './use-bond-form';
 
 export function BondExtraFields({
   form,
@@ -25,7 +25,7 @@ export function BondExtraFields({
           <PercentInput
             id="exit_fee_rate"
             aria-invalid={!!errors.exit_fee_rate}
-            {...form.register("exit_fee_rate")}
+            {...form.register('exit_fee_rate')}
           />
         </FormField>
 
@@ -37,7 +37,7 @@ export function BondExtraFields({
           <PercentInput
             id="penalty_rate"
             aria-invalid={!!errors.penalty_rate}
-            {...form.register("penalty_rate")}
+            {...form.register('penalty_rate')}
           />
         </FormField>
 
@@ -51,7 +51,7 @@ export function BondExtraFields({
             type="time"
             className="h-10"
             aria-invalid={!!errors.issuer_cutoff}
-            {...form.register("issuer_cutoff")}
+            {...form.register('issuer_cutoff')}
           />
         </FormField>
 
@@ -86,7 +86,7 @@ export function BondExtraFields({
           id="prospectus"
           rows={5}
           aria-invalid={!!errors.prospectus}
-          {...form.register("prospectus")}
+          {...form.register('prospectus')}
         />
       </FormField>
     </BondFormSection>

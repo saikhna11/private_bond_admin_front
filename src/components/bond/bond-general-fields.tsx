@@ -1,9 +1,9 @@
-import { Controller, type UseFormReturn } from "react-hook-form";
-import { FormField } from "@/components/common/form-field";
-import { Input } from "@/components/ui/input";
-import { BondFormSection } from "./bond-form-section";
-import { BondIssuerCombobox } from "./bond-issuer-combobox";
-import type { BondFormValues } from "./use-bond-form";
+import { Controller, type UseFormReturn } from 'react-hook-form';
+import { FormField } from '@/components/common/form-field';
+import { Input } from '@/components/ui/input';
+import { BondFormSection } from './bond-form-section';
+import { BondIssuerCombobox } from './bond-issuer-combobox';
+import type { BondFormValues } from './use-bond-form';
 
 export function BondGeneralFields({
   form,
@@ -29,7 +29,7 @@ export function BondGeneralFields({
                   id="bond_issuer_id"
                   value={field.value}
                   onChange={field.onChange}
-                  currency={form.watch("currency")}
+                  currency={form.watch('currency')}
                   invalid={!!errors.bond_issuer_id}
                 />
               )}
@@ -43,7 +43,7 @@ export function BondGeneralFields({
               id="code"
               className="h-10 font-mono uppercase"
               aria-invalid={!!errors.code}
-              {...form.register("code")}
+              {...form.register('code')}
             />
           </FormField>
         </div>
@@ -54,7 +54,7 @@ export function BondGeneralFields({
               id="name"
               className="h-10"
               aria-invalid={!!errors.name}
-              {...form.register("name")}
+              {...form.register('name')}
             />
           </FormField>
         </div>
