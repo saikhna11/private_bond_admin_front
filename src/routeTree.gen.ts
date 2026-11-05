@@ -20,6 +20,7 @@ import { Route as BrokerPanelRouteRouteImport } from './routes/broker/_panel/rou
 import { Route as BrokerPublicRouteRouteImport } from './routes/broker/_public/route'
 import { Route as DashboardAccountIndexRouteImport } from './routes/_dashboard/account/index'
 import { Route as DashboardAdminsIndexRouteImport } from './routes/_dashboard/admins/index'
+import { Route as DashboardBankAccountsRouteImport } from './routes/_dashboard/bank/accounts'
 import { Route as DashboardBankStatementRouteImport } from './routes/_dashboard/bank/statement'
 import { Route as DashboardBankTransfersRouteImport } from './routes/_dashboard/bank/transfers'
 import { Route as DashboardBrokersIndexRouteImport } from './routes/_dashboard/brokers/index'
@@ -88,6 +89,11 @@ const DashboardAccountIndexRoute = DashboardAccountIndexRouteImport.update({
 const DashboardAdminsIndexRoute = DashboardAdminsIndexRouteImport.update({
   id: '/admins/',
   path: '/admins/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBankAccountsRoute = DashboardBankAccountsRouteImport.update({
+  id: '/bank/accounts',
+  path: '/bank/accounts',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardBankStatementRoute = DashboardBankStatementRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/issuers': typeof DashboardIssuersRouteRouteWithChildren
   '/templates': typeof DashboardTemplatesRouteRouteWithChildren
   '/broker': typeof BrokerPublicRouteRouteWithChildren
+  '/bank/accounts': typeof DashboardBankAccountsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof DashboardIndexRoute
   '/broker': typeof BrokerPanelIndexRoute
+  '/bank/accounts': typeof DashboardBankAccountsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
   '/clients/$clientId': typeof DashboardClientsClientIdRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/broker/_panel': typeof BrokerPanelRouteRouteWithChildren
   '/broker/_public': typeof BrokerPublicRouteRouteWithChildren
   '/_dashboard/': typeof DashboardIndexRoute
+  '/_dashboard/bank/accounts': typeof DashboardBankAccountsRoute
   '/_dashboard/bank/statement': typeof DashboardBankStatementRoute
   '/_dashboard/bank/transfers': typeof DashboardBankTransfersRoute
   '/_dashboard/clients/$clientId': typeof DashboardClientsClientIdRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/issuers'
     | '/templates'
     | '/broker'
+    | '/bank/accounts'
     | '/bank/statement'
     | '/bank/transfers'
     | '/clients/$clientId'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/broker'
+    | '/bank/accounts'
     | '/bank/statement'
     | '/bank/transfers'
     | '/clients/$clientId'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/broker/_panel'
     | '/broker/_public'
     | '/_dashboard/'
+    | '/_dashboard/bank/accounts'
     | '/_dashboard/bank/statement'
     | '/_dashboard/bank/transfers'
     | '/_dashboard/clients/$clientId'
@@ -415,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/admins'
       fullPath: '/admins/'
       preLoaderRoute: typeof DashboardAdminsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/bank/accounts': {
+      id: '/_dashboard/bank/accounts'
+      path: '/bank/accounts'
+      fullPath: '/bank/accounts'
+      preLoaderRoute: typeof DashboardBankAccountsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/_dashboard/bank/statement': {
@@ -600,6 +619,7 @@ interface DashboardRouteRouteChildren {
   DashboardIssuersRouteRoute: typeof DashboardIssuersRouteRouteWithChildren
   DashboardTemplatesRouteRoute: typeof DashboardTemplatesRouteRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardBankAccountsRoute: typeof DashboardBankAccountsRoute
   DashboardBankStatementRoute: typeof DashboardBankStatementRoute
   DashboardBankTransfersRoute: typeof DashboardBankTransfersRoute
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
@@ -614,6 +634,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIssuersRouteRoute: DashboardIssuersRouteRouteWithChildren,
   DashboardTemplatesRouteRoute: DashboardTemplatesRouteRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardBankAccountsRoute: DashboardBankAccountsRoute,
   DashboardBankStatementRoute: DashboardBankStatementRoute,
   DashboardBankTransfersRoute: DashboardBankTransfersRoute,
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,

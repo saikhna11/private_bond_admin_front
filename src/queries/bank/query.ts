@@ -3,10 +3,14 @@ import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
 import {
   BankStatementEntrySchema,
   BankTransferSchema,
+  CompanyBankAccountListSchema,
+  CompanyBankAccountSchema,
+  type CreateCompanyAccountBody,
   type CreateTransferBody,
   type StatementFilters,
   StatementSyncSchema,
   type TransferFilters,
+  type UpdateCompanyAccountBody,
 } from './type';
 
 const StatementPageSchema = pageSchema(BankStatementEntrySchema);
@@ -17,6 +21,7 @@ export const getStatement = (f: StatementFilters) =>
     `bank/statement${listQuery({
       page: f.page,
       size: PAGE_SIZE,
+      account_id: f.account_id,
       from: f.from,
       to: f.to,
       related_account: f.related_account,
@@ -30,12 +35,52 @@ export const syncStatement = () =>
     method: 'POST',
   });
 
+/** Every company account; activeOnly leaves out the inactive ones. */
+export const getCompanyAccounts = (activeOnly?: boolean) =>
+  fetchAndValidate(
+    `bank/company-accounts${listQuery({ active_only: activeOnly ? 'true' : undefined })}`,
+    CompanyBankAccountListSchema,
+  );
+
+/** Super admins only. */
+export const createCompanyAccount = (body: CreateCompanyAccountBody) =>
+  fetchAndValidate('bank/company-accounts', CompanyBankAccountSchema, {
+    method: 'POST',
+    body,
+  });
+
+/** Super admins only. */
+export const updateCompanyAccount = (
+  id: string,
+  body: UpdateCompanyAccountBody,
+) =>
+  fetchAndValidate(`bank/company-accounts/${id}`, CompanyBankAccountSchema, {
+    method: 'PATCH',
+    body,
+  });
+
+/** Super admins only. */
+export const setDefaultCompanyAccount = (id: string) =>
+  fetchAndValidate(
+    `bank/company-accounts/${id}/default`,
+    CompanyBankAccountSchema,
+    { method: 'POST' },
+  );
+
+/** Super admins only; a used account answers bank.company_account_in_use. */
+export const deleteCompanyAccount = (id: string) =>
+  fetchAndValidate(`bank/company-accounts/${id}`, undefined, {
+    method: 'DELETE',
+  });
+
 export const getTransfers = (f: TransferFilters) =>
   fetchAndValidate(
     `bank/transfers${listQuery({
       page: f.page,
       size: PAGE_SIZE,
       user_id: f.user_id,
+      bond_issuer_id: f.bond_issuer_id,
+      from_account: f.from_account,
       status: f.status,
     })}`,
     TransferPageSchema,

@@ -6,6 +6,7 @@ import {
   Building2Icon,
   FileSignatureIcon,
   FileTextIcon,
+  LandmarkIcon,
   LayoutDashboardIcon,
   type LucideIcon,
   ReceiptTextIcon,
@@ -47,6 +48,7 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
         to: '/bank/transfers',
         icon: ArrowLeftRightIcon,
       },
+      { title: 'Компанийн данс', to: '/bank/accounts', icon: LandmarkIcon },
     ],
   },
 ];

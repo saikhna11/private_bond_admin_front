@@ -29,12 +29,16 @@ export const BankStatusSchema = z.enum([
 export type BankStatus = z.infer<typeof BankStatusSchema>;
 
 export const IssuerBankAccountSchema = z.object({
+  id: z.string(),
   currency: CurrencySchema,
   bank_name: z.string(),
   account_number: z.string(),
   iban: z.string(),
   account_name: z.string(),
   status: BankStatusSchema,
+  /** The currency's default account. */
+  is_default: z.boolean(),
+  created_at: z.string(),
   updated_at: z.string(),
 });
 export type IssuerBankAccountType = z.infer<typeof IssuerBankAccountSchema>;
@@ -51,7 +55,10 @@ export type IssuerSummaryType = z.infer<typeof IssuerSummarySchema>;
 
 export const IssuerSchema = IssuerSummarySchema.extend({
   members: z.array(IssuerMemberSchema),
-  bank_accounts: z.array(IssuerBankAccountSchema),
+  bank_accounts: z
+    .array(IssuerBankAccountSchema)
+    .nullish()
+    .transform((v) => v ?? []),
 });
 export type IssuerType = z.infer<typeof IssuerSchema>;
 
@@ -69,11 +76,15 @@ export interface IssuerMemberBody {
   password: string;
 }
 
+/** IssuerBankAccountInput: an add or a replace of one account. */
 export interface IssuerBankAccountBody {
+  currency: Currency;
   bank_name: string;
   account_number: string;
   iban: string;
   account_name: string;
+  /** On an add, makes it its currency's default; ignored on a replace. */
+  is_default?: boolean;
 }
 
 export interface CreateIssuerBody {
@@ -81,7 +92,8 @@ export interface CreateIssuerBody {
   register_number: string;
   state_register_number: string;
   director: IssuerMemberBody;
-  bank_accounts?: (IssuerBankAccountBody & { currency: Currency })[];
+  /** Any number per currency (at most 20); the first of each is its default. */
+  bank_accounts?: IssuerBankAccountBody[];
 }
 
 export interface UpdateIssuerBody {

@@ -2,8 +2,8 @@ import fetchAndValidate from '@/lib/fetcher';
 import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
 import {
   type CreateIssuerBody,
-  type Currency,
   type IssuerBankAccountBody,
+  IssuerBankAccountSchema,
   type IssuerFilters,
   type IssuerMemberBody,
   IssuerSchema,
@@ -77,17 +77,39 @@ export const resetIssuerMemberPassword = (
     body: { password },
   });
 
-export const putIssuerBankAccount = (
+const bankAccount = (id: string, accountId: string) =>
+  `issuers/${id}/bank-accounts/${accountId}`;
+
+export const addIssuerBankAccount = (id: string, body: IssuerBankAccountBody) =>
+  fetchAndValidate(`issuers/${id}/bank-accounts`, IssuerSchema, {
+    method: 'POST',
+    body,
+  });
+
+export const updateIssuerBankAccount = (
   id: string,
-  currency: Currency,
+  accountId: string,
   body: IssuerBankAccountBody,
 ) =>
-  fetchAndValidate(`issuers/${id}/bank-accounts/${currency}`, IssuerSchema, {
+  fetchAndValidate(bankAccount(id, accountId), IssuerSchema, {
     method: 'PUT',
     body,
   });
 
-export const deleteIssuerBankAccount = (id: string, currency: Currency) =>
-  fetchAndValidate(`issuers/${id}/bank-accounts/${currency}`, IssuerSchema, {
+export const setDefaultIssuerBankAccount = (id: string, accountId: string) =>
+  fetchAndValidate(`${bankAccount(id, accountId)}/default`, IssuerSchema, {
+    method: 'POST',
+  });
+
+/** Checks the account's holder name with the bank; answers the account with its status. */
+export const verifyIssuerBankAccount = (id: string, accountId: string) =>
+  fetchAndValidate(
+    `${bankAccount(id, accountId)}/verify`,
+    IssuerBankAccountSchema,
+    { method: 'POST' },
+  );
+
+export const deleteIssuerBankAccount = (id: string, accountId: string) =>
+  fetchAndValidate(bankAccount(id, accountId), IssuerSchema, {
     method: 'DELETE',
   });

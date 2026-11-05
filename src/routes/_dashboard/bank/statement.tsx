@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,11 +32,16 @@ import { toApiError } from '@/lib/fetcher';
 import { formatDateTime, formatDay, formatMoney } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
 import { cn, showToast } from '@/lib/utils';
-import { bankKeys, statementOptions } from '@/queries/bank/options';
+import {
+  bankKeys,
+  companyAccountsOptions,
+  statementOptions,
+} from '@/queries/bank/options';
 import { syncStatement } from '@/queries/bank/query';
 
 const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
+  account_id: z.string().optional().catch(undefined),
   from: z.string().optional().catch(undefined),
   to: z.string().optional().catch(undefined),
   related_account: z.string().optional().catch(undefined),
@@ -53,6 +65,12 @@ function StatementPage() {
     statementOptions(search),
   );
 
+  const { data: accounts } = useQuery(companyAccountsOptions());
+  // Left out, the API reads the default MNT account.
+  const accountId =
+    search.account_id ??
+    accounts?.find((a) => a.currency === 'MNT' && a.is_default)?.id;
+
   const setFilter = useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
@@ -69,7 +87,9 @@ function StatementPage() {
       await queryClient.invalidateQueries({ queryKey: bankKeys.statements() });
       showToast(
         'success',
-        stored ? `${stored} мөр хадгалагдлаа.` : 'Шинэ гүйлгээ олдсонгүй.',
+        stored
+          ? `Идэвхтэй бүх данснаас ${stored} мөр хадгалагдлаа.`
+          : 'Шинэ гүйлгээ олдсонгүй.',
       );
     },
     onError: (e) => showToast('error', toApiError(e).message),
@@ -98,6 +118,32 @@ function StatementPage() {
       <Card className="gap-0 py-0">
         <div className="flex flex-col gap-3 border-b p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="space-y-1">
+              <span className="block text-xs text-muted-foreground">
+                Компанийн данс
+              </span>
+              <Select
+                value={accountId ?? ''}
+                onValueChange={(v) => setFilter({ account_id: v })}
+                disabled={!accounts?.length}
+              >
+                <SelectTrigger
+                  aria-label="Компанийн данс"
+                  className="h-9! w-full sm:w-72"
+                >
+                  <SelectValue placeholder="Үндсэн MNT данс" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(accounts ?? []).map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.bank_name} · {a.account_number} ({a.currency})
+                      {a.is_default ? ' · үндсэн' : ''}
+                      {a.is_active ? '' : ' · идэвхгүй'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <label
               htmlFor="statement-from"
               className="space-y-1 text-xs text-muted-foreground"
@@ -159,7 +205,7 @@ function StatementPage() {
                 className="h-9"
                 onClick={() =>
                   navigate({
-                    search: { page: undefined },
+                    search: { page: undefined, account_id: search.account_id },
                   })
                 }
               >

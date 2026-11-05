@@ -4,6 +4,7 @@ import { ArrowRightIcon, PlusIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { ClientPicker } from '@/components/bank/client-picker';
+import { IssuerPicker } from '@/components/bank/issuer-picker';
 import { TransferDialog } from '@/components/bank/transfer-dialog';
 import { TransferStatusBadge } from '@/components/bank/transfer-status-badge';
 import {
@@ -34,13 +35,26 @@ import {
 import { toApiError } from '@/lib/fetcher';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
-import { transferOptions, transfersOptions } from '@/queries/bank/options';
-import { TransferStatusSchema, transferStatusLabel } from '@/queries/bank/type';
+import {
+  companyAccountsOptions,
+  transferOptions,
+  transfersOptions,
+} from '@/queries/bank/options';
+import {
+  type BankTransferType,
+  recipientTypeLabel,
+  TransferStatusSchema,
+  transferPurposeLabel,
+  transferStatusLabel,
+} from '@/queries/bank/type';
 import { clientOptions } from '@/queries/client/options';
+import { issuerOptions } from '@/queries/issuer/options';
 
 const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
   user_id: z.string().optional().catch(undefined),
+  bond_issuer_id: z.string().optional().catch(undefined),
+  from_account: z.string().optional().catch(undefined),
   status: TransferStatusSchema.optional().catch(undefined),
 });
 
@@ -50,7 +64,7 @@ export const Route = createFileRoute('/_dashboard/bank/transfers')({
   staticData: { crumb: 'Шилжүүлэг' },
 });
 
-const COLS = 7;
+const COLS = 8;
 
 /** The client behind a transfer's user id, once their record is read. */
 function ClientName({
@@ -75,6 +89,40 @@ function ClientName({
   ) : null;
 }
 
+/** The bond issuer behind a transfer's issuer id, once its record is read. */
+function IssuerName({ id }: { id: string }) {
+  const { data } = useQuery({ ...issuerOptions(id), staleTime: 60_000 });
+  if (data) return <>{data.name}</>;
+  return (
+    <span className="tabular font-mono text-xs text-muted-foreground">
+      {id.slice(0, 8)}…
+    </span>
+  );
+}
+
+/** Who a transfer paid: a client or a bond issuer, with the id. */
+function Recipient({ t }: { t: BankTransferType }) {
+  const id = t.recipient_type === 'issuer' ? t.bond_issuer_id : t.user_id;
+  return (
+    <>
+      <p className="flex max-w-56 items-center gap-1.5 font-medium">
+        <span className="truncate">
+          {!id ? (
+            '-'
+          ) : t.recipient_type === 'issuer' ? (
+            <IssuerName id={id} />
+          ) : (
+            <ClientName id={id} />
+          )}
+        </span>
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {recipientTypeLabel[t.recipient_type]}
+      </p>
+    </>
+  );
+}
+
 function TransfersPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -90,13 +138,18 @@ function TransfersPage() {
     [navigate],
   );
 
-  const filtered = !!search.user_id || !!search.status;
+  const { data: companyAccounts } = useQuery(companyAccountsOptions());
+  const filtered =
+    !!search.user_id ||
+    !!search.bond_issuer_id ||
+    !!search.from_account ||
+    !!search.status;
 
   return (
     <>
       <PageTitle
         title="Шилжүүлэг"
-        description="Компанийн данснаас харилцагчийн бүртгэлтэй данс руу хийсэн төлбөр."
+        description="Компанийн данснаас харилцагч эсвэл бонд гаргагчийн бүртгэлтэй данс руу хийсэн төлбөр."
         action={
           <TransferDialog
             initialUserId={search.user_id}
@@ -120,6 +173,30 @@ function TransfersPage() {
               clearable
               value={search.user_id}
               onChange={(id) => setFilter({ user_id: id })}
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="block text-xs text-muted-foreground">
+              Бонд гаргагч
+            </span>
+            <IssuerPicker
+              clearable
+              value={search.bond_issuer_id}
+              onChange={(id) => setFilter({ bond_issuer_id: id })}
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="block text-xs text-muted-foreground">
+              Илгээгч данс
+            </span>
+            <FilterSelect
+              value={search.from_account}
+              onChange={(from_account) => setFilter({ from_account })}
+              allLabel="Бүх данс"
+              options={(companyAccounts ?? []).map((a) => ({
+                value: a.account_number,
+                label: `${a.bank_name} · ${a.account_number} (${a.currency})`,
+              }))}
             />
           </div>
           <div className="space-y-1">
@@ -149,8 +226,9 @@ function TransfersPage() {
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="pl-4">Огноо</TableHead>
-              <TableHead>Харилцагч</TableHead>
               <TableHead>Хүлээн авагч</TableHead>
+              <TableHead>Хүлээн авах данс</TableHead>
+              <TableHead>Илгээгч данс</TableHead>
               <TableHead className="text-right">Дүн</TableHead>
               <TableHead>Төлөв</TableHead>
               <TableHead>Тайлбар</TableHead>
@@ -183,12 +261,7 @@ function TransfersPage() {
                     {formatDateTime(t.created_at)}
                   </TableCell>
                   <TableCell>
-                    <p className="max-w-48 truncate font-medium">
-                      <ClientName id={t.user_id} />
-                    </p>
-                    <p className="tabular max-w-48 truncate font-mono text-xs text-muted-foreground">
-                      {t.user_id}
-                    </p>
+                    <Recipient t={t} />
                   </TableCell>
                   <TableCell>
                     <p className="font-medium">
@@ -197,6 +270,9 @@ function TransfersPage() {
                     <p className="text-xs text-muted-foreground">
                       {t.to_holder_name}
                     </p>
+                  </TableCell>
+                  <TableCell className="tabular font-mono text-xs whitespace-nowrap">
+                    {t.from_account}
                   </TableCell>
                   <TableCell className="tabular text-right font-medium whitespace-nowrap">
                     {formatMoney(t.amount, t.currency)}
@@ -238,9 +314,21 @@ function TransfersPage() {
             <TransferDetail
               id={selected}
               onClose={() => setSelected(null)}
-              onClient={(id) => {
+              onRecipient={(t) => {
                 setSelected(null);
-                setFilter({ user_id: id, status: undefined });
+                setFilter(
+                  t.recipient_type === 'issuer'
+                    ? {
+                        bond_issuer_id: t.bond_issuer_id,
+                        user_id: undefined,
+                        status: undefined,
+                      }
+                    : {
+                        user_id: t.user_id,
+                        bond_issuer_id: undefined,
+                        status: undefined,
+                      },
+                );
               }}
             />
           )}
@@ -253,11 +341,11 @@ function TransfersPage() {
 function TransferDetail({
   id,
   onClose,
-  onClient,
+  onRecipient,
 }: {
   id: string;
   onClose: () => void;
-  onClient: (id: string) => void;
+  onRecipient: (t: BankTransferType) => void;
 }) {
   const { data: t, isPending, error } = useQuery(transferOptions(id));
 
@@ -300,19 +388,25 @@ function TransferDetail({
       <div className="space-y-6 p-4">
         <section className="space-y-3">
           <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Харилцагч
+            {recipientTypeLabel[t.recipient_type]}
           </h3>
           <button
             type="button"
             className="flex w-full items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors hover:bg-muted/40"
-            onClick={() => onClient(t.user_id)}
+            onClick={() => onRecipient(t)}
           >
             <span>
               <span className="block font-medium">
-                <ClientName id={t.user_id} />
+                {t.recipient_type === 'issuer' && t.bond_issuer_id ? (
+                  <IssuerName id={t.bond_issuer_id} />
+                ) : t.user_id ? (
+                  <ClientName id={t.user_id} />
+                ) : (
+                  '-'
+                )}
               </span>
               <span className="tabular font-mono text-xs text-muted-foreground">
-                {t.user_id}
+                {t.recipient_type === 'issuer' ? t.bond_issuer_id : t.user_id}
               </span>
             </span>
             <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -324,6 +418,7 @@ function TransferDetail({
             Шилжүүлэг
           </h3>
           <dl className="space-y-3">
+            <Detail label="Зориулалт" value={transferPurposeLabel[t.purpose]} />
             <Detail label="Илгээгч данс" value={t.from_account} mono />
             <Detail
               label="Хүлээн авагч банк"

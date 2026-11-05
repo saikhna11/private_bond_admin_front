@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2Icon } from 'lucide-react';
+import { Loader2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { FormField } from '@/components/common/form-field';
@@ -22,15 +22,23 @@ import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
 import { generatePassword, passwordSchema } from '@/lib/password';
-import type { CreateIssuerBody, IssuerType } from '@/queries/issuer/type';
+import {
+  type CreateIssuerBody,
+  CurrencySchema,
+  type IssuerType,
+} from '@/queries/issuer/type';
 import {
   BankAccountFields,
   bankAccountSchema,
   emptyBankAccount,
 } from './bank-account-fields';
+
+/** The API takes at most this many accounts with a new issuer. */
+const MAX_ACCOUNTS = 20;
 
 const company = {
   name: z.string().trim().min(1, 'Компанийн нэрийг оруулна уу').max(200),
@@ -44,36 +52,32 @@ const company = {
     .regex(/^\d{20}$/, 'Улсын бүртгэлийн дугаар 20 оронтой тоо байна'),
 };
 
-const createSchema = z
-  .object({
-    ...company,
-    director: z.object({
-      last_name: z.string().trim().min(1, 'Овгийг оруулна уу').max(100),
-      first_name: z.string().trim().min(1, 'Нэрийг оруулна уу').max(100),
-      position: z.string().trim().max(100),
-      email: z.email('Имэйл хаяг буруу байна').max(248),
-      phone: z
-        .string()
-        .trim()
-        .regex(/^(\d{8})?$/, 'Утасны дугаар 8 оронтой байна'),
-      password: passwordSchema,
-    }),
-    with_bank: z.boolean(),
-    bank: z.unknown(),
-  })
-  .superRefine((v, ctx) => {
-    if (!v.with_bank) return;
-    const r = bankAccountSchema.safeParse(v.bank);
-    if (!r.success) {
-      for (const issue of r.error.issues) {
-        ctx.addIssue({ ...issue, path: ['bank', ...issue.path] } as never);
-      }
-    }
-  });
+const createSchema = z.object({
+  ...company,
+  director: z.object({
+    last_name: z.string().trim().min(1, 'Овгийг оруулна уу').max(100),
+    first_name: z.string().trim().min(1, 'Нэрийг оруулна уу').max(100),
+    position: z.string().trim().max(100),
+    email: z.email('Имэйл хаяг буруу байна').max(248),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^(\d{8})?$/, 'Утасны дугаар 8 оронтой байна'),
+    password: passwordSchema,
+  }),
+  bank_accounts: z
+    .array(
+      bankAccountSchema.extend({
+        currency: CurrencySchema,
+        is_default: z.boolean(),
+      }),
+    )
+    .max(MAX_ACCOUNTS, `Хамгийн ихдээ ${MAX_ACCOUNTS} данс бүртгэнэ`),
+});
 
-type CreateValues = z.input<typeof createSchema> & {
-  bank: z.input<typeof bankAccountSchema>;
-};
+type CreateValues = z.input<typeof createSchema>;
+type CreateOutput = z.output<typeof createSchema>;
+type AccountValues = CreateValues['bank_accounts'][number];
 
 const editSchema = z.object(company);
 type EditValues = z.input<typeof editSchema>;
@@ -90,11 +94,17 @@ const createDefaults = (): CreateValues => ({
     phone: '',
     password: generatePassword(),
   },
-  with_bank: true,
-  bank: { ...emptyBankAccount },
+  bank_accounts: [newAccount('MNT')],
 });
 
-/** Registers a bond issuer with its director and, optionally, its MNT account. */
+function newAccount(currency: AccountValues['currency']): AccountValues {
+  return { currency, is_default: false, ...emptyBankAccount };
+}
+
+/**
+ * Registers a bond issuer with its director and any number of bank accounts (several per
+ * currency). The first account of a currency is its default unless another is marked.
+ */
 export function CreateIssuerDialog({
   trigger,
   onSubmit,
@@ -104,17 +114,31 @@ export function CreateIssuerDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<CreateValues>({
-    resolver: zodResolver(createSchema) as never,
+  const form = useForm<CreateValues, unknown, CreateOutput>({
+    resolver: zodResolver(createSchema),
     defaultValues: createDefaults(),
   });
   const { errors, isSubmitting } = form.formState;
-  const withBank = form.watch('with_bank');
+  const accounts = useFieldArray({
+    control: form.control,
+    name: 'bank_accounts',
+  });
+  const accountValues = form.watch('bank_accounts');
 
-  async function submit(v: CreateValues) {
+  /** One default per currency: marking one clears the others of its currency. */
+  function markDefault(index: number, on: boolean) {
+    const currency = form.getValues(`bank_accounts.${index}.currency`);
+    form.getValues('bank_accounts').forEach((a, i) => {
+      if (i !== index && on && a.currency === currency && a.is_default) {
+        form.setValue(`bank_accounts.${i}.is_default`, false);
+      }
+    });
+    form.setValue(`bank_accounts.${index}.is_default`, on);
+  }
+
+  async function submit(v: CreateOutput) {
     setError(null);
     const d = v.director;
-    const bank = v.with_bank ? bankAccountSchema.parse(v.bank) : undefined;
     try {
       await onSubmit({
         name: v.name.trim(),
@@ -128,7 +152,12 @@ export function CreateIssuerDialog({
           position: d.position.trim() || undefined,
           password: d.password,
         },
-        bank_accounts: bank ? [{ currency: 'MNT', ...bank }] : undefined,
+        bank_accounts: v.bank_accounts.length
+          ? v.bank_accounts.map((a) => ({
+              ...a,
+              is_default: a.is_default || undefined,
+            }))
+          : undefined,
       });
       setOpen(false);
     } catch (err) {
@@ -147,6 +176,11 @@ export function CreateIssuerDialog({
       }
       if (e.code === 'user.phone_taken') {
         form.setError('director.phone', { message: e.message });
+        return;
+      }
+      if (e.code === 'issuer.bank_account_exists') {
+        // The API does not say which one: the same IBAN twice in this form, or taken.
+        setError(e);
         return;
       }
       if (
@@ -338,37 +372,101 @@ export function CreateIssuerDialog({
             </div>
 
             <Separator />
-            <div className="flex items-center gap-2">
-              <Controller
-                control={form.control}
-                name="with_bank"
-                render={({ field }) => (
-                  <Checkbox
-                    id="with_bank"
-                    checked={field.value}
-                    onCheckedChange={(c) => field.onChange(c === true)}
-                  />
-                )}
-              />
-              <Label htmlFor="with_bank" className="text-sm font-semibold">
-                MNT данс одоо бүртгэх
-              </Label>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">Банкны данс</p>
+                <p className="text-xs text-muted-foreground">
+                  Валют бүрд хэдэн ч данс бүртгэж болно. Үндсэн данс сонгоогүй
+                  бол тухайн валютын эхний данс үндсэн болно.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={accounts.fields.length >= MAX_ACCOUNTS}
+                onClick={() => accounts.append(newAccount('MNT'))}
+              >
+                <PlusIcon />
+                Данс нэмэх
+              </Button>
             </div>
-            {withBank && (
-              <BankAccountFields
-                register={(n) => form.register(`bank.${n}`)}
-                bankName={form.watch('bank.bank_name')}
-                onBankName={(v) =>
-                  form.setValue('bank.bank_name', v, { shouldValidate: true })
-                }
-                errors={
-                  errors.bank as Parameters<
-                    typeof BankAccountFields
-                  >[0]['errors']
-                }
-                prefix="bank_"
-              />
+            {accounts.fields.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Данс бүртгэхгүй. Дараа нь бонд гаргагчийн хуудаснаас нэмж болно.
+              </p>
             )}
+            {accounts.fields.map((f, i) => {
+              const ae = errors.bank_accounts?.[i];
+              return (
+                <div key={f.id} className="space-y-4 rounded-xl border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Controller
+                      control={form.control}
+                      name={`bank_accounts.${i}.currency`}
+                      render={({ field }) => (
+                        <Tabs
+                          value={field.value}
+                          onValueChange={(c) => {
+                            field.onChange(c);
+                            // Its default flag belonged to the old currency.
+                            form.setValue(
+                              `bank_accounts.${i}.is_default`,
+                              false,
+                            );
+                          }}
+                        >
+                          <TabsList>
+                            {CurrencySchema.options.map((c) => (
+                              <TabsTrigger key={c} value={c}>
+                                {c}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                        </Tabs>
+                      )}
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`bank_${i}_is_default`}
+                          checked={accountValues?.[i]?.is_default ?? false}
+                          onCheckedChange={(c) => markDefault(i, c === true)}
+                        />
+                        <Label
+                          htmlFor={`bank_${i}_is_default`}
+                          className="text-sm"
+                        >
+                          Үндсэн данс
+                        </Label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive"
+                        aria-label="Дансыг хасах"
+                        title="Дансыг хасах"
+                        onClick={() => accounts.remove(i)}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    </div>
+                  </div>
+                  <BankAccountFields
+                    register={(n) => form.register(`bank_accounts.${i}.${n}`)}
+                    bankName={accountValues?.[i]?.bank_name ?? ''}
+                    onBankName={(v) =>
+                      form.setValue(`bank_accounts.${i}.bank_name`, v, {
+                        shouldValidate: true,
+                      })
+                    }
+                    errors={ae}
+                    prefix={`bank_${i}_`}
+                  />
+                </div>
+              );
+            })}
           </FieldGroup>
 
           <ApiErrorAlert error={error} />

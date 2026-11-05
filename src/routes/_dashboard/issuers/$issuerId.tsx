@@ -7,14 +7,24 @@ import {
   CrownIcon,
   KeyRoundIcon,
   LandmarkIcon,
+  Loader2Icon,
   LockOpenIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
+  SendIcon,
+  ShieldCheckIcon,
+  StarIcon,
   Trash2Icon,
   UserPlusIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+  BankStatusBadge,
+  CurrencyTag,
+  DefaultBadge,
+} from '@/components/bank/account-badges';
+import { TransferDialog } from '@/components/bank/transfer-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { ActiveBadge } from '@/components/common/status-badge';
 import { InfoItem } from '@/components/contract/info-item';
@@ -53,17 +63,20 @@ import { cn, showToast } from '@/lib/utils';
 import { personInitials, personName } from '@/queries/auth/type';
 import { issuerKeys, issuerOptions } from '@/queries/issuer/options';
 import {
+  addIssuerBankAccount,
   addIssuerMember,
   blockIssuerMember,
   deleteIssuer,
   deleteIssuerBankAccount,
-  putIssuerBankAccount,
   removeIssuerMember,
   resetIssuerMemberPassword,
+  setDefaultIssuerBankAccount,
   setIssuerDirector,
   unblockIssuerMember,
   updateIssuer,
+  updateIssuerBankAccount,
   updateIssuerMember,
+  verifyIssuerBankAccount,
 } from '@/queries/issuer/query';
 import {
   bankStatusLabel,
@@ -173,7 +186,7 @@ function IssuerDetail({ issuer }: { issuer: IssuerType }) {
                 </Button>
               }
               title={`${issuer.name}-г устгах уу?`}
-              description="Компани, түүний бүх ажилтны бүртгэл, банкны данс бүрмөсөн устана. Ажилтнууд дахин нэвтрэх боломжгүй болно."
+              description="Компани, түүний бүх ажилтны бүртгэл, банкны данс бүрмөсөн устана. Ажилтнууд дахин нэвтрэх боломжгүй болно. Шилжүүлэг хийгдсэн бонд гаргагчийг устгах боломжгүй."
               confirmLabel="Устгах"
               onConfirm={async () => {
                 await act(() => deleteIssuer(id), 'Устгагдлаа');
@@ -435,36 +448,51 @@ function MemberRow({
 }
 
 function BankAccountsCard({ issuer, act }: { issuer: IssuerType; act: Act }) {
-  const taken = issuer.bank_accounts.map((a) => a.currency);
+  // Each currency's default first, then the oldest.
+  const accounts = [...issuer.bank_accounts].sort(
+    (a, b) =>
+      a.currency.localeCompare(b.currency) ||
+      Number(b.is_default) - Number(a.is_default) ||
+      a.created_at.localeCompare(b.created_at),
+  );
   return (
     <Card>
       <CardHeader>
         <CardTitle>Банкны данс</CardTitle>
         <CardDescription>
-          Бондоор босгосон хөрөнгө шилжих данс, валют тус бүрд нэг.
+          Бондоор босгосон хөрөнгө шилжих данс. Валют бүрд хэдэн ч данс байж
+          болох ба шилжүүлэг өөр данс сонгоогүй бол үндсэн данс руу очно.
         </CardDescription>
-        {taken.length < 2 && (
-          <CardAction>
-            <BankAccountDialog
-              takenCurrencies={taken}
-              trigger={
-                <Button size="sm" variant="outline">
-                  <PlusIcon />
-                  Нэмэх
-                </Button>
-              }
-              onSubmit={(currency, body) =>
-                act(
-                  () => putIssuerBankAccount(issuer.id, currency, body),
-                  'Данс хадгалагдлаа',
-                )
-              }
-            />
-          </CardAction>
-        )}
+        <CardAction className="flex flex-wrap justify-end gap-2">
+          <TransferDialog
+            issuerId={issuer.id}
+            trigger={
+              <Button size="sm" disabled={accounts.length === 0}>
+                <SendIcon />
+                Шилжүүлэг
+              </Button>
+            }
+          />
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/bank/transfers" search={{ bond_issuer_id: issuer.id }}>
+              Шилжүүлгүүд
+            </Link>
+          </Button>
+          <BankAccountDialog
+            trigger={
+              <Button size="sm" variant="outline">
+                <PlusIcon />
+                Нэмэх
+              </Button>
+            }
+            onSubmit={(body) =>
+              act(() => addIssuerBankAccount(issuer.id, body), 'Данс нэмэгдлээ')
+            }
+          />
+        </CardAction>
       </CardHeader>
       <CardContent className="grid gap-3 lg:grid-cols-2">
-        {issuer.bank_accounts.length === 0 ? (
+        {accounts.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-8 text-center lg:col-span-2">
             <LandmarkIcon className="size-5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -472,9 +500,9 @@ function BankAccountsCard({ issuer, act }: { issuer: IssuerType; act: Act }) {
             </p>
           </div>
         ) : (
-          issuer.bank_accounts.map((a) => (
+          accounts.map((a) => (
             <BankAccountItem
-              key={a.currency}
+              key={a.id}
               issuerId={issuer.id}
               account={a}
               act={act}
@@ -495,31 +523,72 @@ function BankAccountItem({
   account: IssuerBankAccountType;
   act: Act;
 }) {
-  const status = bankStatusLabel[a.status];
+  const queryClient = useQueryClient();
+  const [verifying, setVerifying] = useState(false);
+
+  async function verify() {
+    setVerifying(true);
+    try {
+      const checked = await verifyIssuerBankAccount(issuerId, a.id);
+      const label = bankStatusLabel[checked.status].label;
+      showToast(
+        checked.status === 'verified' ? 'success' : 'warning',
+        `Шалгалтын үр дүн: ${label}`,
+      );
+    } catch (err) {
+      showToast('error', toApiError(err).message);
+    } finally {
+      setVerifying(false);
+      await queryClient.invalidateQueries({ queryKey: issuerKeys.all });
+    }
+  }
+
   return (
     <div className="rounded-xl border p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-2 font-medium">
-          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs">
-            {a.currency}
-          </span>
+          <CurrencyTag currency={a.currency} />
           {a.bank_name}
         </p>
-        <span
-          className={cn(
-            'rounded-full px-2 py-0.5 text-[11px] font-medium',
-            status.className,
-          )}
-        >
-          {status.label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {a.is_default && <DefaultBadge />}
+          <BankStatusBadge status={a.status} />
+        </div>
       </div>
       <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
         <InfoItem label="Данс эзэмшигч" value={a.account_name} />
         <InfoItem label="Дансны дугаар" value={a.account_number} mono />
         <InfoItem label="IBAN" value={a.iban} mono />
       </dl>
-      <div className="mt-3 flex justify-end gap-1">
+      <div className="mt-3 flex flex-wrap justify-end gap-1">
+        {!a.is_default && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              void act(
+                () => setDefaultIssuerBankAccount(issuerId, a.id),
+                'Үндсэн данс солигдлоо',
+              ).catch(() => {})
+            }
+          >
+            <StarIcon />
+            Үндсэн болгох
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={verifying}
+          onClick={() => void verify()}
+        >
+          {verifying ? (
+            <Loader2Icon className="animate-spin" />
+          ) : (
+            <ShieldCheckIcon />
+          )}
+          Банкаар шалгах
+        </Button>
         <BankAccountDialog
           account={a}
           trigger={
@@ -528,9 +597,9 @@ function BankAccountItem({
               Засах
             </Button>
           }
-          onSubmit={(currency, body) =>
+          onSubmit={(body) =>
             act(
-              () => putIssuerBankAccount(issuerId, currency, body),
+              () => updateIssuerBankAccount(issuerId, a.id, body),
               'Данс хадгалагдлаа',
             )
           }
@@ -543,11 +612,15 @@ function BankAccountItem({
             </Button>
           }
           title={`${a.currency} дансыг устгах уу?`}
-          description={`${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана.`}
+          description={
+            a.is_default
+              ? `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана. Энэ валютын өөр данс байвал түүнийг үндсэн болгоно.`
+              : `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана.`
+          }
           confirmLabel="Устгах"
           onConfirm={() =>
             act(
-              () => deleteIssuerBankAccount(issuerId, a.currency),
+              () => deleteIssuerBankAccount(issuerId, a.id),
               'Данс устгагдлаа',
             )
           }

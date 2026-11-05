@@ -24,6 +24,19 @@ const statuses: Record<
     className: 'bg-muted text-muted-foreground',
     Icon: CircleHelpIcon,
   },
+  unmatched: {
+    className: 'bg-muted text-muted-foreground',
+    Icon: CircleHelpIcon,
+  },
+  short_paid: {
+    className: 'bg-warning/15 text-warning-foreground dark:text-warning',
+    Icon: ClockIcon,
+  },
+  over_paid: {
+    className: 'bg-warning/15 text-warning-foreground dark:text-warning',
+    Icon: ClockIcon,
+  },
+  matched: { className: 'bg-success/12 text-success', Icon: CircleCheckIcon },
 };
 
 export function TransferStatusBadge({

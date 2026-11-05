@@ -25,15 +25,20 @@ export const ClientSummarySchema = z.object({
 });
 
 export const BankAccountSchema = z.object({
+  id: z.string(),
   bank_name: z.string(),
   account_number: z.string(),
   iban: z.string(),
   /** The name the account is held in: the person's, or the organization's. */
   holder_account_name: z.string(),
+  currency: z.enum(['MNT', 'USD']).optional(),
   status: z
     .enum(['unverified', 'verified', 'mismatch', 'not_found'])
     .optional(),
+  /** The currency's default: its payments go here unless an admin picks another. */
+  is_default: z.boolean(),
 });
+export type ClientBankAccountType = z.infer<typeof BankAccountSchema>;
 
 export const TaxExemptStatusSchema = z.enum([
   'requested',
@@ -64,7 +69,13 @@ export const ClientSchema = z.object({
   activity: z.string().optional(),
   tax_exempt_status: TaxExemptStatusSchema.optional(),
   tax_exempt_reviewed_at: z.string().optional(),
+  /** The MNT default, else another default: the one contracts print. */
   bank_account: BankAccountSchema.optional(),
+  /** Every account payments can go to, each currency's default first. */
+  bank_accounts: z
+    .array(BankAccountSchema)
+    .nullish()
+    .transform((v) => v ?? []),
   org_id: z.string().optional(),
   org_name: z.string().optional(),
   position: z.string().optional(),

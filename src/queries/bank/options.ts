@@ -1,9 +1,20 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
-import { getStatement, getTransfer, getTransfers } from './query';
+import {
+  getCompanyAccounts,
+  getStatement,
+  getTransfer,
+  getTransfers,
+} from './query';
 import type { StatementFilters, TransferFilters } from './type';
 
 export const bankKeys = {
   all: ['bank'] as const,
+  companyAccounts: (activeOnly?: boolean) =>
+    [
+      ...bankKeys.all,
+      'company-accounts',
+      { activeOnly: !!activeOnly },
+    ] as const,
   statements: () => [...bankKeys.all, 'statement'] as const,
   statement: (f: StatementFilters) => [...bankKeys.statements(), f] as const,
   transfers: () => [...bankKeys.all, 'transfer'] as const,
@@ -11,6 +22,15 @@ export const bankKeys = {
     [...bankKeys.transfers(), 'list', f] as const,
   transfer: (id: string) => [...bankKeys.transfers(), 'detail', id] as const,
 };
+
+export function companyAccountsOptions(activeOnly?: boolean) {
+  return queryOptions({
+    queryKey: bankKeys.companyAccounts(activeOnly),
+    queryFn: () => getCompanyAccounts(activeOnly),
+    select: (d) => d.items,
+    staleTime: 1000 * 60,
+  });
+}
 
 export function statementOptions(f: StatementFilters) {
   return queryOptions({

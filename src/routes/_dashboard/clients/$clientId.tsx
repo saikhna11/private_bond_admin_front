@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
-  BadgeCheckIcon,
   BanIcon,
   CircleCheckIcon,
   CircleXIcon,
@@ -15,6 +14,11 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import {
+  BankStatusBadge,
+  CurrencyTag,
+  DefaultBadge,
+} from '@/components/bank/account-badges';
 import { TransferDialog } from '@/components/bank/transfer-dialog';
 import { RejectDialog } from '@/components/client/reject-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -57,6 +61,7 @@ import {
   unblockClient,
 } from '@/queries/client/query';
 import {
+  type ClientBankAccountType,
   type ClientDetailType,
   clientTypeLabel,
   type TaxExemptStatus,
@@ -405,107 +410,99 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
   );
 }
 
-/** The account bond payments go to: an individual's, or an organization's in its name. */
+/** The accounts bond payments go to: an individual's, or an organization's in its name. */
 function BankAccount({ c }: { c: ClientDetailType }) {
-  const b = c.bank_account;
+  const accounts = c.bank_accounts;
   const organization = c.type === 'organization';
-  const holder = b?.holder_account_name ?? '';
   const owner = organization
     ? (c.name ?? '')
     : [c.last_name, c.first_name].filter(Boolean).join(' ');
-  // Worth a look in review: payments to someone else's account.
-  const differs = !!b && holder.trim().toLowerCase() !== owner.toLowerCase();
-  const verified = b?.status === 'verified';
-  const reason = b?.status ? verificationError[b.status] : undefined;
 
   return (
     <>
       <h3 className="mt-8 mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Банкны данс
       </h3>
-      {b ? (
+      {accounts.length > 0 ? (
         <>
-          <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-            <Info label="Банк" value={b.bank_name} />
-            <Info label="Дансны дугаар" value={b.account_number} mono />
-            <Info label="IBAN" value={b.iban.toUpperCase()} mono />
-            <div className="space-y-1">
-              <Info label="Эзэмшигч" value={holder} />
-              {differs && (
-                <p className="flex items-center gap-1 text-xs text-warning-foreground dark:text-warning">
-                  <TriangleAlertIcon className="size-3.5" />
-                  Харилцагчийн нэртэй ({owner}) таарахгүй байна
-                </p>
-              )}
-            </div>
-          </dl>
-
-          {organization ? (
-            <p className="mt-4 text-sm text-muted-foreground">
-              Байгууллагын дансыг банкаар шалгах, шилжүүлэг илгээх боломж
-              удахгүй нэмэгдэнэ.
-            </p>
-          ) : (
-            <>
-              <div
-                className={
-                  verified
-                    ? 'mt-4 flex items-start gap-3 rounded-xl border border-success/30 bg-success/5 p-4'
-                    : 'mt-4 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/5 p-4'
-                }
-              >
-                <span
-                  className={
-                    verified
-                      ? 'flex size-9 shrink-0 items-center justify-center rounded-lg bg-success/12 text-success'
-                      : 'flex size-9 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-foreground dark:text-warning'
-                  }
-                >
-                  {verified ? (
-                    <BadgeCheckIcon className="size-4.5" />
-                  ) : (
-                    <ShieldAlertIcon className="size-4.5" />
-                  )}
-                </span>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <p className="text-sm font-medium">
-                    {verified
-                      ? 'Данс банкны бүртгэлээр баталгаажсан'
-                      : 'Данс баталгаажаагүй'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {verified
-                      ? 'Шилжүүлэг хийх боломжтой.'
-                      : reason
-                        ? reason
-                        : 'Эхний шилжүүлгийн өмнө банкны CAM-аар автоматаар шалгана.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <TransferDialog
-                  initialUserId={c.id}
-                  trigger={
-                    <Button>
-                      <SendIcon />
-                      Шилжүүлэг илгээх
-                    </Button>
-                  }
-                />
-                <Button variant="outline" asChild>
-                  <Link to="/bank/transfers" search={{ user_id: c.id }}>
-                    Шилжүүлгүүд
-                  </Link>
+          <div className="grid gap-3">
+            {accounts.map((b) => (
+              <ClientBankAccountItem key={b.id} account={b} owner={owner} />
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Шилжүүлэг өөр данс сонгоогүй бол тухайн валютын үндсэн данс руу
+            очно. Баталгаажаагүй дансыг эхний шилжүүлгийн өмнө банкны CAM-аар
+            автоматаар шалгана.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <TransferDialog
+              initialUserId={c.id}
+              trigger={
+                <Button>
+                  <SendIcon />
+                  Шилжүүлэг илгээх
                 </Button>
-              </div>
-            </>
-          )}
+              }
+            />
+            <Button variant="outline" asChild>
+              <Link to="/bank/transfers" search={{ user_id: c.id }}>
+                Шилжүүлгүүд
+              </Link>
+            </Button>
+          </div>
         </>
       ) : (
         <p className="text-sm text-muted-foreground">Банкны данс оруулаагүй.</p>
       )}
     </>
+  );
+}
+
+/** One of the client's accounts with its default flag and the bank's check. */
+function ClientBankAccountItem({
+  account: b,
+  owner,
+}: {
+  account: ClientBankAccountType;
+  owner: string;
+}) {
+  const holder = b.holder_account_name;
+  // Worth a look in review: payments to someone else's account.
+  const differs = holder.trim().toLowerCase() !== owner.toLowerCase();
+  const reason = b.status ? verificationError[b.status] : undefined;
+  return (
+    <div className="rounded-xl border p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 font-medium">
+          <CurrencyTag currency={b.currency ?? 'MNT'} />
+          {b.bank_name}
+        </p>
+        <div className="flex items-center gap-1.5">
+          {b.is_default && <DefaultBadge />}
+          <BankStatusBadge status={b.status} />
+        </div>
+      </div>
+      <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-3">
+        <Info label="Дансны дугаар" value={b.account_number} mono />
+        <Info label="IBAN" value={b.iban.toUpperCase()} mono />
+        <div className="space-y-1">
+          <Info label="Эзэмшигч" value={holder} />
+          {differs && (
+            <p className="flex items-center gap-1 text-xs text-warning-foreground dark:text-warning">
+              <TriangleAlertIcon className="size-3.5" />
+              Харилцагчийн нэртэй ({owner}) таарахгүй байна
+            </p>
+          )}
+        </div>
+      </dl>
+      {reason && (
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+          <ShieldAlertIcon className="size-3.5" />
+          {reason}
+        </p>
+      )}
+    </div>
   );
 }
 

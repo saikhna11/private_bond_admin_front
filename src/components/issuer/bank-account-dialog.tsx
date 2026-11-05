@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { FormField } from '@/components/common/form-field';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
@@ -17,11 +18,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FieldGroup } from '@/components/ui/field';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
 import type {
-  Currency,
   IssuerBankAccountBody,
   IssuerBankAccountType,
 } from '@/queries/issuer/type';
@@ -31,31 +32,28 @@ import {
   emptyBankAccount,
 } from './bank-account-fields';
 
-const schema = bankAccountSchema.extend({ currency: z.enum(['MNT', 'USD']) });
+const schema = bankAccountSchema.extend({
+  currency: z.enum(['MNT', 'USD']),
+  is_default: z.boolean(),
+});
 type Values = z.input<typeof schema>;
 
-/** Adds an issuer's account in a currency, or changes the one it has. */
+/**
+ * Adds one of an issuer's accounts (any number per currency), or replaces one by its id.
+ * A changed field puts the account back to unverified.
+ */
 export function BankAccountDialog({
   account,
-  takenCurrencies,
   trigger,
   onSubmit,
 }: {
   /** The account to change; leave out to add one. */
   account?: IssuerBankAccountType;
-  /** Currencies that already have an account, when adding. */
-  takenCurrencies?: Currency[];
   trigger: ReactNode;
-  onSubmit: (
-    currency: Currency,
-    body: IssuerBankAccountBody,
-  ) => Promise<unknown>;
+  onSubmit: (body: IssuerBankAccountBody) => Promise<unknown>;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const free = (['MNT', 'USD'] as const).filter(
-    (c) => !takenCurrencies?.includes(c),
-  );
   const defaults = (): Values =>
     account
       ? {
@@ -64,8 +62,9 @@ export function BankAccountDialog({
           account_number: account.account_number,
           iban: account.iban,
           account_name: account.account_name,
+          is_default: account.is_default,
         }
-      : { currency: free[0] ?? 'MNT', ...emptyBankAccount };
+      : { currency: 'MNT', is_default: false, ...emptyBankAccount };
   const form = useForm<Values, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: defaults(),
@@ -75,11 +74,16 @@ export function BankAccountDialog({
   async function submit(v: z.output<typeof schema>) {
     setError(null);
     try {
-      const { currency, ...body } = v;
-      await onSubmit(currency, body);
+      const { is_default, ...body } = v;
+      // is_default is ignored on a replace; the default is changed on its own.
+      await onSubmit(account ? body : { ...body, is_default });
       setOpen(false);
     } catch (err) {
       const e = toApiError(err);
+      if (e.code === 'issuer.bank_account_exists') {
+        form.setError('iban', { message: e.message });
+        return;
+      }
       if (
         applyFieldErrors(e, form.setError, {
           bank_name: 'bank_name',
@@ -114,37 +118,40 @@ export function BankAccountDialog({
         >
           <DialogHeader>
             <DialogTitle>
-              {account ? `${account.currency} данс засах` : 'Банкны данс нэмэх'}
+              {account ? 'Банкны данс засах' : 'Банкны данс нэмэх'}
             </DialogTitle>
             <DialogDescription>
-              Бондоор босгосон хөрөнгө энэ дансанд шилжинэ. Валют тус бүрд нэг
-              данс. Мэдээлэл өөрчлөгдвөл данс дахин баталгаажаагүй төлөвт орно.
+              Бондоор босгосон хөрөнгө энэ дансанд шилжинэ. Валют бүрд хэдэн ч
+              данс бүртгэж болох ба нэг нь үндсэн данс байна. Мэдээлэл
+              өөрчлөгдвөл данс дахин баталгаажаагүй төлөвт орно.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="gap-4">
-            {!account && (
-              <FormField id="currency" label="Валют">
-                <Controller
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <Tabs value={field.value} onValueChange={field.onChange}>
-                      <TabsList>
-                        {(['MNT', 'USD'] as const).map((c) => (
-                          <TabsTrigger
-                            key={c}
-                            value={c}
-                            disabled={!free.includes(c)}
-                          >
-                            {c}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-                  )}
-                />
-              </FormField>
-            )}
+            <FormField
+              id="currency"
+              label="Валют"
+              hint={
+                account?.is_default
+                  ? 'Валют солибол энэ данс үндсэн данс байхаа болино.'
+                  : undefined
+              }
+            >
+              <Controller
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <Tabs value={field.value} onValueChange={field.onChange}>
+                    <TabsList>
+                      {(['MNT', 'USD'] as const).map((c) => (
+                        <TabsTrigger key={c} value={c}>
+                          {c}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                )}
+              />
+            </FormField>
             <BankAccountFields
               register={(n) => form.register(n)}
               bankName={form.watch('bank_name')}
@@ -154,6 +161,24 @@ export function BankAccountDialog({
               errors={errors}
               prefix="account_"
             />
+            {!account && (
+              <div className="flex items-center gap-2">
+                <Controller
+                  control={form.control}
+                  name="is_default"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="account_is_default"
+                      checked={field.value}
+                      onCheckedChange={(c) => field.onChange(c === true)}
+                    />
+                  )}
+                />
+                <Label htmlFor="account_is_default" className="text-sm">
+                  Энэ валютын үндсэн данс болгох
+                </Label>
+              </div>
+            )}
           </FieldGroup>
           <ApiErrorAlert error={error} />
           <DialogFooter>
