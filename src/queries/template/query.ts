@@ -2,7 +2,6 @@ import * as z from 'zod';
 import fetchAndValidate, { adminApi, toApiError } from '@/lib/fetcher';
 import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
 import {
-  ContractProductSchema,
   ContractVariableSchema,
   type FieldMappingBody,
   TemplateDetailSchema,
@@ -14,15 +13,12 @@ import {
 // An upload carries a .docx of up to 5 MB, base64-encoded.
 const uploadTimeout = 60_000;
 
-export const getContractProducts = () =>
-  fetchAndValidate('contract-products', z.array(ContractProductSchema));
-
 export const getContractVariables = () =>
   fetchAndValidate('contract-variables', z.array(ContractVariableSchema));
 
 export const getTemplates = (f: TemplateFilters) =>
   fetchAndValidate(
-    `contract-templates${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, product: f.product })}`,
+    `contract-templates${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, bond_id: f.bond_id })}`,
     pageSchema(TemplateSummarySchema),
   );
 

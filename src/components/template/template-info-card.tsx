@@ -16,7 +16,7 @@ import {
 import { TemplateStatusBadge } from './template-status-badge';
 import { TtdBadge } from './ttd-badge';
 
-/** The template's name, product and status, with its actions. */
+/** The template's name, bond and status, with its actions. */
 export function TemplateInfoCard({
   t,
   actions,
@@ -49,7 +49,7 @@ export function TemplateInfoCard({
               {t.ttd && <TtdBadge />}
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="font-mono">{t.product}</span> ·{' '}
+              <span className="font-mono">{t.bond_code}</span> ·{' '}
               {ownershipLabel[t.ownership_type]} · {languageLabel[t.language]} ·
               оруулсан {formatDateTime(t.created_at)}
               {t.contracts > 0 && (

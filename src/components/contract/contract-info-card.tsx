@@ -1,7 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatDateTime } from '@/lib/format';
-import type { AdminContractDetailType } from '@/queries/contract/type';
+import { formatDate, formatDateTime } from '@/lib/format';
+import {
+  type AdminContractDetailType,
+  paymentSourceLabel,
+} from '@/queries/contract/type';
 import { languageLabel, ownershipLabel } from '@/queries/template/type';
 import { ContractDocumentButton } from './contract-document-button';
 import { ContractStatusBadge } from './contract-status-badge';
@@ -10,8 +13,8 @@ import { ContractStatusNote } from './contract-status-note';
 import { InfoItem } from './info-item';
 
 /**
- * The contract's number and status, its kind, template and the template's language, and its
- * dates, with its PDF download.
+ * The contract's number and status, its kind, template and the template's language, its
+ * payment and dates, with its PDF download.
  */
 export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
   return (
@@ -26,7 +29,7 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
           </div>
           <ContractDocumentButton c={c} />
         </div>
-        <dl className="grid gap-x-6 gap-y-4 border-t pt-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <dl className="grid gap-x-6 gap-y-4 border-t pt-5 sm:grid-cols-2 lg:grid-cols-3">
           <InfoItem
             label="Төрөл"
             value={`${ownershipLabel[c.ownership_type]}${c.template.ttd ? ' · ТТД' : ''}`}
@@ -44,6 +47,14 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
             }
           />
           <InfoItem label="Хэл" value={languageLabel[c.template.language]} />
+          <InfoItem
+            label="Төлбөр орсон"
+            value={
+              c.paid_on && c.payment_source
+                ? `${formatDate(c.paid_on)} · ${paymentSourceLabel[c.payment_source]}`
+                : 'Төлөгдөөгүй'
+            }
+          />
           <InfoItem label="Үүссэн огноо" value={formatDateTime(c.created_at)} />
           <ContractStatusDate c={c} />
         </dl>

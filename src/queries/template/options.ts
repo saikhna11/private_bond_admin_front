@@ -1,17 +1,11 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
-import {
-  getContractProducts,
-  getContractVariables,
-  getTemplate,
-  getTemplates,
-} from './query';
+import { getContractVariables, getTemplate, getTemplates } from './query';
 import type { TemplateFilters } from './type';
 
 export const templateKeys = {
   all: ['templates'] as const,
   list: (f: TemplateFilters) => [...templateKeys.all, 'list', f] as const,
   detail: (id: string) => [...templateKeys.all, 'detail', id] as const,
-  products: ['contract-products'] as const,
   variables: ['contract-variables'] as const,
 };
 
@@ -28,15 +22,6 @@ export function templateOptions(id: string) {
   return queryOptions({
     queryKey: templateKeys.detail(id),
     queryFn: () => getTemplate(id),
-  });
-}
-
-// The products change only with a backend release.
-export function contractProductsOptions() {
-  return queryOptions({
-    queryKey: templateKeys.products,
-    queryFn: getContractProducts,
-    staleTime: 1000 * 60 * 30,
   });
 }
 

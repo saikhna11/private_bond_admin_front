@@ -3,8 +3,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { UploadIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
-import { FilterSelect, Pagination } from '@/components/common/list-parts';
+import { Pagination } from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
+import { BondCombobox } from '@/components/template/bond-combobox';
 import { TemplateListTable } from '@/components/template/template-list-table';
 import { UploadTemplateDialog } from '@/components/template/upload-template-dialog';
 import { Button } from '@/components/ui/button';
@@ -12,11 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PAGE_SIZE } from '@/lib/types';
 import { showToast } from '@/lib/utils';
-import {
-  contractProductsOptions,
-  templateKeys,
-  templatesOptions,
-} from '@/queries/template/options';
+import { templateKeys, templatesOptions } from '@/queries/template/options';
 import {
   type TemplateFilters,
   TemplateStatusSchema,
@@ -25,7 +22,7 @@ import {
 const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
   status: TemplateStatusSchema.optional().catch(undefined),
-  product: z.string().optional().catch(undefined),
+  bond_id: z.guid().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_dashboard/templates/')({
@@ -40,7 +37,6 @@ function TemplatesPage() {
   const { data, isPending, error, isPlaceholderData } = useQuery(
     templatesOptions(search),
   );
-  const { data: products } = useQuery(contractProductsOptions());
   const setFilter = useCallback(
     (patch: Partial<TemplateFilters>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
@@ -91,14 +87,11 @@ function TemplatesPage() {
               <TabsTrigger value="inactive">Идэвхгүй</TabsTrigger>
             </TabsList>
           </Tabs>
-          <FilterSelect
-            value={search.product}
-            onChange={(product) => setFilter({ product })}
-            allLabel="Бүх бүтээгдэхүүн"
-            options={(products ?? []).map((p) => ({
-              value: p.name,
-              label: p.name,
-            }))}
+          <BondCombobox
+            value={search.bond_id ?? ''}
+            onChange={(id) => setFilter({ bond_id: id || undefined })}
+            allLabel="Бүх бонд"
+            className="sm:w-56"
           />
         </div>
         <TemplateListTable

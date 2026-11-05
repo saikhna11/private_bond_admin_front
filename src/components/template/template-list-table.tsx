@@ -79,7 +79,7 @@ export function TemplateListTable({
               <TableCell>{ownershipLabel[t.ownership_type]}</TableCell>
               <TableCell>
                 <span className="inline-flex rounded-md bg-muted px-2 py-1 text-sm font-medium">
-                  {t.product}
+                  {t.bond_code}
                 </span>
               </TableCell>
               <TableCell className="text-center">

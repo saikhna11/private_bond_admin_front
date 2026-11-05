@@ -68,6 +68,7 @@ export const partyTypeLabel: Record<PartyType, string> = {
 
 export const InterestFrequencySchema = z.enum([
   'monthly',
+  'bimonthly',
   'quarterly',
   'semi_annual',
   'annual',
@@ -77,6 +78,7 @@ export type InterestFrequency = z.infer<typeof InterestFrequencySchema>;
 
 export const interestFrequencyLabel: Record<InterestFrequency, string> = {
   monthly: 'Сар бүр',
+  bimonthly: '2 сар тутам',
   quarterly: 'Улирал бүр',
   semi_annual: 'Хагас жил тутам',
   annual: 'Жил бүр',
@@ -118,6 +120,9 @@ export const AdminContractDetailSchema = z.object({
   repayment_account_no: z.string(),
   repayment_iban: z.string(),
   repayment_owner: z.string(),
+  /** The day the payment came in, which numbered and started it; absent until paid. */
+  paid_on: z.string().optional(),
+  payment_source: z.enum(['mock', 'admin', 'payment']).optional(),
   signature_deadline: z.string().optional(),
   cancel_reason: z.enum(['declined', 'expired']).optional(),
   cancelled_at: z.string().optional(),
@@ -134,6 +139,16 @@ export const AdminContractDetailSchema = z.object({
   render_error: z.string().optional(),
 });
 export type AdminContractDetailType = z.infer<typeof AdminContractDetailSchema>;
+
+export type PaymentSource = NonNullable<
+  AdminContractDetailType['payment_source']
+>;
+
+export const paymentSourceLabel: Record<PaymentSource, string> = {
+  mock: 'Туршилтын төлбөр',
+  admin: 'Ажилтан тэмдэглэсэн',
+  payment: 'Дансны хуулга',
+};
 
 export interface ContractFilters {
   page?: number;

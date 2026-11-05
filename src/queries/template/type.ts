@@ -40,12 +40,6 @@ export const ownershipOrder: OwnershipType[] = [
   'organization',
 ];
 
-/** A product templates are uploaded for, of any ownership type. */
-export const ContractProductSchema = z.object({
-  name: z.string(),
-});
-export type ContractProductType = z.infer<typeof ContractProductSchema>;
-
 /**
  * A value of a contract a placeholder can be mapped to; a row one repeats the schedule's row.
  * A field one reads a field of the contract or of a party (source, field) in a format; a
@@ -71,11 +65,8 @@ export const ContractVariableSchema = z.object({
 });
 export type ContractVariableType = z.infer<typeof ContractVariableSchema>;
 
-// z.guid, not z.uuid: the sample bonds and issuers have ids such as
-// 00000000-0000-0000-0000-000000000101, which carry no RFC 4122 version.
 const templateFields = {
   id: z.guid(),
-  user_id: z.guid(),
   bond_id: z.guid(),
   ownership_type: OwnershipTypeSchema,
   language: LanguageSchema,
@@ -89,7 +80,7 @@ const templateFields = {
 
 export const TemplateSummarySchema = z.object({
   ...templateFields,
-  product: z.string(),
+  bond_code: z.string(),
   fields: z.number(),
   mapped: z.number(),
 });
@@ -109,7 +100,7 @@ export type TemplateFieldType = z.infer<typeof TemplateFieldSchema>;
 
 export const TemplateDetailSchema = z.object({
   ...templateFields,
-  product: z.string(),
+  bond_code: z.string(),
   created_by: z.guid().optional(),
   fields: z.array(TemplateFieldSchema),
   pictures: z.array(
@@ -130,7 +121,7 @@ export const templateEditable = (t: TemplateDetailType) =>
   t.status === 'draft' && t.contracts === 0;
 
 export interface UploadTemplateBody {
-  product: string;
+  bond_id: string;
   ownership_type: OwnershipType;
   language: Language;
   ttd: boolean;
@@ -150,7 +141,7 @@ export interface FieldMappingBody {
 export interface TemplateFilters {
   page?: number;
   status?: TemplateStatus;
-  product?: string;
+  bond_id?: string;
 }
 
 /** The ownership types whose contracts name each party a variable reads. */

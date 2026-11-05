@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
 import { Loader2Icon } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { FormField } from '@/components/common/form-field';
+import { BondCombobox } from '@/components/template/bond-combobox';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -30,7 +30,6 @@ import {
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { fileToBase64, MAX_TEMPLATE_BYTES } from '@/lib/file';
 import { applyFieldErrors } from '@/lib/form-errors';
-import { contractProductsOptions } from '@/queries/template/options';
 import { uploadTemplate } from '@/queries/template/query';
 import {
   type Language,
@@ -44,7 +43,7 @@ import {
 
 const schema = z.object({
   ownership_type: z.enum(ownershipOrder, { message: 'Төрлөө сонгоно уу' }),
-  product: z.string().min(1, 'Бүтээгдэхүүнээ сонгоно уу'),
+  bond_id: z.string().min(1, 'Бондоо сонгоно уу'),
   language: LanguageSchema,
   ttd: z.boolean(),
   name: z.string().trim().min(1, 'Загварын нэрээ оруулна уу').max(200),
@@ -60,7 +59,7 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-/** Uploads a .docx as a new draft template of a product and ownership type. */
+/** Uploads a .docx as a new draft template of a bond and ownership type. */
 export function UploadTemplateDialog({
   trigger,
   onUploaded,
@@ -70,10 +69,9 @@ export function UploadTemplateDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const { data: products } = useQuery(contractProductsOptions());
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { product: '', language: 'mn', ttd: false, name: '' },
+    defaultValues: { bond_id: '', language: 'mn', ttd: false, name: '' },
   });
   const { errors, isSubmitting } = form.formState;
 
@@ -81,7 +79,7 @@ export function UploadTemplateDialog({
     setError(null);
     try {
       const t = await uploadTemplate({
-        product: values.product,
+        bond_id: values.bond_id,
         ownership_type: values.ownership_type,
         language: values.language,
         ttd: values.ttd,
@@ -94,7 +92,7 @@ export function UploadTemplateDialog({
       const e = toApiError(err);
       if (
         !applyFieldErrors(e, form.setError, {
-          product: 'product',
+          bond_id: 'bond_id',
           ownership_type: 'ownership_type',
           language: 'language',
           ttd: 'ttd',
@@ -113,7 +111,7 @@ export function UploadTemplateDialog({
       onOpenChange={(o) => {
         setOpen(o);
         if (o) {
-          form.reset({ product: '', language: 'mn', ttd: false, name: '' });
+          form.reset({ bond_id: '', language: 'mn', ttd: false, name: '' });
           setError(null);
         }
       }}
@@ -175,30 +173,20 @@ export function UploadTemplateDialog({
                 />
               </FormField>
               <FormField
-                id="product"
-                label="Бүтээгдэхүүн"
-                error={errors.product?.message}
+                id="bond_id"
+                label="Бонд"
+                error={errors.bond_id?.message}
               >
                 <Controller
                   control={form.control}
-                  name="product"
+                  name="bond_id"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger
-                        id="product"
-                        className="h-10! w-full"
-                        aria-invalid={!!errors.product}
-                      >
-                        <SelectValue placeholder="Сонгох" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products?.map((p) => (
-                          <SelectItem key={p.name} value={p.name}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <BondCombobox
+                      id="bond_id"
+                      value={field.value}
+                      onChange={field.onChange}
+                      invalid={!!errors.bond_id}
+                    />
                   )}
                 />
               </FormField>
