@@ -28,12 +28,16 @@ export function FormField({
   return (
     <Field data-invalid={!!error || undefined} className="gap-2">
       <div className="flex items-center justify-between gap-2">
-        <FieldLabel htmlFor={id}>
+        {/* Optional: one run of text, so a long label wraps with its note. */}
+        <FieldLabel htmlFor={id} className={optional ? 'block' : undefined}>
           {label}
           {optional && (
-            <span className="font-normal text-muted-foreground">
-              (заавал биш)
-            </span>
+            <>
+              {' '}
+              <span className="ml-1 font-normal text-muted-foreground">
+                (заавал биш)
+              </span>
+            </>
           )}
         </FieldLabel>
         {action}

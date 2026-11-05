@@ -15,7 +15,6 @@ import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { PageTitle } from '@/components/common/page-title';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FieldLegend, FieldSet } from '@/components/ui/field';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
 import { showToast } from '@/lib/utils';
@@ -62,20 +61,27 @@ function NewBondPage() {
         title="Бонд бүртгэх"
         description="Бонд ноорог болж хадгалагдана: харилцагчид харагдахгүй. Нүүр зураг, танилцуулгын файлаа оруулж шалгаад нийтэлнэ."
       />
-      <Card className="w-full max-w-4xl">
-        <CardContent>
-          <form
-            onSubmit={form.handleSubmit(submit)}
-            noValidate
-            className="flex flex-col gap-8"
-          >
-            <BondFormFields form={form} />
-            <FieldSet>
-              <FieldLegend>Хүүгийн нөхцөл</FieldLegend>
-              <RateOptionMatrix form={form} />
-            </FieldSet>
-            <ApiErrorAlert error={error} />
-            <div className="flex justify-end gap-2">
+      <form
+        onSubmit={form.handleSubmit(submit)}
+        noValidate
+        className="flex flex-col gap-4"
+      >
+        <Card className="py-0">
+          <CardContent className="p-6">
+            <BondFormFields
+              form={form}
+              rateOptions={<RateOptionMatrix form={form} />}
+            />
+          </CardContent>
+        </Card>
+        {/* The error sits in the bar, so it shows wherever the form is scrolled. */}
+        <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-xl border bg-card/95 px-4 py-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-card/80">
+          <ApiErrorAlert error={error} />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Ноорог болж хадгалагдана
+            </p>
+            <div className="flex gap-2">
               <Button type="button" variant="outline" asChild>
                 <Link to="/bonds">Болих</Link>
               </Button>
@@ -86,9 +92,9 @@ function NewBondPage() {
                 Бүртгэх
               </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </form>
     </>
   );
 }

@@ -40,7 +40,7 @@ export function TermSelect({
       >
         <SelectValue placeholder="Сонгох" />
       </SelectTrigger>
-      <SelectContent className="max-h-72">
+      <SelectContent position="popper" className="max-h-72">
         {choices.map((t) => (
           <SelectItem key={t} value={String(t)}>
             {t} сар

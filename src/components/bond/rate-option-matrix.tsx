@@ -1,7 +1,6 @@
 import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { Controller, type UseFormReturn, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -14,6 +13,7 @@ import {
   FrequencySchema,
   frequencyLabel,
 } from '@/queries/bond/type';
+import { PercentInput } from './percent-input';
 import { snapTerm } from './rate-option-rules';
 import { TermSelect } from './term-select';
 import { type BondFormValues, emptyRateOption } from './use-bond-form';
@@ -48,11 +48,11 @@ export function RateOptionMatrix({
 
   return (
     <div className="@container flex flex-col gap-3">
-      <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_2.5rem] gap-2 px-1 text-xs font-medium text-muted-foreground @2xl:grid">
+      <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_2.5rem] gap-2 text-sm font-medium @xl:grid">
         <span>Хүү төлөх давтамж</span>
         <span>Доод хугацаа</span>
         <span>Дээд хугацаа</span>
-        <span>Жилийн хүү (%)</span>
+        <span>Жилийн хүү</span>
         <span />
       </div>
       {fields.map((f, i) => {
@@ -65,10 +65,10 @@ export function RateOptionMatrix({
         return (
           <div
             key={f.id}
-            className="flex flex-col gap-1 rounded-lg border p-2 @2xl:rounded-none @2xl:border-0 @2xl:p-0"
+            className="flex flex-col gap-1 rounded-lg border p-2 @xl:rounded-none @xl:border-0 @xl:p-0"
           >
-            <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-[1.5fr_1fr_1fr_1fr_2.5rem]">
-              <div className="col-span-2 @2xl:col-span-1">
+            <div className="grid grid-cols-2 gap-2 @xl:grid-cols-[1.5fr_1fr_1fr_1fr_2.5rem]">
+              <div className="col-span-2 @xl:col-span-1">
                 <Select
                   value={frequency}
                   onValueChange={(v) => setFrequency(i, v as Frequency)}
@@ -122,11 +122,9 @@ export function RateOptionMatrix({
                   />
                 )}
               />
-              <Input
-                inputMode="decimal"
-                placeholder="Хүү, жишээ нь 20.50"
+              <PercentInput
+                placeholder="20.50"
                 aria-label="Жилийн хүү (%)"
-                className="tabular h-10"
                 aria-invalid={!!e?.annual_rate}
                 {...form.register(`rate_options.${i}.annual_rate`)}
               />
@@ -134,7 +132,7 @@ export function RateOptionMatrix({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10 justify-self-end @2xl:justify-self-auto"
+                className="size-10 justify-self-end @xl:justify-self-auto"
                 aria-label="Нөхцөл хасах"
                 disabled={fields.length === 1}
                 onClick={() => remove(i)}
