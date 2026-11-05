@@ -1,15 +1,44 @@
+import { Link } from '@tanstack/react-router';
 import { BanknoteIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formatAmount } from '@/lib/format';
 import type { AdminContractDetailType } from '@/queries/contract/type';
 
 /**
- * That a paid contract which ended, declined by the bond issuer's director or expired at
- * their turn, needs its payment refunded: no longer sold, its amount went back to the bond,
- * and finance returns the money by hand.
+ * The money the contract received and must give back, per currency: an order paid over its
+ * amount, money that came after it lapsed, was cancelled or already paid, or a paid contract
+ * that ended unsigned. A contract paid with the test button has no bank money: its note says
+ * finance returns it by hand.
  */
 export function ContractRefundNote({ c }: { c: AdminContractDetailType }) {
-  if (!c.paid_on || (c.status !== 'cancelled' && c.status !== 'expired')) {
+  const due = (c.payment?.money ?? []).filter((m) => Number(m.refundable) > 0);
+  if (due.length > 0) {
+    return (
+      <Alert className="border-warning/40 bg-warning/10">
+        <BanknoteIcon className="text-warning-foreground dark:text-warning" />
+        <AlertTitle className="mb-1">Төлбөрийг буцаах шаардлагатай</AlertTitle>
+        <AlertDescription>
+          <span>
+            Буцаах дүн:{' '}
+            {due.map((m) => formatAmount(m.refundable, m.currency)).join(', ')}.{' '}
+            <Link
+              to="/bank/payments"
+              search={{ tab: 'refund' }}
+              className="font-medium underline"
+            >
+              Анхаарах төлбөр
+            </Link>{' '}
+            хуудаснаас буцаана.
+          </span>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  if (
+    !c.paid_on ||
+    c.payment_source !== 'mock' ||
+    (c.status !== 'cancelled' && c.status !== 'expired')
+  ) {
     return null;
   }
   return (

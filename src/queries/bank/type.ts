@@ -148,6 +148,8 @@ export interface CreateTransferBody {
   purpose?: TransferPurpose;
   amount: string;
   description?: string;
+  /** The contract a refund gives money back for. */
+  contract_id?: string;
 }
 
 export interface CreateCompanyAccountBody {

@@ -35,6 +35,7 @@ import {
 import { toApiError } from '@/lib/fetcher';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import {
   companyAccountsOptions,
   transferOptions,
@@ -274,8 +275,17 @@ function TransfersPage() {
                   <TableCell className="tabular font-mono text-xs whitespace-nowrap">
                     {t.from_account}
                   </TableCell>
-                  <TableCell className="tabular text-right font-medium whitespace-nowrap">
+                  <TableCell
+                    className={cn(
+                      'tabular text-right font-medium whitespace-nowrap',
+                      t.direction === 'inbound' && 'text-success',
+                    )}
+                  >
+                    {t.direction === 'inbound' ? '+' : ''}
                     {formatMoney(t.amount, t.currency)}
+                    <p className="text-xs font-normal text-muted-foreground">
+                      {t.direction === 'inbound' ? 'Орлого' : 'Зарлага'}
+                    </p>
                   </TableCell>
                   <TableCell>
                     <TransferStatusBadge status={t.status} />

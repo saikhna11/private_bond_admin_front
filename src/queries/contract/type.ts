@@ -2,6 +2,7 @@ import z from 'zod';
 import { LanguageSchema, OwnershipTypeSchema } from '@/queries/template/type';
 
 export const ContractStatusSchema = z.enum([
+  'pending_payment',
   'pending_customer_signature',
   'pending_issuer_signature',
   'rendering',
@@ -13,6 +14,7 @@ export const ContractStatusSchema = z.enum([
 export type ContractStatus = z.infer<typeof ContractStatusSchema>;
 
 export const contractStatusLabel: Record<ContractStatus, string> = {
+  pending_payment: 'Төлбөр хүлээж буй',
   pending_customer_signature: 'Харилцагчийн гарын үсэг хүлээж буй',
   pending_issuer_signature: 'Бонд гаргагчийн гарын үсэг хүлээж буй',
   rendering: 'PDF бэлтгэж буй',
@@ -123,6 +125,9 @@ export const AdminContractDetailSchema = z.object({
   /** The day the payment came in, which numbered and started it; absent until paid. */
   paid_on: z.string().optional(),
   payment_source: z.enum(['mock', 'admin', 'payment']).optional(),
+  /** The code its buyer writes in the bank transfer; absent for a contract never ordered. */
+  payment_reference: z.string().optional(),
+  payment_deadline: z.string().optional(),
   signature_deadline: z.string().optional(),
   cancel_reason: z.enum(['declined', 'expired']).optional(),
   cancelled_at: z.string().optional(),
@@ -141,6 +146,25 @@ export const AdminContractDetailSchema = z.object({
   render_error: z.string().optional(),
   /** The underwriter the contract names beside its parties; it does not sign. */
   underwriter: z.string(),
+  /** How it is paid: what came in, per currency what it keeps, gave back and has left to. */
+  payment: z
+    .object({
+      reference: z.string(),
+      deadline: z.string(),
+      amount: z.string(),
+      currency: z.string(),
+      received: z.string(),
+      money: z.array(
+        z.object({
+          currency: z.string(),
+          received: z.string(),
+          kept: z.string(),
+          refunded: z.string(),
+          refundable: z.string(),
+        }),
+      ),
+    })
+    .optional(),
 });
 export type AdminContractDetailType = z.infer<typeof AdminContractDetailSchema>;
 

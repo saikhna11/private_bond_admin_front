@@ -1,6 +1,7 @@
 import type { LinkProps } from '@tanstack/react-router';
 import {
   ArrowLeftRightIcon,
+  BanknoteIcon,
   BracesIcon,
   BriefcaseIcon,
   Building2Icon,
@@ -43,6 +44,11 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Банк',
     items: [
+      {
+        title: 'Анхаарах төлбөр',
+        to: '/bank/payments',
+        icon: BanknoteIcon,
+      },
       { title: 'Хуулга', to: '/bank/statement', icon: ReceiptTextIcon },
       {
         title: 'Шилжүүлэг',

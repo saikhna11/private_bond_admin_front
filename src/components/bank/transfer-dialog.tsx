@@ -101,16 +101,28 @@ interface RecipientAccount {
  * recipient's registered accounts (a client's, or a bond issuer's). The API verifies the
  * account with the bank first when it never was.
  */
+/** A contract's money to give back to its holder. */
+export interface TransferRefund {
+  contractId: string;
+  userId: string;
+  currency: string;
+  amount: string;
+  description: string;
+}
+
 export function TransferDialog({
   trigger,
   initialUserId,
   issuerId,
+  refund,
 }: {
   trigger: ReactNode;
   /** Preselects this client. */
   initialUserId?: string;
   /** Fixes the recipient to this bond issuer. */
   issuerId?: string;
+  /** Gives back a contract's money: its holder, currency, amount and reference, prefilled. */
+  refund?: TransferRefund;
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -121,14 +133,14 @@ export function TransferDialog({
 
   const defaults = (): Values => ({
     recipient_type: issuerId ? 'issuer' : 'client',
-    user_id: initialUserId ?? '',
+    user_id: refund?.userId ?? initialUserId ?? '',
     bond_issuer_id: issuerId ?? '',
-    currency: 'MNT',
+    currency: refund?.currency === 'USD' ? 'USD' : 'MNT',
     to_account_id: '',
     from_account_id: '',
-    purpose: issuerId ? 'payout' : 'other',
-    amount: '',
-    description: '',
+    purpose: refund ? 'refund' : issuerId ? 'payout' : 'other',
+    amount: refund?.amount ?? '',
+    description: refund?.description ?? '',
   });
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -228,6 +240,7 @@ export function TransferDialog({
           purpose: values.purpose,
           amount: values.amount,
           description: values.description || undefined,
+          contract_id: refund?.contractId,
         },
         key,
       );
@@ -300,6 +313,8 @@ export function TransferDialog({
       queryClient.invalidateQueries({ queryKey: bankKeys.all }),
       queryClient.invalidateQueries({ queryKey: clientKeys.all }),
       queryClient.invalidateQueries({ queryKey: issuerKeys.all }),
+      queryClient.invalidateQueries({ queryKey: ['payments'] }),
+      queryClient.invalidateQueries({ queryKey: ['contracts'] }),
     ]);
   }
 

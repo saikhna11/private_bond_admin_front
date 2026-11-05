@@ -3,11 +3,18 @@ import type { AdminContractDetailType } from '@/queries/contract/type';
 import { InfoItem } from './info-item';
 
 /**
- * The date the contract's status turns on: its signing deadline, which a paid contract
- * outlives only while its clients sign, or when it ended.
+ * The date the contract's status turns on: an order's payment deadline, its signing
+ * deadline, which a paid contract outlives only while its clients sign, or when it ended.
  */
 export function ContractStatusDate({ c }: { c: AdminContractDetailType }) {
   switch (c.status) {
+    case 'pending_payment':
+      return (
+        <InfoItem
+          label="Төлөх хугацаа"
+          value={formatDateTime(c.payment_deadline)}
+        />
+      );
     case 'pending_customer_signature':
     case 'pending_issuer_signature':
       if (c.paid_on && c.status === 'pending_customer_signature') return null;

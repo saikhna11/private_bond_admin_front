@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import {
   type AdminContractDetailType,
   paymentSourceLabel,
@@ -58,6 +58,18 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
                 : 'Төлөгдөөгүй'
             }
           />
+          {c.payment && (
+            <InfoItem
+              label="Гүйлгээний утга"
+              value={<span className="tabular">{c.payment.reference}</span>}
+            />
+          )}
+          {c.payment && (
+            <InfoItem
+              label="Орсон төлбөр"
+              value={formatAmount(c.payment.received, c.payment.currency)}
+            />
+          )}
           <InfoItem label="Үүссэн огноо" value={formatDateTime(c.created_at)} />
           <ContractStatusDate c={c} />
         </dl>

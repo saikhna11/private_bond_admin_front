@@ -19,6 +19,7 @@ import { useLogout } from '@/hooks/use-logout';
 import { meOptions } from '@/queries/auth/options';
 import { personInitials, personName } from '@/queries/auth/type';
 import { clientsOptions } from '@/queries/client/options';
+import { paymentCountsOptions } from '@/queries/payment/options';
 import { navGroups } from './nav-items';
 import { SidebarUserMenu } from './sidebar-user-menu';
 
@@ -31,6 +32,12 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
     ...clientsOptions({ status: 'pending' }, 1),
     refetchInterval: 60_000,
   });
+
+  // The payments to look at, next to their menu item.
+  const { data: payments } = useQuery(paymentCountsOptions());
+  const paymentIssues = payments
+    ? payments.unknown + payments.short + payments.refund
+    : 0;
 
   const isActive = (to: string) =>
     to === '/' ? pathname === '/' : pathname.startsWith(to);
@@ -66,6 +73,11 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {item.to === '/bank/payments' && paymentIssues > 0 && (
+                        <SidebarMenuBadge className="rounded-full bg-warning/20 px-1.5 text-warning-foreground dark:text-warning">
+                          {paymentIssues}
+                        </SidebarMenuBadge>
+                      )}
                       {item.to === '/clients' && !!pending?.total && (
                         <SidebarMenuBadge className="rounded-full bg-warning/20 px-1.5 text-warning-foreground dark:text-warning">
                           {pending.total}
