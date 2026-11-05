@@ -1,26 +1,22 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
-import { FormField } from '@/components/common/form-field';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ROW } from './bond-form-row';
-import { BondFormSection } from './bond-form-section';
-import { PercentInput } from './percent-input';
-import type { BondFormValues } from './use-bond-form';
+import { Controller, type UseFormReturn } from "react-hook-form";
+import { FormField } from "@/components/common/form-field";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { BondFormSection } from "./bond-form-section";
+import { PercentInput } from "./percent-input";
+import type { BondFormValues } from "./use-bond-form";
 
-/** Fees, the issuer's payment time, the guarantee and the text customers read. */
 export function BondExtraFields({
   form,
 }: {
   form: UseFormReturn<BondFormValues>;
 }) {
   const { errors } = form.formState;
+
   return (
-    <BondFormSection
-      title="Нэмэлт нөхцөл"
-      description="Шимтгэл, алданги, барьцаа. Бонд гаргагч төлөх өдрөө төлбөрийн цагаас өмнө шилжүүлнэ."
-    >
-      <div className={ROW}>
+    <BondFormSection>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
         <FormField
           id="exit_fee_rate"
           label="Хугацаанаас өмнө гарах шимтгэл"
@@ -29,9 +25,10 @@ export function BondExtraFields({
           <PercentInput
             id="exit_fee_rate"
             aria-invalid={!!errors.exit_fee_rate}
-            {...form.register('exit_fee_rate')}
+            {...form.register("exit_fee_rate")}
           />
         </FormField>
+
         <FormField
           id="penalty_rate"
           label="Алданги, хоногт"
@@ -40,9 +37,10 @@ export function BondExtraFields({
           <PercentInput
             id="penalty_rate"
             aria-invalid={!!errors.penalty_rate}
-            {...form.register('penalty_rate')}
+            {...form.register("penalty_rate")}
           />
         </FormField>
+
         <FormField
           id="issuer_cutoff"
           label="Бонд гаргагчийн төлбөрийн цаг"
@@ -53,9 +51,10 @@ export function BondExtraFields({
             type="time"
             className="h-10"
             aria-invalid={!!errors.issuer_cutoff}
-            {...form.register('issuer_cutoff')}
+            {...form.register("issuer_cutoff")}
           />
         </FormField>
+
         <FormField id="has_guarantee" label="Барьцаа">
           <Controller
             control={form.control}
@@ -76,18 +75,18 @@ export function BondExtraFields({
           />
         </FormField>
       </div>
+
       <FormField
         id="prospectus"
         label="Танилцуулга"
         optional
         error={errors.prospectus?.message}
-        hint="Харилцагчид харагдах текст. Файлыг бонд бүртгэсний дараа оруулна."
       >
         <Textarea
           id="prospectus"
           rows={5}
           aria-invalid={!!errors.prospectus}
-          {...form.register('prospectus')}
+          {...form.register("prospectus")}
         />
       </FormField>
     </BondFormSection>

@@ -4,14 +4,14 @@ import {
   FieldDescription,
   FieldLabel,
   FieldTitle,
-} from '@/components/ui/field';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from "@/components/ui/field";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   type InterestMethod,
   InterestMethodSchema,
   interestMethodHint,
   interestMethodLabel,
-} from '@/queries/bond/type';
+} from "@/queries/bond/type";
 
 /** The ways interest is counted, each a card that says what it does. */
 export function InterestMethodCards({

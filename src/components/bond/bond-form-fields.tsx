@@ -1,16 +1,12 @@
-import type { ReactNode } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
-import { BondAmountFields } from './bond-amount-fields';
-import { BondExtraFields } from './bond-extra-fields';
-import { BondGeneralFields } from './bond-general-fields';
-import { BondInterestFields } from './bond-interest-fields';
-import { BondSaleFields } from './bond-sale-fields';
-import type { BondFormValues } from './use-bond-form';
+import type { ReactNode } from "react";
+import type { UseFormReturn } from "react-hook-form";
+import { BondAmountFields } from "./bond-amount-fields";
+import { BondExtraFields } from "./bond-extra-fields";
+import { BondGeneralFields } from "./bond-general-fields";
+import { BondInterestFields } from "./bond-interest-fields";
+import { BondSaleFields } from "./bond-sale-fields";
+import type { BondFormValues } from "./use-bond-form";
 
-/**
- * A bond's terms (bond.md 3.2) in sections: what it is, its amounts, its interest, its sales and
- * the rest. A new bond's rate options go in the interest section.
- */
 export function BondFormFields({
   form,
   rateOptions,
@@ -19,7 +15,7 @@ export function BondFormFields({
   rateOptions?: ReactNode;
 }) {
   return (
-    <div className="@container/bond-form divide-y">
+    <div className="flex flex-col divide-y divide-border">
       <BondGeneralFields form={form} />
       <BondAmountFields form={form} />
       <BondInterestFields form={form} rateOptions={rateOptions} />

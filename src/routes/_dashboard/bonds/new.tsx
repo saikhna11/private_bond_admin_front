@@ -1,29 +1,29 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeftIcon, Loader2Icon } from 'lucide-react';
-import { useState } from 'react';
-import { BondFormFields } from '@/components/bond/bond-form-fields';
-import { RateOptionMatrix } from '@/components/bond/rate-option-matrix';
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
+import { useState } from "react";
+import { BondFormFields } from "@/components/bond/bond-form-fields";
+import { RateOptionMatrix } from "@/components/bond/rate-option-matrix";
 import {
   type BondFormValues,
   bondBody,
   bondFieldNames,
   rateOptionBodies,
   useBondForm,
-} from '@/components/bond/use-bond-form';
-import { ApiErrorAlert } from '@/components/common/api-error-alert';
-import { PageTitle } from '@/components/common/page-title';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { type ApiError, toApiError } from '@/lib/fetcher';
-import { applyFieldErrors } from '@/lib/form-errors';
-import { showToast } from '@/lib/utils';
-import { bondKeys } from '@/queries/bond/options';
-import { createBond } from '@/queries/bond/query';
+} from "@/components/bond/use-bond-form";
+import { ApiErrorAlert } from "@/components/common/api-error-alert";
+import { PageTitle } from "@/components/common/page-title";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { type ApiError, toApiError } from "@/lib/fetcher";
+import { applyFieldErrors } from "@/lib/form-errors";
+import { showToast } from "@/lib/utils";
+import { bondKeys } from "@/queries/bond/options";
+import { createBond } from "@/queries/bond/query";
 
-export const Route = createFileRoute('/_dashboard/bonds/new')({
+export const Route = createFileRoute("/_dashboard/bonds/new")({
   component: NewBondPage,
-  staticData: { crumb: 'Шинэ бонд' },
+  staticData: { crumb: "Шинэ бонд" },
 });
 
 function NewBondPage() {
@@ -39,9 +39,9 @@ function NewBondPage() {
         ...bondBody(v),
         rate_options: rateOptionBodies(v),
       });
-      showToast('success', 'Бонд ноорог болж хадгалагдлаа');
+      showToast("success", "Бонд ноорог болж хадгалагдлаа");
       await queryClient.invalidateQueries({ queryKey: bondKeys.all });
-      await navigate({ to: '/bonds/$bondId', params: { bondId: d.id } });
+      await navigate({ to: "/bonds/$bondId", params: { bondId: d.id } });
     } catch (err) {
       const e = toApiError(err);
       if (!applyFieldErrors(e, form.setError, bondFieldNames)) setError(e);
