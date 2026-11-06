@@ -11,6 +11,7 @@ import { formatDateTime } from '@/lib/format';
 import {
   type ContractPartyType,
   partyTypeLabel,
+  type UnderwriterType,
 } from '@/queries/contract/type';
 import { PartySignatureState } from './party-signature-state';
 
@@ -29,14 +30,17 @@ function nameOf(p: ContractPartyType) {
 
 /**
  * The people and organizations the contract names, and where each stands on signing, then
- * the underwriter, which it names beside them and which does not sign.
+ * the underwriter, which it names beside them and whose signature it holds from the start,
+ * dated when the contract was made (createdAt).
  */
 export function ContractPartiesCard({
   parties,
   underwriter,
+  createdAt,
 }: {
   parties: ContractPartyType[];
-  underwriter: string;
+  underwriter: UnderwriterType;
+  createdAt: string;
 }) {
   return (
     <Card className="gap-0 py-0">
@@ -77,14 +81,19 @@ export function ContractPartiesCard({
             <TableCell className="pl-4 text-muted-foreground">
               Андеррайтер
             </TableCell>
-            <TableCell className="font-medium">{underwriter}</TableCell>
-            <TableCell>-</TableCell>
-            <TableCell>-</TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              Зурахгүй
+            <TableCell className="font-medium">
+              {underwriter.name} · {underwriter.director_last_name}{' '}
+              {underwriter.director_first_name}
             </TableCell>
-            <TableCell className="pr-4 text-sm text-muted-foreground">
-              -
+            <TableCell className="font-mono text-sm tabular">
+              {underwriter.register_no}
+            </TableCell>
+            <TableCell className="tabular">{underwriter.phone}</TableCell>
+            <TableCell className="text-sm">
+              <span className="font-medium text-success">Зурсан</span>
+            </TableCell>
+            <TableCell className="pr-4 text-sm text-muted-foreground tabular">
+              {formatDateTime(createdAt) || '-'}
             </TableCell>
           </TableRow>
         </TableBody>

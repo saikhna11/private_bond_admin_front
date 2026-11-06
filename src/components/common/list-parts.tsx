@@ -61,6 +61,104 @@ export function SearchInput({
   );
 }
 
+/**
+ * A list's filter row, drawn as the contracts page draws it: the search at the left and the
+ * other filters at the right, one row from sm up. Without a search the filters start at the
+ * left.
+ */
+export function FilterBar({
+  search,
+  children,
+}: {
+  search?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center">
+      {search}
+      {children && (
+        <div
+          className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center ${search ? 'sm:ml-auto sm:justify-end' : ''}`}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A day filter sized as the selects; label names it to screen readers and on hover. */
+export function DateFilter({
+  id,
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value?: string;
+  min?: string;
+  max?: string;
+  onChange: (value: string | undefined) => void;
+}) {
+  return (
+    <Input
+      id={id}
+      type="date"
+      aria-label={label}
+      title={label}
+      value={value ?? ''}
+      min={min}
+      max={max}
+      onChange={(e) => onChange(e.target.value || undefined)}
+      className="h-9 w-full sm:w-40"
+    />
+  );
+}
+
+/** The first and the last day a list's rows were made; either may be left empty. */
+export function DayRangeFilter({
+  id,
+  from,
+  to,
+  onChange,
+}: {
+  id: string;
+  from?: string;
+  to?: string;
+  onChange: (range: { from?: string; to?: string }) => void;
+}) {
+  return (
+    <>
+      <DateFilter
+        id={`${id}-from`}
+        label="Эхлэх өдөр"
+        value={from}
+        max={to}
+        onChange={(v) => onChange({ from: v, to })}
+      />
+      <DateFilter
+        id={`${id}-to`}
+        label="Дуусах өдөр"
+        value={to}
+        min={from}
+        onChange={(v) => onChange({ from, to: v })}
+      />
+    </>
+  );
+}
+
+/** Clears a list's filters; shown only while one is set. */
+export function ClearFilters({ onClear }: { onClear: () => void }) {
+  return (
+    <Button variant="ghost" className="h-9" onClick={onClear}>
+      Шүүлтүүр цэвэрлэх
+    </Button>
+  );
+}
+
 const ALL = '__all';
 
 /** A filter select whose first option clears it. */

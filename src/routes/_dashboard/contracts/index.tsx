@@ -3,6 +3,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import * as z from 'zod';
 import {
+  DayRangeFilter,
+  FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
@@ -25,6 +27,16 @@ const searchSchema = z.object({
   status: ContractStatusSchema.optional().catch(undefined),
   template: z.guid().optional().catch(undefined),
   q: z.string().optional().catch(undefined),
+  from: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .catch(undefined),
+  to: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .catch(undefined),
 });
 
 export const Route = createFileRoute('/_dashboard/contracts/')({
@@ -53,33 +65,40 @@ function ContractsPage() {
         description="Харилцагчдын байгуулсан гэрээ, аль загвараас үүссэнийг харна."
       />
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center">
-          <SearchInput
-            value={search.q ?? ''}
-            onChange={(q) => setFilter({ q: q || undefined })}
-            placeholder="Дугаараар хайх: MFG-26"
+        <FilterBar
+          search={
+            <SearchInput
+              value={search.q ?? ''}
+              onChange={(q) => setFilter({ q: q || undefined })}
+              placeholder="Дугаараар хайх: MFG-26"
+            />
+          }
+        >
+          <FilterSelect
+            value={search.status}
+            onChange={(status) => setFilter({ status })}
+            allLabel="Бүх төлөв"
+            options={ContractStatusSchema.options.map((s) => ({
+              value: s,
+              label: contractStatusLabel[s],
+            }))}
           />
-          <div className="flex flex-col gap-3 sm:ml-auto sm:flex-row">
-            <FilterSelect
-              value={search.status}
-              onChange={(status) => setFilter({ status })}
-              allLabel="Бүх төлөв"
-              options={ContractStatusSchema.options.map((s) => ({
-                value: s,
-                label: contractStatusLabel[s],
-              }))}
-            />
-            <FilterSelect
-              value={search.template}
-              onChange={(template) => setFilter({ template })}
-              allLabel="Бүх загвар"
-              options={(templates?.items ?? []).map((t) => ({
-                value: t.id,
-                label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
-              }))}
-            />
-          </div>
-        </div>
+          <FilterSelect
+            value={search.template}
+            onChange={(template) => setFilter({ template })}
+            allLabel="Бүх загвар"
+            options={(templates?.items ?? []).map((t) => ({
+              value: t.id,
+              label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
+            }))}
+          />
+          <DayRangeFilter
+            id="contracts-days"
+            from={search.from}
+            to={search.to}
+            onChange={(range) => setFilter(range)}
+          />
+        </FilterBar>
         <ContractListTable
           items={data?.items}
           isPending={isPending}

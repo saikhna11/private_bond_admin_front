@@ -4,6 +4,7 @@ import { Building2Icon, PlusIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
 import {
+  FilterBar,
   Pagination,
   SearchInput,
   TableEmpty,
@@ -85,13 +86,15 @@ function IssuersPage() {
       />
 
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-2 border-b p-4 sm:flex-row">
-          <SearchInput
-            value={search.q ?? ''}
-            onChange={setQ}
-            placeholder="Нэр эсвэл регистрийн дугаар"
-          />
-        </div>
+        <FilterBar
+          search={
+            <SearchInput
+              value={search.q ?? ''}
+              onChange={setQ}
+              placeholder="Нэр эсвэл регистрийн дугаар"
+            />
+          }
+        />
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">

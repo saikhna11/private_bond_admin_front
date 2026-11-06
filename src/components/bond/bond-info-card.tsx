@@ -71,6 +71,18 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
               {b.bond_issuer_name} · бүртгэсэн {formatDateTime(b.created_at)}
               {b.updated_at && ` · засварласан ${formatDateTime(b.updated_at)}`}
             </p>
+            {b.requested_at && (
+              <p className="text-sm text-primary">
+                Бонд гаргагчийн хүсэлт
+                {b.requester_name && `: ${b.requester_name}`} ·{' '}
+                {formatDateTime(b.requested_at)}
+              </p>
+            )}
+            {b.reject_reason && (
+              <p className="text-sm text-destructive">
+                Татгалзсан шалтгаан: {b.reject_reason}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <BondStateActions b={b} />

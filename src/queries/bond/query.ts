@@ -16,7 +16,7 @@ const uploadTimeout = 120_000;
 
 export const getBonds = (f: BondFilters) =>
   fetchAndValidate(
-    `bonds${listQuery({ page: f.page, size: PAGE_SIZE, q: f.q })}`,
+    `bonds${listQuery({ page: f.page, size: PAGE_SIZE, q: f.q, issuer: f.issuer, status: f.status, from: f.from, to: f.to })}`,
     pageSchema(BondSchema),
   );
 
@@ -34,6 +34,13 @@ export const setBondState = (id: string, state: ManualState) =>
   fetchAndValidate(`bonds/${id}/state`, BondDetailSchema, {
     method: 'POST',
     body: { state },
+  });
+
+/** Turns down an issuer's request with reason, which the issuer reads. */
+export const rejectBond = (id: string, reason: string) =>
+  fetchAndValidate(`bonds/${id}/reject`, BondDetailSchema, {
+    method: 'POST',
+    body: { reason },
   });
 
 export const addRateOption = (id: string, body: RateOptionBody) =>

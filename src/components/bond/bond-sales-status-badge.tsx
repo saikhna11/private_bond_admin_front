@@ -3,6 +3,7 @@ import {
   CircleDashedIcon,
   CircleOffIcon,
   CirclePauseIcon,
+  CircleXIcon,
   ClockIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,10 @@ const styles: Record<
     Icon: CirclePauseIcon,
   },
   closed: { className: 'bg-muted text-muted-foreground', Icon: CircleOffIcon },
+  rejected: {
+    className: 'bg-destructive/10 text-destructive',
+    Icon: CircleXIcon,
+  },
 };
 
 /** Whether a bond takes purchases today (bond.md 5.1). */

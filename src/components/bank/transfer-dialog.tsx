@@ -1,12 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2Icon, ShieldAlertIcon } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  Loader2Icon,
+  ShieldAlertIcon,
+} from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { FormField } from '@/components/common/form-field';
 import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   Dialog,
   DialogClose,
@@ -19,6 +32,11 @@ import {
 } from '@/components/ui/dialog';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -43,7 +61,6 @@ import { clientKeys, clientOptions } from '@/queries/client/options';
 import { issuerKeys, issuerOptions } from '@/queries/issuer/options';
 import { CurrencySchema } from '@/queries/issuer/type';
 import { BankStatusBadge, DefaultBadge } from './account-badges';
-import { ClientPicker } from './client-picker';
 import { IssuerPicker } from './issuer-picker';
 
 const schema = z
@@ -96,12 +113,6 @@ interface RecipientAccount {
   is_default: boolean;
 }
 
-/**
- * POST /bank/transfers: sends money from one of the company accounts to one of the
- * recipient's registered accounts (a client's, or a bond issuer's). The API verifies the
- * account with the bank first when it never was.
- */
-/** A contract's money to give back to its holder. */
 export interface TransferRefund {
   contractId: string;
   userId: string;
@@ -117,18 +128,14 @@ export function TransferDialog({
   refund,
 }: {
   trigger: ReactNode;
-  /** Preselects this client. */
   initialUserId?: string;
-  /** Fixes the recipient to this bond issuer. */
   issuerId?: string;
-  /** Gives back a contract's money: its holder, currency, amount and reference, prefilled. */
   refund?: TransferRefund;
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [conflict, setConflict] = useState(false);
-  // Stable while the dialog is open: a retry after a lost answer cannot pay twice.
   const [key, setKey] = useState(() => crypto.randomUUID());
 
   const defaults = (): Values => ({
@@ -198,7 +205,6 @@ export function TransferDialog({
   );
   const toAccount = accounts.find((a) => a.id === toAccountId);
 
-  // Keeps the picks valid: a new recipient or currency preselects its default.
   const accountIds = accounts.map((a) => a.id).join(',');
   const preferredTo = (accounts.find((a) => a.is_default) ?? accounts[0])?.id;
   useEffect(() => {
@@ -217,7 +223,6 @@ export function TransferDialog({
     }
   }, [fromIds, preferredFrom, fromAccountId, form]);
 
-  // bond_purchase is a client's inbound payment, never one an admin sends.
   const purposes = TransferPurposeSchema.options.filter(
     (p) => p !== 'bond_purchase' && (p !== 'payout' || !isClient),
   );
@@ -258,7 +263,6 @@ export function TransferDialog({
     } catch (err) {
       const e = toApiError(err);
       if (e.code === 'bank.transfer_unknown') {
-        // The bank may have sent it: the statement decides, never a retry.
         await invalidate();
         setOpen(false);
         showToast(
@@ -307,7 +311,6 @@ export function TransferDialog({
     }
   }
 
-  // A transfer may verify the account, so the recipient's record changes too.
   async function invalidate() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: bankKeys.all }),
@@ -347,37 +350,6 @@ export function TransferDialog({
           </DialogHeader>
 
           <FieldGroup className="gap-4">
-            {!issuerId && (
-              <FormField id="recipient_type" label="Хүлээн авагч">
-                <Controller
-                  control={form.control}
-                  name="recipient_type"
-                  render={({ field }) => (
-                    <Tabs
-                      value={field.value}
-                      onValueChange={(v) => {
-                        const type = v as Values['recipient_type'];
-                        field.onChange(type);
-                        form.setValue(
-                          'purpose',
-                          type === 'issuer' ? 'payout' : 'other',
-                        );
-                        form.clearErrors();
-                      }}
-                    >
-                      <TabsList>
-                        {RecipientTypeSchema.options.map((t) => (
-                          <TabsTrigger key={t} value={t}>
-                            {recipientTypeLabel[t]}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-                  )}
-                />
-              </FormField>
-            )}
-
             {isClient ? (
               <FormField
                 id="user_id"
@@ -678,5 +650,96 @@ function AccountOption({
         </span>
       </span>
     </label>
+  );
+}
+
+// ----------------------------------------------------------------------
+// ClientPicker Component (Combobox шиг харагдуулахын тулд энд шинээр бичлээ)
+// ----------------------------------------------------------------------
+function ClientPicker({
+  id,
+  value,
+  onChange,
+}: {
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  // TODO: Та өөрийн харилцагч хайдаг API-г энд холбоно уу.
+  // Жишээ нь: const { data: clients, isLoading } = useQuery(clientSearchOptions(search));
+  const clients: any[] = []; // Түр зуурын хоосон массив (API холбох хүртэл)
+  const isLoading = false;
+
+  const { data: selectedClient } = useQuery({
+    ...clientOptions(value),
+    enabled: !!value,
+  });
+
+  const displayLabel = selectedClient
+    ? `${selectedClient.last_name} ${selectedClient.first_name} · ${selectedClient.register_number}`
+    : 'Харилцагч сонгох...';
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between h-10 px-3 font-normal"
+        >
+          <span className="truncate">{displayLabel}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        align="start"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Нэр, имэйл, утас, РД-ээр хайх..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>
+              {isLoading ? 'Хайж байна...' : 'Харилцагч олдсонгүй.'}
+            </CommandEmpty>
+            <CommandGroup>
+              {clients.map((client) => (
+                <CommandItem
+                  key={client.id}
+                  value={client.id}
+                  onSelect={() => {
+                    onChange(client.id === value ? '' : client.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === client.id ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                  <div className="flex flex-col">
+                    <span>
+                      {client.last_name} {client.first_name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {client.register_number}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

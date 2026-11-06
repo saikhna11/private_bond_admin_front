@@ -8,7 +8,7 @@ import {
 
 export const getContracts = (f: ContractFilters) =>
   fetchAndValidate(
-    `contracts${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, template: f.template, q: f.q })}`,
+    `contracts${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, template: f.template, q: f.q, from: f.from, to: f.to })}`,
     pageSchema(AdminContractSchema),
   );
 

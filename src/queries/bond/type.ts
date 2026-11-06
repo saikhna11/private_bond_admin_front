@@ -51,6 +51,7 @@ export const SalesStatusSchema = z.enum([
   'selling',
   'paused',
   'closed',
+  'rejected',
 ]);
 export type SalesStatus = z.infer<typeof SalesStatusSchema>;
 
@@ -60,17 +61,19 @@ export const salesStatusLabel: Record<SalesStatus, string> = {
   selling: 'Захиалга авч буй',
   paused: 'Түр хаасан',
   closed: 'Хаагдсан',
+  rejected: 'Татгалзсан',
 };
 
 /**
  * Where staff have a bond: a draft customers never see, active (sold by its dates), paused,
- * or closed for good.
+ * closed for good, or rejected, an issuer's request staff turned down (final).
  */
 export const ManualStateSchema = z.enum([
   'draft',
   'active',
   'paused',
   'closed',
+  'rejected',
 ]);
 export type ManualState = z.infer<typeof ManualStateSchema>;
 
@@ -108,6 +111,10 @@ export const BondSchema = z.object({
   penalty_rate: z.string(),
   manual_state: ManualStateSchema,
   sales_status: SalesStatusSchema,
+  /** When an issuer's member requested it from the issuer portal; left out for staff's. */
+  requested_at: z.string().optional(),
+  requester_name: z.string().optional(),
+  reject_reason: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string().optional(),
 });
@@ -142,6 +149,13 @@ export type BondDetailType = z.infer<typeof BondDetailSchema>;
 export interface BondFilters {
   page?: number;
   q?: string;
+  /** Any part of the issuer's name. */
+  issuer?: string;
+  /** Only the bonds in this sales status today. */
+  status?: SalesStatus;
+  /** The first and the last day it was registered. */
+  from?: string;
+  to?: string;
 }
 
 /** What an admin writes of a rate option. */

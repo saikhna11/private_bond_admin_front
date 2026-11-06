@@ -1,4 +1,5 @@
-import { DownloadIcon, FileIcon, Trash2Icon } from 'lucide-react';
+import { DownloadIcon, FileIcon, Loader2Icon, Trash2Icon } from 'lucide-react';
+import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,9 +30,15 @@ function sizeLabel(bytes: number): string {
     : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-/** A bond's cover image and its up to five prospectus files (bond.md 3.2). */
+/**
+ * A bond's cover image and its up to five prospectus files (bond.md 3.2). While a file
+ * uploads, every other file button waits.
+ */
 export function BondFilesCard({ b }: { b: BondDetailType }) {
   const run = useBondAction();
+  const [uploading, setUploading] = useState<'cover' | 'prospectus' | null>(
+    null,
+  );
   const cover = b.files.find((f) => f.kind === 'cover');
   const prospectus = b.files.filter((f) => f.kind === 'prospectus');
 
@@ -46,7 +53,12 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
   const remove = (f: BondFileType, what: string) => (
     <ConfirmDialog
       trigger={
-        <Button variant="ghost" size="icon" aria-label="Устгах">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Устгах"
+          disabled={uploading !== null}
+        >
           <Trash2Icon />
         </Button>
       }
@@ -72,10 +84,13 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
                 bondId={b.id}
                 kind="cover"
                 label={cover ? 'Солих' : 'Оруулах'}
+                disabled={uploading !== null}
+                onBusy={(busy) => setUploading(busy ? 'cover' : null)}
               />
             </CardAction>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
+            {uploading === 'cover' && <Uploading />}
             <BondCoverPreview bondId={b.id} cover={cover} />
           </CardContent>
         </Card>
@@ -90,12 +105,17 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
                 bondId={b.id}
                 kind="prospectus"
                 label="Файл нэмэх"
-                disabled={prospectus.length >= MAX_PROSPECTUS_FILES}
+                disabled={
+                  uploading !== null ||
+                  prospectus.length >= MAX_PROSPECTUS_FILES
+                }
+                onBusy={(busy) => setUploading(busy ? 'prospectus' : null)}
               />
             </CardAction>
           </CardHeader>
-          <CardContent>
-            {prospectus.length === 0 ? (
+          <CardContent className="flex flex-col gap-3">
+            {uploading === 'prospectus' && <Uploading />}
+            {prospectus.length === 0 && uploading !== 'prospectus' ? (
               <p className="text-sm text-muted-foreground">
                 Танилцуулгын файл алга.
               </p>
@@ -116,6 +136,7 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
                       variant="ghost"
                       size="icon"
                       aria-label="Татах"
+                      disabled={uploading !== null}
                       onClick={() => void download(f)}
                     >
                       <DownloadIcon />
@@ -129,5 +150,15 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
         </Card>
       </div>
     </div>
+  );
+}
+
+/** The row that says a file is uploading, while it does. */
+function Uploading() {
+  return (
+    <p className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+      <Loader2Icon className="size-4 animate-spin" />
+      Файл оруулж байна…
+    </p>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
 import { paymentContractsOptions } from '@/queries/payment/options';
+import type { PaymentFilter } from '@/queries/payment/type';
 
 const COLS = 6;
 
@@ -29,15 +30,17 @@ const COLS = 6;
  */
 export function PaymentContractsTable({
   tab,
+  filter,
   page,
   onPage,
 }: {
   tab: 'short' | 'refund';
+  filter: PaymentFilter;
   page: number;
   onPage: (page: number) => void;
 }) {
   const { data, isPending, isPlaceholderData } = useQuery(
-    paymentContractsOptions(tab, page),
+    paymentContractsOptions(tab, filter, page),
   );
   const refund = tab === 'refund';
   return (

@@ -1,11 +1,11 @@
-import { Link } from '@tanstack/react-router';
-import { ArrowLeftIcon } from 'lucide-react';
-import type { TemplateDetailType } from '@/queries/template/type';
-import { FieldMappingTable } from './field-mapping-table';
-import { TemplateActions } from './template-actions';
-import { TemplateInfoCard } from './template-info-card';
-import { TemplateProblems } from './template-problems';
-import { useFieldMapping } from './use-field-mapping';
+import { Link } from "@tanstack/react-router";
+import { ArrowLeftIcon } from "lucide-react";
+import type { TemplateDetailType } from "@/queries/template/type";
+import { FieldMappingTable } from "./field-mapping-table";
+import { TemplateActions } from "./template-actions";
+import { TemplateInfoCard } from "./template-info-card";
+import { TemplateProblems } from "./template-problems";
+import { useFieldMapping } from "./use-field-mapping";
 
 /**
  * A template as an admin maps and activates it. From md up the page fits the screen below
@@ -23,11 +23,11 @@ export function TemplateDetail({ t }: { t: TemplateDetailType }) {
         <ArrowLeftIcon className="size-4" />
         Гэрээний загвар
       </Link>
+      <TemplateProblems t={t} mapping={mapping} />
       <TemplateInfoCard
         t={t}
         actions={<TemplateActions t={t} dirty={mapping.dirty} />}
       />
-      <TemplateProblems t={t} mapping={mapping} />
       <FieldMappingTable t={t} mapping={mapping} />
     </div>
   );

@@ -142,6 +142,9 @@ export interface TemplateFilters {
   page?: number;
   status?: TemplateStatus;
   bond_id?: string;
+  /** The first and the last day it was uploaded. */
+  from?: string;
+  to?: string;
 }
 
 /** The ownership types whose contracts name each party a variable reads. */

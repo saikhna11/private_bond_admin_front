@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
+  FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
@@ -15,17 +16,17 @@ import { useVariableActions } from './use-variable-actions';
 import { VariableListTable } from './variable-list-table';
 
 /**
- * One page of the variables filters picks, under a bar with tabs at its left and a search and
- * a group filter, of the groups of its kinds, at its right.
+ * One page of the variables filters picks, under a filter bar: a search at its left, and at its
+ * right the view (viewSelect) and a group filter of the groups of its kinds.
  */
 export function VariableListPanel({
   filters,
-  tabs,
+  viewSelect,
   onFilter,
   onPage,
 }: {
   filters: VariableFilters;
-  tabs: ReactNode;
+  viewSelect: ReactNode;
   onFilter: (patch: { q?: string; group?: string }) => void;
   onPage: (page: number) => void;
 }) {
@@ -37,21 +38,24 @@ export function VariableListPanel({
 
   return (
     <>
-      <div className="flex shrink-0 flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
-        {tabs}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <SearchInput
-            value={filters.q ?? ''}
-            onChange={(q) => onFilter({ q: q || undefined })}
-            placeholder="Нэр, утгаар хайх"
-          />
+      <div className="shrink-0">
+        <FilterBar
+          search={
+            <SearchInput
+              value={filters.q ?? ''}
+              onChange={(q) => onFilter({ q: q || undefined })}
+              placeholder="Нэр, утгаар хайх"
+            />
+          }
+        >
+          {viewSelect}
           <FilterSelect
             value={filters.group}
             onChange={(group) => onFilter({ group })}
             allLabel="Бүх бүлэг"
             options={(groups ?? []).map((g) => ({ value: g, label: g }))}
           />
-        </div>
+        </FilterBar>
       </div>
       <VariableListTable
         items={data?.items}

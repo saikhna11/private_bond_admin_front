@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { LinkIcon, XIcon } from 'lucide-react';
 import {
   Pagination,
   TableEmpty,
   TableSkeletonRows,
 } from '@/components/common/list-parts';
-import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -17,9 +15,8 @@ import {
 import { formatDate, formatMoney } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
 import { unknownCreditsOptions } from '@/queries/payment/options';
-import { dismissCredit, linkCredit } from '@/queries/payment/query';
-import { linkResultLabel } from '@/queries/payment/type';
-import { CreditActionDialog } from './credit-action-dialog';
+import type { PaymentFilter } from '@/queries/payment/type';
+import { UnknownCreditActions } from './unknown-credit-actions';
 
 const COLS = 5;
 
@@ -28,14 +25,16 @@ const COLS = 5;
  * payer meant, or dismisses one that pays no order.
  */
 export function UnknownCreditsTable({
+  filter,
   page,
   onPage,
 }: {
+  filter: PaymentFilter;
   page: number;
   onPage: (page: number) => void;
 }) {
   const { data, isPending, isPlaceholderData } = useQuery(
-    unknownCreditsOptions(page),
+    unknownCreditsOptions(filter, page),
   );
   return (
     <>
@@ -70,42 +69,7 @@ export function UnknownCreditsTable({
                   {formatMoney(c.amount, c.currency)}
                 </TableCell>
                 <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <CreditActionDialog
-                      trigger={
-                        <Button size="sm" variant="outline">
-                          <LinkIcon />
-                          Гэрээнд холбох
-                        </Button>
-                      }
-                      title="Гэрээнд холбох"
-                      description="Харилцагчийн захиалгын гүйлгээний утгыг оруулна. Захиалга төлбөр хүлээж байвал орлого түүнд тооцогдоно."
-                      label="Гүйлгээний утга"
-                      placeholder="PAY-MFG-7K3Q"
-                      action="Холбох"
-                      send={async (ref) =>
-                        linkResultLabel[(await linkCredit(c.id, ref)).status]
-                      }
-                    />
-                    <CreditActionDialog
-                      trigger={
-                        <Button size="sm" variant="ghost">
-                          <XIcon />
-                          Хамааралгүй
-                        </Button>
-                      }
-                      title="Хамааралгүй гэж тэмдэглэх"
-                      description="Энэ орлого ямар ч захиалгын төлбөр биш бол (бонд гаргагчийн эргэн төлөлт, банкны хүү гэх мэт) жагсаалтаас гаргана."
-                      label="Шалтгаан"
-                      placeholder="Жишээ нь: банкны хүүгийн орлого"
-                      action="Тэмдэглэх"
-                      multiline
-                      send={async (note) => {
-                        await dismissCredit(c.id, note);
-                        return 'Хамааралгүй гэж тэмдэглэлээ.';
-                      }}
-                    />
-                  </div>
+                  <UnknownCreditActions id={c.id} />
                 </TableCell>
               </TableRow>
             ))

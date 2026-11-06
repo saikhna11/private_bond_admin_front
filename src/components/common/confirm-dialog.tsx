@@ -25,6 +25,7 @@ export function ConfirmDialog({
   confirmLabel,
   tone = 'destructive',
   onConfirm,
+  confirmDisabled = false,
   open: controlledOpen,
   onOpenChange,
 }: {
@@ -37,6 +38,8 @@ export function ConfirmDialog({
   confirmLabel: string;
   tone?: 'destructive' | 'success' | 'default';
   onConfirm: () => Promise<unknown>;
+  /** Keeps the confirm button off, such as while something it needs is missing. */
+  confirmDisabled?: boolean;
 }) {
   const [ownOpen, setOwnOpen] = useState(false);
   const open = controlledOpen ?? ownOpen;
@@ -70,7 +73,7 @@ export function ConfirmDialog({
           <Button
             className={toneClass[tone]}
             onClick={() => void confirm()}
-            disabled={busy}
+            disabled={busy || confirmDisabled}
           >
             {busy && <Loader2Icon className="animate-spin" />}
             {confirmLabel}
