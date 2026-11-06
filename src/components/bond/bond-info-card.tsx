@@ -1,16 +1,52 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { type BondDetailType, interestMethodLabel } from '@/queries/bond/type';
 import { BondEditDialog } from './bond-edit-dialog';
 import { BondSalesStatusBadge } from './bond-sales-status-badge';
 import { BondStateActions } from './bond-state-actions';
 
-function Term({ label, value }: { label: string; value: string }) {
+function Term({
+  label,
+  value,
+  emphasis = false,
+}: {
+  label: string;
+  value: string;
+  emphasis?: boolean;
+}) {
   return (
-    <div className="min-w-0">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="tabular truncate text-sm font-medium">{value}</dd>
+    <div className="min-w-0 space-y-0.5">
+      <dt className="truncate text-sm text-muted-foreground" title={label}>
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          'tabular truncate text-sm',
+          emphasis ? 'font-semibold' : 'font-medium',
+        )}
+        title={value}
+      >
+        {value}
+      </dd>
     </div>
+  );
+}
+
+function TermGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-4 @sm:grid-cols-2 @2xl:grid-cols-3">
+        {children}
+      </dl>
+    </section>
   );
 }
 
@@ -41,39 +77,56 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
             <BondEditDialog b={b} />
           </div>
         </div>
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
-          <Term label="Нийт босгох дүн" value={amount(b.total_amount)} />
-          <Term
-            label="Хамгийн бага худалдан авалт"
-            value={amount(b.min_purchase)}
-          />
-          <Term label="Худалдан авах нэгж" value={amount(b.purchase_unit)} />
-          <Term
-            label="Нэг хөрөнгө оруулагчийн дээд дүн"
-            value={b.investor_cap ? amount(b.investor_cap) : 'Хязгааргүй'}
-          />
-          <Term
-            label="Борлуулалт"
-            value={`${formatDate(b.sale_start)} - ${b.sale_end ? formatDate(b.sale_end) : 'хугацаагүй'}`}
-          />
-          <Term
-            label="Хүү тооцох арга"
-            value={interestMethodLabel[b.interest_method]}
-          />
-          <Term label="Бонд гаргагчийн төлбөрийн цаг" value={b.issuer_cutoff} />
-          <Term
-            label="Батлан даалт, барьцаа"
-            value={b.has_guarantee ? 'Тийм' : 'Үгүй'}
-          />
-          <Term
-            label="Хугацаанаас өмнө гарах шимтгэл"
-            value={`${b.exit_fee_rate}%`}
-          />
-          <Term label="Алданги, хоногт" value={`${b.penalty_rate}%`} />
-        </dl>
+
+        <div className="space-y-6 border-t pt-6">
+          <TermGroup title="Дүн ба үнэ">
+            <Term
+              label="Нийт босгох дүн"
+              value={amount(b.total_amount)}
+              emphasis
+            />
+            <Term label="Нэгж үнэ" value={amount(b.purchase_unit)} emphasis />
+            <Term
+              label="Хамгийн бага худалдан авалт"
+              value={amount(b.min_purchase)}
+            />
+            <Term
+              label="Хамгийн их худалдан авалт"
+              value={b.investor_cap ? amount(b.investor_cap) : 'Хязгааргүй'}
+            />
+          </TermGroup>
+
+          <TermGroup title="Борлуулалт">
+            <Term label="Эхлэх огноо" value={formatDate(b.sale_start)} />
+            <Term
+              label="Дуусах огноо"
+              value={b.sale_end ? formatDate(b.sale_end) : 'Хугацаагүй'}
+            />
+            <Term label="Хүү эргэн төлөх цаг" value={b.issuer_cutoff} />
+          </TermGroup>
+
+          <TermGroup title="Хүү, шимтгэл, нөхцөл">
+            <Term
+              label="Хүү тооцох арга"
+              value={interestMethodLabel[b.interest_method]}
+            />
+            <Term
+              label="Хугацаанаас өмнө гарах шимтгэл"
+              value={`${b.exit_fee_rate}%`}
+            />
+            <Term label="Алданги, хоногт" value={`${b.penalty_rate}%`} />
+            <Term
+              label="Батлан даалт, барьцаа"
+              value={b.has_guarantee ? 'Тийм' : 'Үгүй'}
+            />
+          </TermGroup>
+        </div>
+
         {b.prospectus && (
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Танилцуулга</p>
+          <div className="space-y-1 border-t pt-6">
+            <p className="text-sm font-medium text-muted-foreground">
+              Танилцуулга
+            </p>
             <p className="whitespace-pre-line text-sm">{b.prospectus}</p>
           </div>
         )}
