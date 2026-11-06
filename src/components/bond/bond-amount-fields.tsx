@@ -21,7 +21,6 @@ export function BondAmountFields({
 }) {
   const { errors } = form.formState;
   const currency = form.watch('currency');
-  const rawUnit = form.watch('purchase_unit');
 
   const amountField = (
     name: 'total_amount' | 'min_purchase' | 'investor_cap',
@@ -42,7 +41,6 @@ export function BondAmountFields({
             value={field.value}
             onChange={field.onChange}
             onBlur={field.onBlur}
-            unit={rawUnit || 1}
             currency={currency}
             placeholder={name === 'investor_cap' ? 'Хязгааргүй' : undefined}
             aria-invalid={!!errors[name]}
@@ -82,9 +80,9 @@ export function BondAmountFields({
 
         <FormField
           id="purchase_unit"
-          label="Худалдан авах нэгж"
+          label="Нэгж үнэ"
           error={errors.purchase_unit?.message}
-          hint="1 ширхэг (нэгж) бондын үнэ. Хэрэглэгч үүний үржвэрээр авна."
+          hint="1 ширхэг нэгжын үнэ"
         >
           <Controller
             control={form.control}
@@ -95,9 +93,7 @@ export function BondAmountFields({
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                unit={null}
                 currency={currency}
-                placeholder="Жишээ нь: 100000"
                 aria-invalid={!!errors.purchase_unit}
               />
             )}
@@ -105,9 +101,29 @@ export function BondAmountFields({
         </FormField>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        {amountField('min_purchase', 'Хамгийн бага худалдан авалт')}
-        {amountField('investor_cap', 'Нэг хөрөнгө оруулагчийн дээд дүн')}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {amountField('min_purchase', 'Хамгийн бага худалдан авалтын дүн')}
+        <FormField
+          id="investor_cap"
+          label="Хамгийн их худалдан авалтын дүн"
+          error={errors.investor_cap?.message}
+          hint="Утга оруулахгүй бол хязгааргүй гэж тооцогдоно"
+        >
+          <Controller
+            control={form.control}
+            name="investor_cap"
+            render={({ field }) => (
+              <AmountInput
+                id="investor_cap"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                currency={currency}
+                aria-invalid={!!errors.investor_cap}
+              />
+            )}
+          />
+        </FormField>
       </div>
       {amountField('total_amount', 'Нийт босгох дүн')}
     </BondFormSection>

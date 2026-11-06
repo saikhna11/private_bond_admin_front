@@ -16,7 +16,7 @@ export function BondExtraFields({
 
   return (
     <BondFormSection>
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormField
           id="exit_fee_rate"
           label="Хугацаанаас өмнө гарах шимтгэл"
@@ -43,8 +43,9 @@ export function BondExtraFields({
 
         <FormField
           id="issuer_cutoff"
-          label="Бонд гаргагчийн төлбөрийн цаг"
+          label="Хүү эргэн төлөх цаг"
           error={errors.issuer_cutoff?.message}
+          hint="харилцагчдад хүүг эргэн төлөх цаг"
         >
           <Input
             id="issuer_cutoff"
@@ -69,7 +70,7 @@ export function BondExtraFields({
                   checked={field.value}
                   onCheckedChange={(c) => field.onChange(c === true)}
                 />
-                Батлан даалт, барьцаатай
+                Батлан даалт, барьцаатай эсэх
               </label>
             )}
           />

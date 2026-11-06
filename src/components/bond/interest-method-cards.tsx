@@ -26,7 +26,7 @@ export function InterestMethodCards({
       aria-label="Хүү тооцох арга"
       value={value}
       onValueChange={(v) => onChange(v as InterestMethod)}
-      className="grid gap-3 @md/field-group:grid-cols-2"
+      className="flex gap-5"
     >
       {InterestMethodSchema.options.map((m) => (
         <FieldLabel

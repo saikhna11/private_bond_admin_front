@@ -16,7 +16,7 @@ export function BondSaleFields({
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormField
           id="sale_start"
-          label="Эхлэх огноо"
+          label="Захиалга нээх огноо"
           error={errors.sale_start?.message}
         >
           <Input
@@ -30,8 +30,7 @@ export function BondSaleFields({
 
         <FormField
           id="sale_end"
-          label="Дуусах огноо"
-          optional
+          label="Захиалга хаах огноо"
           error={errors.sale_end?.message}
         >
           <Input

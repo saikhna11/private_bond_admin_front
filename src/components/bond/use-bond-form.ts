@@ -42,7 +42,7 @@ const schema = z
     purchase_unit: z.enum(PURCHASE_UNITS),
     investor_cap: amount.or(z.literal('')),
     sale_start: z.string().min(1, 'Огноо сонгоно уу'),
-    sale_end: z.string(),
+    sale_end: z.string().min(1, 'Огноо сонгоно уу'),
     interest_method: InterestMethodSchema,
     issuer_cutoff: z
       .string()
@@ -61,14 +61,17 @@ const schema = z
     if (ok(v.min_purchase)) {
       const min = BigInt(v.min_purchase);
       if (min === 0n || min % unit !== 0n) {
-        issue('min_purchase', 'Нэгжийн үржвэр, 0-ээс их байна');
+        issue(
+          'min_purchase',
+          'Нэгжийн үржвэртэй багагүй болон түүнээс их байна',
+        );
       }
       if (ok(v.total_amount)) {
         const total = BigInt(v.total_amount);
         if (total < min || total % unit !== 0n) {
           issue(
             'total_amount',
-            'Нэгжийн үржвэр, хамгийн бага дүнгээс багагүй байна',
+            'Нэгжийн үржвэр, хамгийн бага дүнгээс багагүй болон түүнээс их байна',
           );
         }
       }
@@ -77,7 +80,7 @@ const schema = z
         if (cap !== 0n && (cap < min || cap % unit !== 0n)) {
           issue(
             'investor_cap',
-            'Нэгжийн үржвэр, хамгийн бага дүнгээс багагүй байна',
+            'Нэгжийн үржвэр, хамгийн бага дүнгээс багагүй болон түүнээс их байна',
           );
         }
       }
