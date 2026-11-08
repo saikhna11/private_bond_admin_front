@@ -142,6 +142,8 @@ export interface TemplateFilters {
   page?: number;
   status?: TemplateStatus;
   bond_id?: string;
+  /** Any part of the template's name or its bond's code or name. */
+  q?: string;
   /** The first and the last day it was uploaded. */
   from?: string;
   to?: string;

@@ -1,26 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useCallback } from 'react';
-import * as z from 'zod';
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback } from "react";
+import * as z from "zod";
 import {
   DayRangeFilter,
   FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
-} from '@/components/common/list-parts';
-import { PageTitle } from '@/components/common/page-title';
-import { ContractListTable } from '@/components/contract/contract-list-table';
-import { Card } from '@/components/ui/card';
-import { PAGE_SIZE } from '@/lib/types';
-import { contractsOptions } from '@/queries/contract/options';
+} from "@/components/common/list-parts";
+import { PageTitle } from "@/components/common/page-title";
+import { ContractListTable } from "@/components/contract/contract-list-table";
+import { Card } from "@/components/ui/card";
+import { PAGE_SIZE } from "@/lib/types";
+import { contractsOptions } from "@/queries/contract/options";
 import {
   type ContractFilters,
   ContractStatusSchema,
   contractStatusLabel,
-} from '@/queries/contract/type';
-import { templatesOptions } from '@/queries/template/options';
-import { languageLabel, ownershipLabel } from '@/queries/template/type';
+} from "@/queries/contract/type";
 
 const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
@@ -39,7 +37,7 @@ const searchSchema = z.object({
     .catch(undefined),
 });
 
-export const Route = createFileRoute('/_dashboard/contracts/')({
+export const Route = createFileRoute("/_dashboard/contracts/")({
   validateSearch: searchSchema,
   component: ContractsPage,
 });
@@ -50,8 +48,7 @@ function ContractsPage() {
   const { data, isPending, error, isPlaceholderData } = useQuery(
     contractsOptions(search),
   );
-  // Every template a contract can come from fits one page of the list.
-  const { data: templates } = useQuery(templatesOptions({}));
+
   const setFilter = useCallback(
     (patch: Partial<ContractFilters>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
@@ -68,7 +65,7 @@ function ContractsPage() {
         <FilterBar
           search={
             <SearchInput
-              value={search.q ?? ''}
+              value={search.q ?? ""}
               onChange={(q) => setFilter({ q: q || undefined })}
               placeholder="Дугаараар хайх: MFG-26"
             />
@@ -81,15 +78,6 @@ function ContractsPage() {
             options={ContractStatusSchema.options.map((s) => ({
               value: s,
               label: contractStatusLabel[s],
-            }))}
-          />
-          <FilterSelect
-            value={search.template}
-            onChange={(template) => setFilter({ template })}
-            allLabel="Бүх загвар"
-            options={(templates?.items ?? []).map((t) => ({
-              value: t.id,
-              label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
             }))}
           />
           <DayRangeFilter

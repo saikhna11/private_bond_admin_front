@@ -8,9 +8,9 @@ import {
   FilterBar,
   FilterSelect,
   Pagination,
+  SearchInput,
 } from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
-import { BondCombobox } from '@/components/template/bond-combobox';
 import { TemplateListTable } from '@/components/template/template-list-table';
 import { UploadTemplateDialog } from '@/components/template/upload-template-dialog';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ const searchSchema = z.object({
   page: z.number().int().min(1).optional().catch(undefined),
   status: TemplateStatusSchema.optional().catch(undefined),
   bond_id: z.guid().optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
   from: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -55,6 +56,10 @@ function TemplatesPage() {
     (patch: Partial<TemplateFilters>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
     [navigate],
+  );
+  const setQ = useCallback(
+    (q: string) => setFilter({ q: q || undefined }),
+    [setFilter],
   );
 
   return (
@@ -85,7 +90,15 @@ function TemplatesPage() {
       />
 
       <Card className="gap-0 py-0">
-        <FilterBar>
+        <FilterBar
+          search={
+            <SearchInput
+              value={search.q ?? ''}
+              onChange={setQ}
+              placeholder="Код эсвэл нэрээр хайх"
+            />
+          }
+        >
           <FilterSelect
             value={search.status}
             onChange={(status) => setFilter({ status })}
@@ -95,11 +108,6 @@ function TemplatesPage() {
               { value: 'active', label: 'Идэвхтэй' },
               { value: 'inactive', label: 'Идэвхгүй' },
             ]}
-          />
-          <BondCombobox
-            value={search.bond_id ?? ''}
-            onChange={(id) => setFilter({ bond_id: id || undefined })}
-            allLabel="Бүх бонд"
           />
           <DayRangeFilter
             id="templates-days"
