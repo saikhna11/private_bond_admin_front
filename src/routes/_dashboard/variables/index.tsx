@@ -13,6 +13,9 @@ import { VariableListPanel } from '@/components/variable/variable-list-panel';
 import { WordCategoryTabs } from '@/components/variable/word-category-tabs';
 import { WordFormDialog } from '@/components/variable/word-form-dialog';
 import { WordListTable } from '@/components/variable/word-list-table';
+import { useCan } from '@/hooks/use-can';
+import { requireAuth } from '@/lib/auth';
+import { PRIV } from '@/lib/rbac';
 import { showToast } from '@/lib/utils';
 import { VariableViewSchema, viewKinds } from '@/queries/variable/type';
 import { wordKeys } from '@/queries/word/options';
@@ -40,12 +43,16 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_dashboard/variables/')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.variableList });
+  },
   validateSearch: searchSchema,
   component: VariablesPage,
   staticData: { crumb: 'Хувьсагч' },
 });
 
 function VariablesPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
@@ -68,7 +75,7 @@ function VariablesPage() {
         title="Хувьсагч"
         description="Загварын хоосон зайд холбогдох хувьсагчид болон гэрээнд хэвлэгдэх кодын орчуулга (толь бичиг). Өөрчлөлт зөвхөн шинэ гэрээнд нөлөөлнө."
         action={
-          !dictionary ? (
+          !can(PRIV.variableCreate) ? undefined : !dictionary ? (
             <VariableFormDialog
               create={view === 'custom' ? 'custom' : 'field'}
               onSubmit={actions.create}

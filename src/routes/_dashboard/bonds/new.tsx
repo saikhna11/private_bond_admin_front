@@ -15,13 +15,18 @@ import { ApiErrorAlert } from '@/components/common/api-error-alert';
 import { PageTitle } from '@/components/common/page-title';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { requireAuth } from '@/lib/auth';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
+import { PRIV } from '@/lib/rbac';
 import { showToast } from '@/lib/utils';
 import { bondKeys } from '@/queries/bond/options';
 import { createBond } from '@/queries/bond/query';
 
 export const Route = createFileRoute('/_dashboard/bonds/new')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.bondCreate });
+  },
   component: NewBondPage,
   staticData: { crumb: 'Шинэ бонд' },
 });

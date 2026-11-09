@@ -10,7 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
+import { PRIV } from '@/lib/rbac';
 import { showToast } from '@/lib/utils';
 import { wordKeys, wordsOptions } from '@/queries/word/options';
 import { deleteWord, updateWord } from '@/queries/word/query';
@@ -31,6 +33,9 @@ function wordName(w: ContractWordType) {
 
 /** The words of one category, each with what the Mongolian and English templates print. */
 export function WordListTable({ category }: { category: WordCategory }) {
+  const can = useCan();
+  const canUpdate = can(PRIV.variableUpdate);
+  const canDelete = can(PRIV.variableDelete);
   const queryClient = useQueryClient();
   const { data, isPending, error } = useQuery(wordsOptions(category));
 
@@ -80,18 +85,20 @@ export function WordListTable({ category }: { category: WordCategory }) {
               <TableCell className="whitespace-normal">{w.value_en}</TableCell>
               <TableCell className="pr-4">
                 <div className="flex justify-end gap-1">
-                  <WordFormDialog
-                    word={w}
-                    category={w.category}
-                    title={wordName(w)}
-                    onSubmit={(body) => save(w, body)}
-                    trigger={
-                      <Button variant="ghost" size="icon" aria-label="Засах">
-                        <PencilIcon />
-                      </Button>
-                    }
-                  />
-                  {!w.builtin && (
+                  {canUpdate && (
+                    <WordFormDialog
+                      word={w}
+                      category={w.category}
+                      title={wordName(w)}
+                      onSubmit={(body) => save(w, body)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label="Засах">
+                          <PencilIcon />
+                        </Button>
+                      }
+                    />
+                  )}
+                  {canDelete && !w.builtin && (
                     <DeleteWordButton
                       word={w}
                       name={wordName(w)}

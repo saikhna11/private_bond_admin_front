@@ -3,10 +3,14 @@ import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
 import {
   BankStatementEntrySchema,
   BankTransferSchema,
+  BusinessDaySchema,
+  CompanyBalanceListSchema,
   CompanyBankAccountListSchema,
   CompanyBankAccountSchema,
   type CreateCompanyAccountBody,
   type CreateTransferBody,
+  HolidayChangeSchema,
+  HolidayListSchema,
   type StatementFilters,
   StatementSyncSchema,
   type TransferFilters,
@@ -41,6 +45,10 @@ export const getCompanyAccounts = (activeOnly?: boolean) =>
     `bank/company-accounts${listQuery({ active_only: activeOnly ? 'true' : undefined })}`,
     CompanyBankAccountListSchema,
   );
+
+/** Every active company account's balance: the bank's now, the statement's and the open transfers. */
+export const getCompanyBalances = () =>
+  fetchAndValidate('bank/company-accounts/balances', CompanyBalanceListSchema);
 
 /** Super admins only. */
 export const createCompanyAccount = (body: CreateCompanyAccountBody) =>
@@ -82,6 +90,7 @@ export const getTransfers = (f: TransferFilters) =>
       bond_issuer_id: f.bond_issuer_id,
       from_account: f.from_account,
       status: f.status,
+      contract_id: f.contract_id,
     })}`,
     TransferPageSchema,
   );
@@ -102,3 +111,26 @@ export const createTransfer = (
     headers: { 'Idempotency-Key': idempotencyKey },
     body,
   });
+
+export const getHolidays = (year: number) =>
+  fetchAndValidate(`bank/holidays${listQuery({ year })}`, HolidayListSchema);
+
+/** A weekday only (holiday.weekend); one per day (holiday.exists). */
+export const createHoliday = (date: string, name: string) =>
+  fetchAndValidate('bank/holidays', HolidayChangeSchema, {
+    method: 'POST',
+    body: { date, name },
+  });
+
+/** The unpaid schedule rows are worked out again, as on entering one. */
+export const deleteHoliday = (date: string) =>
+  fetchAndValidate(`bank/holidays/${date}`, HolidayChangeSchema, {
+    method: 'DELETE',
+  });
+
+/** Today in Ulaanbaatar when date is left out. */
+export const getBusinessDay = (date?: string) =>
+  fetchAndValidate(
+    `bank/business-day${listQuery({ date })}`,
+    BusinessDaySchema,
+  );

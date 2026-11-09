@@ -16,12 +16,16 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useLogout } from '@/hooks/use-logout';
+import { can, PRIV } from '@/lib/rbac';
 import { meOptions } from '@/queries/auth/options';
 import { personInitials, personName } from '@/queries/auth/type';
 import { clientsOptions } from '@/queries/client/options';
 import { paymentCountsOptions } from '@/queries/payment/options';
+import { duePayoutsOptions } from '@/queries/schedule/options';
 import { navGroups } from './nav-items';
 import { SidebarUserMenu } from './sidebar-user-menu';
+
+const allPaths = navGroups.flatMap((g) => g.items.map((i) => i.to as string));
 
 export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
   const { data: me } = useSuspenseQuery(meOptions());
@@ -31,16 +35,33 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
   const { data: pending } = useQuery({
     ...clientsOptions({ status: 'pending' }, 1),
     refetchInterval: 60_000,
+    enabled: can(me, PRIV.clientList),
   });
 
   // The payments to look at, next to their menu item.
-  const { data: payments } = useQuery(paymentCountsOptions());
+  const { data: payments } = useQuery({
+    ...paymentCountsOptions(),
+    enabled: can(me, PRIV.paymentList),
+  });
   const paymentIssues = payments
     ? payments.unknown + payments.short + payments.refund
     : 0;
 
+  // The payouts due today or before, next to their menu item.
+  const { data: payouts } = useQuery({
+    ...duePayoutsOptions(1),
+    enabled: can(me, PRIV.scheduleList),
+  });
+
+  // The longest item the path is under, when one item's path starts another's.
   const isActive = (to: string) =>
-    to === '/' ? pathname === '/' : pathname.startsWith(to);
+    to === '/'
+      ? pathname === '/'
+      : pathname.startsWith(to) &&
+        !allPaths.some(
+          (o) =>
+            o.length > to.length && o.startsWith(to) && pathname.startsWith(o),
+        );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -54,7 +75,9 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {navGroups.map((group) => {
-          const items = group.items.filter((i) => !i.superOnly || me.is_super);
+          const items = group.items.filter(
+            (i) => !i.privilege || can(me, i.privilege),
+          );
           if (items.length === 0) return null;
           return (
             <SidebarGroup key={group.label}>
@@ -78,6 +101,11 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
                           {paymentIssues}
                         </SidebarMenuBadge>
                       )}
+                      {item.to === '/bank/repayments' && !!payouts?.total && (
+                        <SidebarMenuBadge className="rounded-full bg-warning/20 px-1.5 text-warning-foreground dark:text-warning">
+                          {payouts.total}
+                        </SidebarMenuBadge>
+                      )}
                       {item.to === '/clients' && !!pending?.total && (
                         <SidebarMenuBadge className="rounded-full bg-warning/20 px-1.5 text-warning-foreground dark:text-warning">
                           {pending.total}
@@ -95,7 +123,7 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
         <SidebarUserMenu
           name={personName(me)}
           initials={personInitials(me)}
-          subtitle={me.is_super ? 'Супер админ' : 'Админ'}
+          subtitle={me.role?.name ?? 'Админ'}
           email={me.email}
           accountTo="/account"
           onLogout={logout}

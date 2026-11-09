@@ -16,6 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import {
   addRateOption,
   deleteRateOption,
@@ -35,6 +37,8 @@ import { useBondAction } from './use-bond-action';
  */
 export function RateOptionTable({ b }: { b: BondDetailType }) {
   const run = useBondAction();
+  const can = useCan();
+  const manage = can(PRIV.bondUpdate);
   const last = b.rate_options.length === 1;
   return (
     <Card className="gap-0 py-0">
@@ -45,19 +49,21 @@ export function RateOptionTable({ b }: { b: BondDetailType }) {
             ? 'Энгийн: нэг нөхцөл'
             : `Матриц: ${b.rate_options.length} нөхцөл`}
         </CardDescription>
-        <CardAction>
-          <RateOptionFormDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                <PlusIcon />
-                Нөхцөл нэмэх
-              </Button>
-            }
-            onSubmit={(body) =>
-              run(() => addRateOption(b.id, body), 'Нөхцөл нэмэгдлээ')
-            }
-          />
-        </CardAction>
+        {manage && (
+          <CardAction>
+            <RateOptionFormDialog
+              trigger={
+                <Button variant="outline" size="sm">
+                  <PlusIcon />
+                  Нөхцөл нэмэх
+                </Button>
+              }
+              onSubmit={(body) =>
+                run(() => addRateOption(b.id, body), 'Нөхцөл нэмэгдлээ')
+              }
+            />
+          </CardAction>
+        )}
       </CardHeader>
       <Table>
         <TableHeader>
@@ -65,7 +71,7 @@ export function RateOptionTable({ b }: { b: BondDetailType }) {
             <TableHead className="pl-4">Хугацаа</TableHead>
             <TableHead>Хүү төлөх давтамж</TableHead>
             <TableHead className="text-right">Жилийн хүү</TableHead>
-            <TableHead className="w-24 pr-4" />
+            {manage && <TableHead className="w-24 pr-4" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,40 +82,42 @@ export function RateOptionTable({ b }: { b: BondDetailType }) {
               <TableCell className="tabular text-right">
                 {Number(o.annual_rate).toFixed(2)}%
               </TableCell>
-              <TableCell className="pr-4 text-right">
-                <RateOptionFormDialog
-                  option={o}
-                  trigger={
-                    <Button variant="ghost" size="icon" aria-label="Засах">
-                      <PencilIcon />
-                    </Button>
-                  }
-                  onSubmit={(body) =>
-                    run(
-                      () => updateRateOption(b.id, o.id, body),
-                      'Нөхцөл хадгалагдлаа',
-                    )
-                  }
-                />
-                <ConfirmDialog
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Устгах"
-                      disabled={last}
-                    >
-                      <Trash2Icon />
-                    </Button>
-                  }
-                  title="Нөхцлийг устгах уу?"
-                  description={`${termLabel(o)}, ${frequencyLabel[o.interest_frequency]}, ${Number(o.annual_rate).toFixed(2)}%. Шинэ худалдан авалтад санал болгохоо болино; энэ нөхцлөөр авсан гэрээ хэвээр.`}
-                  confirmLabel="Устгах"
-                  onConfirm={() =>
-                    run(() => deleteRateOption(b.id, o.id), 'Нөхцөл устлаа')
-                  }
-                />
-              </TableCell>
+              {manage && (
+                <TableCell className="pr-4 text-right">
+                  <RateOptionFormDialog
+                    option={o}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label="Засах">
+                        <PencilIcon />
+                      </Button>
+                    }
+                    onSubmit={(body) =>
+                      run(
+                        () => updateRateOption(b.id, o.id, body),
+                        'Нөхцөл хадгалагдлаа',
+                      )
+                    }
+                  />
+                  <ConfirmDialog
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Устгах"
+                        disabled={last}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    }
+                    title="Нөхцлийг устгах уу?"
+                    description={`${termLabel(o)}, ${frequencyLabel[o.interest_frequency]}, ${Number(o.annual_rate).toFixed(2)}%. Шинэ худалдан авалтад санал болгохоо болино; энэ нөхцлөөр авсан гэрээ хэвээр.`}
+                    confirmLabel="Устгах"
+                    onConfirm={() =>
+                      run(() => deleteRateOption(b.id, o.id), 'Нөхцөл устлаа')
+                    }
+                  />
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

@@ -1,8 +1,4 @@
-import {
-  useQuery,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   BanIcon,
@@ -20,6 +16,7 @@ import {
   CreateCompanyAccountDialog,
   EditCompanyAccountDialog,
 } from '@/components/bank/company-account-dialog';
+import { CompanyBalanceCards } from '@/components/bank/company-balance-cards';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { TableEmpty, TableSkeletonRows } from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
@@ -40,9 +37,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
+import { PRIV } from '@/lib/rbac';
 import { cn, showToast } from '@/lib/utils';
-import { meOptions } from '@/queries/auth/options';
 import { bankKeys, companyAccountsOptions } from '@/queries/bank/options';
 import {
   createCompanyAccount,
@@ -60,11 +58,13 @@ export const Route = createFileRoute('/_dashboard/bank/accounts')({
 type Act = (action: () => Promise<unknown>, done: string) => Promise<void>;
 
 function CompanyAccountsPage() {
-  const { data: me } = useSuspenseQuery(meOptions());
+  const can = useCan();
   const queryClient = useQueryClient();
   const { data, isPending, error } = useQuery(companyAccountsOptions());
-  // Only super admins change the company's accounts; the API answers 403 otherwise.
-  const canEdit = me.is_super;
+  // Changing the company's accounts takes a permission; the API answers 403 otherwise.
+  const canCreate = can(PRIV.companyAccountCreate);
+  const canEdit =
+    can(PRIV.companyAccountUpdate) || can(PRIV.companyAccountDelete);
   const cols = canEdit ? 7 : 6;
 
   const act: Act = async (action, done) => {
@@ -93,12 +93,12 @@ function CompanyAccountsPage() {
       <PageTitle
         title="Компанийн данс"
         description={
-          canEdit
+          canCreate || canEdit
             ? 'Шилжүүлэг илгээж, хуулга уншдаг Улзий ХХК-ийн дансууд. Валют бүрд нэг үндсэн данс байна.'
-            : 'Шилжүүлэг илгээж, хуулга уншдаг Улзий ХХК-ийн дансууд. Зөвхөн супер админ өөрчилнө.'
+            : 'Шилжүүлэг илгээж, хуулга уншдаг Улзий ХХК-ийн дансууд. Өөрчлөх эрх танд алга.'
         }
         action={
-          canEdit && (
+          canCreate && (
             <CreateCompanyAccountDialog
               trigger={
                 <Button>
@@ -113,6 +113,8 @@ function CompanyAccountsPage() {
           )
         }
       />
+
+      {can(PRIV.statementBalance) && <CompanyBalanceCards />}
 
       <Card className="gap-0 py-0">
         <Table>
@@ -172,6 +174,8 @@ function AccountRow({
   canEdit: boolean;
   act: Act;
 }) {
+  const can = useCan();
+  const canUpdate = can(PRIV.companyAccountUpdate);
   const [dialog, setDialog] = useState<'edit' | 'delete' | null>(null);
   const label = `${a.bank_name} ${a.account_number}`;
 
@@ -222,11 +226,13 @@ function AccountRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onSelect={() => setDialog('edit')}>
-                <PencilIcon />
-                Засах
-              </DropdownMenuItem>
-              {a.is_active && !a.is_default && (
+              {canUpdate && (
+                <DropdownMenuItem onSelect={() => setDialog('edit')}>
+                  <PencilIcon />
+                  Засах
+                </DropdownMenuItem>
+              )}
+              {canUpdate && a.is_active && !a.is_default && (
                 <DropdownMenuItem
                   onSelect={() =>
                     void act(
@@ -239,32 +245,40 @@ function AccountRow({
                   Үндсэн болгох
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onSelect={() =>
-                  void act(
-                    () =>
-                      updateCompanyAccount(a.id, { is_active: !a.is_active }),
-                    a.is_active ? 'Идэвхгүй болголоо' : 'Идэвхжүүллээ',
-                  ).catch(() => {})
-                }
-              >
-                {a.is_active ? <BanIcon /> : <CircleCheckIcon />}
-                {a.is_active ? 'Идэвхгүй болгох' : 'Идэвхжүүлэх'}
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/bank/statement" search={{ account_id: a.id }}>
-                  <ReceiptTextIcon />
-                  Хуулга харах
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setDialog('delete')}
-              >
-                <Trash2Icon />
-                Устгах
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onSelect={() =>
+                    void act(
+                      () =>
+                        updateCompanyAccount(a.id, { is_active: !a.is_active }),
+                      a.is_active ? 'Идэвхгүй болголоо' : 'Идэвхжүүллээ',
+                    ).catch(() => {})
+                  }
+                >
+                  {a.is_active ? <BanIcon /> : <CircleCheckIcon />}
+                  {a.is_active ? 'Идэвхгүй болгох' : 'Идэвхжүүлэх'}
+                </DropdownMenuItem>
+              )}
+              {can(PRIV.statementList) && (
+                <DropdownMenuItem asChild>
+                  <Link to="/bank/statement" search={{ account_id: a.id }}>
+                    <ReceiptTextIcon />
+                    Хуулга харах
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {can(PRIV.companyAccountDelete) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setDialog('delete')}
+                  >
+                    <Trash2Icon />
+                    Устгах
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
           {dialog === 'edit' && (

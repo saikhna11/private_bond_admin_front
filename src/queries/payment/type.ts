@@ -33,6 +33,8 @@ export const PaymentContractSchema = z.object({
   status: ContractStatusSchema,
   bond_code: z.string(),
   amount: z.string(),
+  /** The contract's own currency, which amount is in. */
+  contract_currency: z.string(),
   payment_deadline: z.string(),
   currency: z.string(),
   received: z.string(),

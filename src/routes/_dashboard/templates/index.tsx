@@ -11,6 +11,8 @@ import { UploadTemplateDialog } from '@/components/template/upload-template-dial
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { showToast } from '@/lib/utils';
 import { templateKeys, templatesOptions } from '@/queries/template/options';
@@ -31,6 +33,7 @@ export const Route = createFileRoute('/_dashboard/templates/')({
 });
 
 function TemplatesPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
@@ -49,24 +52,26 @@ function TemplatesPage() {
         title="Гэрээний загвар"
         description="Word загвар оруулж, хоосон зай бүрийг гэрээний мэдээлэл эсвэл тогтмол тексттэй холбоно."
         action={
-          <UploadTemplateDialog
-            trigger={
-              <Button>
-                <UploadIcon />
-                Загвар оруулах
-              </Button>
-            }
-            onUploaded={(t) => {
-              showToast('success', 'Загвар ноорог болж хадгалагдлаа');
-              void queryClient.invalidateQueries({
-                queryKey: templateKeys.all,
-              });
-              void navigate({
-                to: '/templates/$templateId',
-                params: { templateId: t.id },
-              });
-            }}
-          />
+          can(PRIV.templateCreate) && (
+            <UploadTemplateDialog
+              trigger={
+                <Button>
+                  <UploadIcon />
+                  Загвар оруулах
+                </Button>
+              }
+              onUploaded={(t) => {
+                showToast('success', 'Загвар ноорог болж хадгалагдлаа');
+                void queryClient.invalidateQueries({
+                  queryKey: templateKeys.all,
+                });
+                void navigate({
+                  to: '/templates/$templateId',
+                  params: { templateId: t.id },
+                });
+              }}
+            />
+          )
         }
       />
 
@@ -87,12 +92,14 @@ function TemplatesPage() {
               <TabsTrigger value="inactive">Идэвхгүй</TabsTrigger>
             </TabsList>
           </Tabs>
-          <BondCombobox
-            value={search.bond_id ?? ''}
-            onChange={(id) => setFilter({ bond_id: id || undefined })}
-            allLabel="Бүх бонд"
-            className="sm:w-56"
-          />
+          {can(PRIV.bondList) && (
+            <BondCombobox
+              value={search.bond_id ?? ''}
+              onChange={(id) => setFilter({ bond_id: id || undefined })}
+              allLabel="Бүх бонд"
+              className="sm:w-56"
+            />
+          )}
         </div>
         <TemplateListTable
           items={data?.items}

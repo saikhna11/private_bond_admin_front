@@ -10,6 +10,8 @@ import {
 import { PageTitle } from '@/components/common/page-title';
 import { ContractListTable } from '@/components/contract/contract-list-table';
 import { Card } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { contractsOptions } from '@/queries/contract/options';
 import {
@@ -33,13 +35,18 @@ export const Route = createFileRoute('/_dashboard/contracts/')({
 });
 
 function ContractsPage() {
+  const can = useCan();
+  const canTemplates = can(PRIV.templateList);
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { data, isPending, error, isPlaceholderData } = useQuery(
     contractsOptions(search),
   );
   // Every template a contract can come from fits one page of the list.
-  const { data: templates } = useQuery(templatesOptions({}));
+  const { data: templates } = useQuery({
+    ...templatesOptions({}),
+    enabled: canTemplates,
+  });
   const setFilter = useCallback(
     (patch: Partial<ContractFilters>) =>
       navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) }),
@@ -69,15 +76,17 @@ function ContractsPage() {
                 label: contractStatusLabel[s],
               }))}
             />
-            <FilterSelect
-              value={search.template}
-              onChange={(template) => setFilter({ template })}
-              allLabel="Бүх загвар"
-              options={(templates?.items ?? []).map((t) => ({
-                value: t.id,
-                label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
-              }))}
-            />
+            {canTemplates && (
+              <FilterSelect
+                value={search.template}
+                onChange={(template) => setFilter({ template })}
+                allLabel="Бүх загвар"
+                options={(templates?.items ?? []).map((t) => ({
+                  value: t.id,
+                  label: `${t.name} · ${ownershipLabel[t.ownership_type]} · ${languageLabel[t.language]}`,
+                }))}
+              />
+            )}
           </div>
         </div>
         <ContractListTable

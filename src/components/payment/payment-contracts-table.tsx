@@ -17,11 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { formatDateTime, formatMoney } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { paymentContractsOptions } from '@/queries/payment/options';
-
-const COLS = 6;
 
 /**
  * The orders paid short (short), or the money contracts received and must give back
@@ -39,7 +39,9 @@ export function PaymentContractsTable({
   const { data, isPending, isPlaceholderData } = useQuery(
     paymentContractsOptions(tab, page),
   );
+  const can = useCan();
   const refund = tab === 'refund';
+  const cols = refund ? 8 : 6;
   return (
     <>
       <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
@@ -49,6 +51,12 @@ export function PaymentContractsTable({
             <TableHead>Эзэмшигч</TableHead>
             <TableHead className="text-right">Гэрээний дүн</TableHead>
             <TableHead className="text-right">Орсон</TableHead>
+            {refund && (
+              <>
+                <TableHead className="text-right">Үлдээсэн</TableHead>
+                <TableHead className="text-right">Буцаасан</TableHead>
+              </>
+            )}
             <TableHead className="text-right">
               {refund ? 'Буцаах' : 'Дутуу'}
             </TableHead>
@@ -59,10 +67,10 @@ export function PaymentContractsTable({
         </TableHeader>
         <TableBody>
           {isPending ? (
-            <TableSkeletonRows cols={COLS} />
+            <TableSkeletonRows cols={cols} />
           ) : !data?.items.length ? (
             <TableEmpty
-              cols={COLS}
+              cols={cols}
               title={
                 refund ? 'Буцаах мөнгө алга' : 'Дутуу төлсөн захиалга алга'
               }
@@ -74,24 +82,40 @@ export function PaymentContractsTable({
               return (
                 <TableRow key={`${c.contract_id}-${c.currency}`}>
                   <TableCell>
-                    <Link
-                      to="/contracts/$contractId"
-                      params={{ contractId: c.contract_id }}
-                      className="tabular font-medium hover:underline"
-                    >
-                      {c.contract_no ?? c.payment_reference}
-                    </Link>
+                    {can(PRIV.contractList) ? (
+                      <Link
+                        to="/contracts/$contractId"
+                        params={{ contractId: c.contract_id }}
+                        className="tabular font-medium hover:underline"
+                      >
+                        {c.contract_no ?? c.payment_reference}
+                      </Link>
+                    ) : (
+                      <span className="tabular font-medium">
+                        {c.contract_no ?? c.payment_reference}
+                      </span>
+                    )}
                     <div className="mt-1">
                       <ContractStatusBadge status={c.status} />
                     </div>
                   </TableCell>
                   <TableCell>{holder || '-'}</TableCell>
                   <TableCell className="tabular text-right">
-                    {formatMoney(c.amount)}
+                    {formatMoney(c.amount, c.contract_currency)}
                   </TableCell>
                   <TableCell className="tabular text-right">
                     {formatMoney(c.received, c.currency)}
                   </TableCell>
+                  {refund && (
+                    <>
+                      <TableCell className="tabular text-right text-muted-foreground">
+                        {formatMoney(c.kept, c.currency)}
+                      </TableCell>
+                      <TableCell className="tabular text-right text-muted-foreground">
+                        {formatMoney(c.refunded, c.currency)}
+                      </TableCell>
+                    </>
+                  )}
                   <TableCell className="tabular text-right font-medium">
                     {refund
                       ? formatMoney(c.refundable, c.currency)
@@ -102,21 +126,24 @@ export function PaymentContractsTable({
                   </TableCell>
                   <TableCell className="text-right">
                     {refund ? (
-                      <TransferDialog
-                        refund={{
-                          contractId: c.contract_id,
-                          userId: c.holder_id,
-                          currency: c.currency,
-                          amount: c.refundable,
-                          description: c.payment_reference,
-                        }}
-                        trigger={
-                          <Button size="sm">
-                            <BanknoteIcon />
-                            Буцаах
-                          </Button>
-                        }
-                      />
+                      can(PRIV.transferCreate) && (
+                        <TransferDialog
+                          refund={{
+                            contractId: c.contract_id,
+                            contractLabel: c.contract_no ?? c.payment_reference,
+                            userId: c.holder_id,
+                            currency: c.currency,
+                            amount: c.refundable,
+                            description: c.payment_reference,
+                          }}
+                          trigger={
+                            <Button size="sm">
+                              <BanknoteIcon />
+                              Буцаах
+                            </Button>
+                          }
+                        />
+                      )
                     ) : (
                       <span className="tabular text-sm">
                         {formatDateTime(c.payment_deadline)}

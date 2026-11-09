@@ -1,7 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import { BanknoteIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useCan } from '@/hooks/use-can';
 import { formatAmount } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import type { AdminContractDetailType } from '@/queries/contract/type';
 
 /**
@@ -11,6 +13,7 @@ import type { AdminContractDetailType } from '@/queries/contract/type';
  * finance returns it by hand.
  */
 export function ContractRefundNote({ c }: { c: AdminContractDetailType }) {
+  const can = useCan();
   const due = (c.payment?.money ?? []).filter((m) => Number(m.refundable) > 0);
   if (due.length > 0) {
     return (
@@ -21,13 +24,17 @@ export function ContractRefundNote({ c }: { c: AdminContractDetailType }) {
           <span>
             Буцаах дүн:{' '}
             {due.map((m) => formatAmount(m.refundable, m.currency)).join(', ')}.{' '}
-            <Link
-              to="/bank/payments"
-              search={{ tab: 'refund' }}
-              className="font-medium underline"
-            >
-              Анхаарах төлбөр
-            </Link>{' '}
+            {can(PRIV.paymentList) ? (
+              <Link
+                to="/bank/payments"
+                search={{ tab: 'refund' }}
+                className="font-medium underline"
+              >
+                Анхаарах төлбөр
+              </Link>
+            ) : (
+              'Анхаарах төлбөр'
+            )}{' '}
             хуудаснаас буцаана.
           </span>
         </AlertDescription>

@@ -7,8 +7,12 @@ export const MeSchema = z.object({
   phone: z.string(),
   last_name: z.string(),
   first_name: z.string(),
-  role: z.string().optional(),
-  is_super: z.boolean(),
+  /** The role the admin holds. */
+  role: z.object({ id: z.string(), name: z.string() }).nullable(),
+  /** The system role may call everything. */
+  is_system_role: z.boolean(),
+  /** The module:action keys the admin may call: every one for the system role. */
+  privileges: z.array(z.string()),
 });
 
 export type MeType = z.infer<typeof MeSchema>;

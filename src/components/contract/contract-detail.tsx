@@ -1,12 +1,16 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeftIcon } from 'lucide-react';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import type { AdminContractDetailType } from '@/queries/contract/type';
 import { ContractInfoCard } from './contract-info-card';
 import { ContractPartiesCard } from './contract-parties-card';
+import { ContractScheduleCard } from './contract-schedule-card';
 import { ContractTermsCard } from './contract-terms-card';
 
-/** A contract as an admin reads it: its state, parties and terms. */
+/** A contract as an admin reads it: its state, parties, terms and repayment schedule. */
 export function ContractDetail({ c }: { c: AdminContractDetailType }) {
+  const can = useCan();
   return (
     <>
       <Link
@@ -19,6 +23,7 @@ export function ContractDetail({ c }: { c: AdminContractDetailType }) {
       <ContractInfoCard c={c} />
       <ContractPartiesCard parties={c.parties} underwriter={c.underwriter} />
       <ContractTermsCard c={c} />
+      {can(PRIV.scheduleList) && <ContractScheduleCard contractId={c.id} />}
     </>
   );
 }

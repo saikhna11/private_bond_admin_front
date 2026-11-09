@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2Icon, ShieldAlertIcon } from 'lucide-react';
+import { CalendarClockIcon, Loader2Icon, ShieldAlertIcon } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -27,10 +27,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
+import { formatDateTime, formatDay, formatMoney } from '@/lib/format';
 import { cn, showToast } from '@/lib/utils';
-import { bankKeys, companyAccountsOptions } from '@/queries/bank/options';
+import {
+  bankKeys,
+  businessDayOptions,
+  companyAccountsOptions,
+  transfersOptions,
+} from '@/queries/bank/options';
 import { createTransfer } from '@/queries/bank/query';
 import {
   RecipientTypeSchema,
@@ -64,6 +71,10 @@ const schema = z
         'Дүн 0-ээс их, хамгийн ихдээ 2 аравтын оронтой байна',
       ),
     description: z.string().trim().max(200, 'Тайлбар 200 тэмдэгтээс хэтрэхгүй'),
+    refund_reason: z
+      .string()
+      .trim()
+      .max(500, 'Шалтгаан 500 тэмдэгтээс хэтрэхгүй'),
   })
   .superRefine((v, ctx) => {
     if (v.recipient_type === 'client' && !v.user_id) {
@@ -71,6 +82,13 @@ const schema = z
         code: 'custom',
         path: ['user_id'],
         message: 'Харилцагч сонгоно уу',
+      });
+    }
+    if (v.purpose === 'refund' && !v.refund_reason) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['refund_reason'],
+        message: 'Буцаах шалтгаанаа бичнэ үү',
       });
     }
     if (v.recipient_type === 'issuer' && !v.bond_issuer_id) {
@@ -104,9 +122,29 @@ interface RecipientAccount {
 /** A contract's money to give back to its holder. */
 export interface TransferRefund {
   contractId: string;
+  /** The contract's number, or its payment reference before it has one. */
+  contractLabel: string;
   userId: string;
   currency: string;
+  /** What the contract has left to refund in currency: the most one refund may give. */
   amount: string;
+  description: string;
+}
+
+/** One schedule row to pay out to its contract's holder (bond.md 8.5). */
+export interface TransferPayout {
+  contractId: string;
+  contractLabel: string;
+  rowNo: number;
+  rowCount: number;
+  userId: string;
+  currency: string;
+  /** The row's total: the only amount the API takes. */
+  amount: string;
+  /** The account the contract repays to; the dialog preselects the holder's account with it. */
+  iban: string;
+  /** principal for the last row, which repays it; coupon otherwise. */
+  purpose: 'coupon' | 'principal';
   description: string;
 }
 
@@ -115,6 +153,7 @@ export function TransferDialog({
   initialUserId,
   issuerId,
   refund,
+  payout,
 }: {
   trigger: ReactNode;
   /** Preselects this client. */
@@ -123,6 +162,8 @@ export function TransferDialog({
   issuerId?: string;
   /** Gives back a contract's money: its holder, currency, amount and reference, prefilled. */
   refund?: TransferRefund;
+  /** Pays out a schedule row: its holder, account, amount and purpose, fixed. */
+  payout?: TransferPayout;
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -133,14 +174,21 @@ export function TransferDialog({
 
   const defaults = (): Values => ({
     recipient_type: issuerId ? 'issuer' : 'client',
-    user_id: refund?.userId ?? initialUserId ?? '',
+    user_id: refund?.userId ?? payout?.userId ?? initialUserId ?? '',
     bond_issuer_id: issuerId ?? '',
-    currency: refund?.currency === 'USD' ? 'USD' : 'MNT',
+    currency: (refund ?? payout)?.currency === 'USD' ? 'USD' : 'MNT',
     to_account_id: '',
     from_account_id: '',
-    purpose: refund ? 'refund' : issuerId ? 'payout' : 'other',
-    amount: refund?.amount ?? '',
-    description: refund?.description ?? '',
+    purpose: refund
+      ? 'refund'
+      : payout
+        ? payout.purpose
+        : issuerId
+          ? 'payout'
+          : 'other',
+    amount: refund?.amount ?? payout?.amount ?? '',
+    description: refund?.description ?? payout?.description ?? '',
+    refund_reason: '',
   });
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -153,7 +201,28 @@ export function TransferDialog({
   const currency = form.watch('currency');
   const toAccountId = form.watch('to_account_id');
   const fromAccountId = form.watch('from_account_id');
+  const purpose = form.watch('purpose');
   const isClient = recipientType === 'client';
+
+  // The bank carries out a transfer sent on a holiday or a weekend only on its next working day.
+  const businessDay = useQuery({ ...businessDayOptions(), enabled: open });
+  // A recipient with an unknown transfer gets no other until the statement settles it.
+  const openTransfers = useQuery({
+    ...transfersOptions({
+      user_id: isClient ? userId : undefined,
+      bond_issuer_id: isClient ? undefined : bondIssuerId,
+      status: 'unknown',
+    }),
+    enabled: open && !!(isClient ? userId : bondIssuerId),
+  });
+  const hasOpenTransfer = (openTransfers.data?.total ?? 0) > 0;
+  const refundHistory = useQuery({
+    ...transfersOptions({ contract_id: refund?.contractId }),
+    enabled: open && !!refund,
+  });
+  const pastRefunds = (refundHistory.data?.items ?? []).filter(
+    (t) => t.direction === 'outbound' && t.purpose === 'refund',
+  );
 
   const client = useQuery({
     ...clientOptions(userId),
@@ -192,7 +261,11 @@ export function TransferDialog({
         status: a.status,
         is_default: a.is_default,
       }));
-  const accounts = allAccounts.filter((a) => a.currency === currency);
+  const accounts = allAccounts.filter(
+    (a) =>
+      a.currency === currency &&
+      (!payout || a.iban.toUpperCase() === payout.iban.toUpperCase()),
+  );
   const fromAccounts = (company.data ?? []).filter(
     (a) => a.is_active && a.currency === currency,
   );
@@ -200,7 +273,11 @@ export function TransferDialog({
 
   // Keeps the picks valid: a new recipient or currency preselects its default.
   const accountIds = accounts.map((a) => a.id).join(',');
-  const preferredTo = (accounts.find((a) => a.is_default) ?? accounts[0])?.id;
+  // A payout goes only to the account its contract repays to.
+  const preferredTo = payout
+    ? accounts.find((a) => a.iban.toUpperCase() === payout.iban.toUpperCase())
+        ?.id
+    : (accounts.find((a) => a.is_default) ?? accounts[0])?.id;
   useEffect(() => {
     if (!accountIds.split(',').includes(toAccountId)) {
       form.setValue('to_account_id', preferredTo ?? '');
@@ -217,14 +294,35 @@ export function TransferDialog({
     }
   }, [fromIds, preferredFrom, fromAccountId, form]);
 
-  // bond_purchase is a client's inbound payment, never one an admin sends.
-  const purposes = TransferPurposeSchema.options.filter(
-    (p) => p !== 'bond_purchase' && (p !== 'payout' || !isClient),
-  );
+  // bond_purchase is a client's inbound payment, never one an admin sends. A refund is sent
+  // only from a contract's refund row, which names the contract; the API refuses one without.
+  // A coupon or principal pays one schedule row, sent only from the payouts list.
+  const purposes = payout
+    ? [payout.purpose]
+    : TransferPurposeSchema.options.filter(
+        (p) =>
+          p !== 'bond_purchase' &&
+          p !== 'coupon' &&
+          p !== 'principal' &&
+          (p !== 'payout' || !isClient) &&
+          (p !== 'refund' || !!refund),
+      );
 
   async function submit(values: Values) {
     setError(null);
     setConflict(false);
+    if (refund && Number(values.amount) > Number(refund.amount)) {
+      form.setError('amount', {
+        message: `Буцаах үлдэгдэл ${formatMoney(refund.amount, refund.currency)}-с хэтрэхгүй`,
+      });
+      return;
+    }
+    if (payout && Number(values.amount) !== Number(payout.amount)) {
+      form.setError('amount', {
+        message: `Мөрийн нийт дүн ${formatMoney(payout.amount, payout.currency)} байна`,
+      });
+      return;
+    }
     try {
       const transfer = await createTransfer(
         {
@@ -240,7 +338,10 @@ export function TransferDialog({
           purpose: values.purpose,
           amount: values.amount,
           description: values.description || undefined,
-          contract_id: refund?.contractId,
+          contract_id: refund?.contractId ?? payout?.contractId,
+          repayment_row_no: payout?.rowNo,
+          refund_reason:
+            values.purpose === 'refund' ? values.refund_reason : undefined,
         },
         key,
       );
@@ -266,6 +367,15 @@ export function TransferDialog({
           'Шилжүүлгийн үр дүн тодорхойгүй байна. Хуулгаар шалгана уу; дахин илгээхгүй.',
           8000,
         );
+        return;
+      }
+      if (e.code === 'bank.refund_reason_required') {
+        form.setError('refund_reason', { message: e.message });
+        return;
+      }
+      if (e.code === 'bank.refund_invalid') {
+        form.setError('amount', { message: e.message });
+        await invalidate();
         return;
       }
       if (e.code === 'bank.idempotency_conflict') {
@@ -299,6 +409,7 @@ export function TransferDialog({
           purpose: 'purpose',
           amount: 'amount',
           description: 'description',
+          refund_reason: 'refund_reason',
         })
       ) {
         return;
@@ -339,12 +450,104 @@ export function TransferDialog({
           className="flex flex-col gap-5"
         >
           <DialogHeader>
-            <DialogTitle>Шилжүүлэг илгээх</DialogTitle>
+            <DialogTitle>
+              {refund
+                ? 'Гэрээний мөнгө буцаах'
+                : payout
+                  ? 'Эргэн төлөлт олгох'
+                  : 'Шилжүүлэг илгээх'}
+            </DialogTitle>
             <DialogDescription>
               Мөнгө компанийн данснаас хүлээн авагчийн бүртгэлтэй данс руу
               шилжинэ. Данс баталгаажаагүй бол банкнаас эхлээд шалгана.
             </DialogDescription>
           </DialogHeader>
+
+          {businessDay.data && !businessDay.data.business && (
+            <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+              <CalendarClockIcon className="mt-0.5 size-4 shrink-0" />
+              <span>
+                Өнөөдөр{' '}
+                {businessDay.data.holiday_name
+                  ? `баярын өдөр (${businessDay.data.holiday_name})`
+                  : 'амралтын өдөр'}
+                . Банк шилжүүлгийг{' '}
+                {formatDay(businessDay.data.next_business_day)}-нд гүйцэтгэж
+                магадгүй; хуулгад тэр өдрөөс хойш харагдана.
+              </span>
+            </p>
+          )}
+          {businessDay.data && !businessDay.data.year_known && (
+            <p className="text-xs text-muted-foreground">
+              Энэ оны баярын өдрүүд бүртгэгдээгүй тул зөвхөн бямба, ням гарагийг
+              амралтын өдөр гэж тооцож байна.
+            </p>
+          )}
+
+          {payout && (
+            <div className="flex flex-wrap justify-between gap-2 rounded-lg border bg-muted/30 p-3 text-sm">
+              <span>
+                Гэрээ{' '}
+                <span className="tabular font-medium">
+                  {payout.contractLabel}
+                </span>{' '}
+                · {payout.rowNo}/{payout.rowCount}-р төлбөр
+              </span>
+              <span>
+                Олгох{' '}
+                <span className="tabular font-medium">
+                  {formatMoney(payout.amount, payout.currency)}
+                </span>
+              </span>
+              {!recipientLoading && !preferredTo && (
+                <span className="w-full text-destructive">
+                  Харилцагчид гэрээний эргэн төлөлтийн данс (
+                  {payout.iban.toUpperCase()}) бүртгэлгүй байна.
+                </span>
+              )}
+            </div>
+          )}
+
+          {refund && (
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-3 text-sm">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span>
+                  Гэрээ{' '}
+                  <span className="tabular font-medium">
+                    {refund.contractLabel}
+                  </span>
+                </span>
+                <span>
+                  Буцаах үлдэгдэл{' '}
+                  <span className="tabular font-medium">
+                    {formatMoney(refund.amount, refund.currency)}
+                  </span>
+                </span>
+              </div>
+              {pastRefunds.length > 0 && (
+                <div className="space-y-1 border-t pt-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Өмнөх буцаалтууд
+                  </p>
+                  {pastRefunds.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex flex-wrap justify-between gap-x-3 text-xs"
+                    >
+                      <span className="tabular">
+                        {formatDateTime(t.created_at)} ·{' '}
+                        {formatMoney(t.amount, t.currency)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {transferStatusLabel[t.status]}
+                        {t.refund_reason ? ` · ${t.refund_reason}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <FieldGroup className="gap-4">
             {!issuerId && (
@@ -590,7 +793,31 @@ export function TransferDialog({
                 />
               </FormField>
             </div>
+            {purpose === 'refund' && (
+              <FormField
+                id="refund_reason"
+                label="Буцаах шалтгаан"
+                error={errors.refund_reason?.message}
+              >
+                <Textarea
+                  id="refund_reason"
+                  maxLength={500}
+                  placeholder="Жишээ нь: гэрээний дүнгээс илүү төлсөн"
+                  aria-invalid={!!errors.refund_reason}
+                  {...form.register('refund_reason')}
+                />
+              </FormField>
+            )}
           </FieldGroup>
+
+          {hasOpenTransfer && (
+            <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <ShieldAlertIcon className="mt-0.5 size-4 shrink-0" />
+              Энэ хүлээн авагч руу илгээсэн шилжүүлгийн үр дүн тодорхойгүй
+              байна. Хуулгаар баталгаажих эсвэл амжилтгүй болох хүртэл шинэ
+              шилжүүлэг илгээх боломжгүй.
+            </p>
+          )}
 
           <ApiErrorAlert error={error} />
           {conflict && (
@@ -618,7 +845,12 @@ export function TransferDialog({
             </DialogClose>
             <Button
               type="submit"
-              disabled={isSubmitting || !toAccount || fromAccounts.length === 0}
+              disabled={
+                isSubmitting ||
+                !toAccount ||
+                fromAccounts.length === 0 ||
+                hasOpenTransfer
+              }
               className="h-10 px-5"
             >
               {isSubmitting && <Loader2Icon className="animate-spin" />}

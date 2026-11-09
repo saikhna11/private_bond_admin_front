@@ -43,7 +43,11 @@ import { showToast } from '@/lib/utils';
 import { personInitials, personName } from '@/queries/auth/type';
 import type { StaffFilters } from '@/queries/broker/type';
 import { ResetPasswordDialog } from './reset-password-dialog';
-import { StaffFormDialog, type StaffValues } from './staff-form-dialog';
+import {
+  type StaffAccess,
+  StaffFormDialog,
+  type StaffValues,
+} from './staff-form-dialog';
 
 export interface StaffRow {
   id: string;
@@ -65,6 +69,15 @@ export interface StaffActions {
   remove: (id: string) => Promise<unknown>;
 }
 
+/** Which changes the admin's role allows; each is allowed when left out. */
+export interface StaffAllow {
+  create?: boolean;
+  update?: boolean;
+  block?: boolean;
+  resetPassword?: boolean;
+  remove?: boolean;
+}
+
 /** The broker and admin lists: the same table, filters, dialogs and actions. */
 export function StaffManager<T extends StaffRow>({
   title,
@@ -79,9 +92,12 @@ export function StaffManager<T extends StaffRow>({
   selfId,
   badge,
   deleteNote,
+  allow = {},
+  access,
+  toolbar,
 }: {
   title: string;
-  description: string;
+  description: ReactNode;
   noun: string;
   withPosition: boolean;
   filters: StaffFilters;
@@ -93,10 +109,17 @@ export function StaffManager<T extends StaffRow>({
   selfId?: string;
   badge?: (row: T) => ReactNode;
   deleteNote?: string;
+  /** Hides the changes the admin's role does not allow. */
+  allow?: StaffAllow;
+  /** Lets the create dialog pick the new admin's role (the admin list). */
+  access?: StaffAccess;
+  /** More filters, after the status one. */
+  toolbar?: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const { data, isPending, error, isPlaceholderData } = query;
   const cols = withPosition ? 6 : 5;
+  const Noun = noun[0].toUpperCase() + noun.slice(1);
 
   async function run(action: () => Promise<unknown>, done: string) {
     try {
@@ -116,25 +139,25 @@ export function StaffManager<T extends StaffRow>({
         title={title}
         description={description}
         action={
-          <StaffFormDialog
-            mode="create"
-            noun={noun}
-            withPosition={withPosition}
-            trigger={
-              <Button>
-                <PlusIcon />
-                {noun[0].toUpperCase() + noun.slice(1)} нэмэх
-              </Button>
-            }
-            onSubmit={async (v) => {
-              await actions.create(v);
-              showToast(
-                'success',
-                `${noun[0].toUpperCase() + noun.slice(1)} нэмэгдлээ`,
-              );
-              await queryClient.invalidateQueries({ queryKey });
-            }}
-          />
+          allow.create !== false && (
+            <StaffFormDialog
+              mode="create"
+              noun={noun}
+              withPosition={withPosition}
+              access={access}
+              trigger={
+                <Button>
+                  <PlusIcon />
+                  {Noun} нэмэх
+                </Button>
+              }
+              onSubmit={async (v) => {
+                await actions.create(v);
+                showToast('success', `${Noun} нэмэгдлээ`);
+                await queryClient.invalidateQueries({ queryKey });
+              }}
+            />
+          )
         }
       />
 
@@ -154,6 +177,7 @@ export function StaffManager<T extends StaffRow>({
               { value: 'inactive', label: 'Хаагдсан' },
             ]}
           />
+          {toolbar}
         </div>
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>
@@ -178,15 +202,9 @@ export function StaffManager<T extends StaffRow>({
             ) : !data?.items.length ? (
               <TableEmpty
                 cols={cols}
-                title={
-                  filters.q || filters.status
-                    ? 'Олдсонгүй'
-                    : `${noun[0].toUpperCase() + noun.slice(1)} алга`
-                }
+                title={isFiltered(filters) ? 'Олдсонгүй' : `${Noun} алга`}
                 text={
-                  filters.q || filters.status
-                    ? 'Хайлтаа өөрчилж үзнэ үү.'
-                    : undefined
+                  isFiltered(filters) ? 'Хайлтаа өөрчилж үзнэ үү.' : undefined
                 }
               />
             ) : (
@@ -201,6 +219,7 @@ export function StaffManager<T extends StaffRow>({
                   deleteNote={deleteNote}
                   actions={actions}
                   run={run}
+                  allow={allow}
                 />
               ))
             )}
@@ -219,6 +238,10 @@ export function StaffManager<T extends StaffRow>({
   );
 }
 
+function isFiltered(f: StaffFilters) {
+  return Object.entries(f).some(([k, v]) => k !== 'page' && v !== undefined);
+}
+
 function StaffTableRow<T extends StaffRow>({
   row,
   noun,
@@ -228,6 +251,7 @@ function StaffTableRow<T extends StaffRow>({
   deleteNote,
   actions,
   run,
+  allow,
 }: {
   row: T;
   noun: string;
@@ -237,11 +261,16 @@ function StaffTableRow<T extends StaffRow>({
   deleteNote?: string;
   actions: StaffActions;
   run: (action: () => Promise<unknown>, done: string) => Promise<void>;
+  allow: StaffAllow;
 }) {
   const [dialog, setDialog] = useState<'reset' | 'block' | 'delete' | null>(
     null,
   );
   const name = personName(row);
+  const canReset = allow.resetPassword !== false;
+  const canBlock = allow.block !== false;
+  const canRemove = allow.remove !== false;
+  const hasMenu = canReset || canBlock || canRemove;
 
   return (
     <TableRow>
@@ -280,72 +309,84 @@ function StaffTableRow<T extends StaffRow>({
       </TableCell>
       <TableCell className="pr-4 text-right">
         <div className="flex justify-end gap-1">
-          <StaffFormDialog
-            mode="edit"
-            noun={noun}
-            withPosition={withPosition}
-            initial={{
-              last_name: row.last_name,
-              first_name: row.first_name,
-              position: row.position,
-            }}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Засах"
-                title="Засах"
-              >
-                <PencilIcon />
-              </Button>
-            }
-            onSubmit={(v) =>
-              run(() => actions.update(row.id, v), 'Хадгалагдлаа')
-            }
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Бусад үйлдэл"
-                disabled={isSelf}
-              >
-                <MoreHorizontalIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onSelect={() => setDialog('reset')}>
-                <KeyRoundIcon />
-                Нууц үг шинэчлэх
-              </DropdownMenuItem>
-              {row.is_active ? (
-                <DropdownMenuItem onSelect={() => setDialog('block')}>
-                  <BanIcon />
-                  Хаах
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    void run(() => actions.unblock(row.id), 'Нээгдлээ').catch(
-                      () => {},
-                    )
-                  }
+          {allow.update !== false && (
+            <StaffFormDialog
+              mode="edit"
+              noun={noun}
+              withPosition={withPosition}
+              initial={{
+                last_name: row.last_name,
+                first_name: row.first_name,
+                position: row.position,
+              }}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Засах"
+                  title="Засах"
                 >
-                  <LockOpenIcon />
-                  Нээх
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setDialog('delete')}
-              >
-                <Trash2Icon />
-                Устгах
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <PencilIcon />
+                </Button>
+              }
+              onSubmit={(v) =>
+                run(() => actions.update(row.id, v), 'Хадгалагдлаа')
+              }
+            />
+          )}
+          {hasMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Бусад үйлдэл"
+                  disabled={isSelf}
+                >
+                  <MoreHorizontalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                {canReset && (
+                  <DropdownMenuItem onSelect={() => setDialog('reset')}>
+                    <KeyRoundIcon />
+                    Нууц үг шинэчлэх
+                  </DropdownMenuItem>
+                )}
+                {canBlock &&
+                  (row.is_active ? (
+                    <DropdownMenuItem onSelect={() => setDialog('block')}>
+                      <BanIcon />
+                      Хаах
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        void run(
+                          () => actions.unblock(row.id),
+                          'Нээгдлээ',
+                        ).catch(() => {})
+                      }
+                    >
+                      <LockOpenIcon />
+                      Нээх
+                    </DropdownMenuItem>
+                  ))}
+                {canRemove && (
+                  <>
+                    {(canReset || canBlock) && <DropdownMenuSeparator />}
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setDialog('delete')}
+                    >
+                      <Trash2Icon />
+                      Устгах
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         <ResetPasswordDialog
           open={dialog === 'reset'}

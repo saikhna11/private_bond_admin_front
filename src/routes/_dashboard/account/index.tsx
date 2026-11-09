@@ -54,7 +54,7 @@ function AccountPage() {
                 </p>
               </div>
               <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-medium text-warning-foreground dark:text-gold">
-                {me.is_super ? 'Супер админ' : 'Админ'}
+                {me.role?.name ?? 'Админ'}
               </span>
             </CardContent>
           </Card>

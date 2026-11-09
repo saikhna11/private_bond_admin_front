@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
 import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import {
   type AdminContractDetailType,
   paymentSourceLabel,
@@ -8,6 +10,7 @@ import {
 import { languageLabel, ownershipLabel } from '@/queries/template/type';
 import { ContractDeclineNote } from './contract-decline-note';
 import { ContractDocumentButton } from './contract-document-button';
+import { ContractRefundHistory } from './contract-refund-history';
 import { ContractRefundNote } from './contract-refund-note';
 import { ContractStatusBadge } from './contract-status-badge';
 import { ContractStatusDate } from './contract-status-date';
@@ -20,6 +23,7 @@ import { InfoItem } from './info-item';
  * one that ended needs.
  */
 export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
+  const can = useCan();
   return (
     <Card className="gap-0 py-0">
       <CardContent className="flex flex-col gap-5 p-6">
@@ -40,13 +44,17 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
           <InfoItem
             label="Загвар"
             value={
-              <Link
-                to="/templates/$templateId"
-                params={{ templateId: c.template.id }}
-                className="hover:underline"
-              >
-                {c.template.name}
-              </Link>
+              can(PRIV.templateList) ? (
+                <Link
+                  to="/templates/$templateId"
+                  params={{ templateId: c.template.id }}
+                  className="hover:underline"
+                >
+                  {c.template.name}
+                </Link>
+              ) : (
+                c.template.name
+              )
             }
           />
           <InfoItem label="Хэл" value={languageLabel[c.template.language]} />
@@ -76,6 +84,7 @@ export function ContractInfoCard({ c }: { c: AdminContractDetailType }) {
         <ContractStatusNote c={c} />
         <ContractDeclineNote c={c} />
         <ContractRefundNote c={c} />
+        {can(PRIV.transferList) && <ContractRefundHistory contractId={c.id} />}
       </CardContent>
     </Card>
   );

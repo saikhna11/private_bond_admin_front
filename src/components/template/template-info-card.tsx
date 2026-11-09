@@ -3,9 +3,11 @@ import { DownloadIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
 import { saveBlob } from '@/lib/file';
 import { formatDateTime } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { showToast } from '@/lib/utils';
 import { downloadTemplate } from '@/queries/template/query';
 import {
@@ -24,6 +26,7 @@ export function TemplateInfoCard({
   t: TemplateDetailType;
   actions: ReactNode;
 }) {
+  const can = useCan();
   async function download() {
     try {
       const blob = await downloadTemplate(t.id);
@@ -55,13 +58,17 @@ export function TemplateInfoCard({
               {t.contracts > 0 && (
                 <>
                   {' · '}
-                  <Link
-                    to="/contracts"
-                    search={{ template: t.id }}
-                    className="font-medium text-primary hover:underline"
-                  >
-                    {t.contracts} гэрээ
-                  </Link>
+                  {can(PRIV.contractList) ? (
+                    <Link
+                      to="/contracts"
+                      search={{ template: t.id }}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {t.contracts} гэрээ
+                    </Link>
+                  ) : (
+                    `${t.contracts} гэрээ`
+                  )}
                 </>
               )}
             </p>

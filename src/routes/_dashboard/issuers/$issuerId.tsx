@@ -57,8 +57,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { cn, showToast } from '@/lib/utils';
 import { personInitials, personName } from '@/queries/auth/type';
 import { issuerKeys, issuerOptions } from '@/queries/issuer/options';
@@ -123,6 +125,8 @@ function IssuerPage() {
 function IssuerDetail({ issuer }: { issuer: IssuerType }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const can = useCan();
+  const manage = can(PRIV.issuerMember);
   const id = issuer.id;
 
   const act: Act = async (action, done) => {
@@ -167,33 +171,41 @@ function IssuerDetail({ issuer }: { issuer: IssuerType }) {
               </span>
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <EditIssuerDialog
-              issuer={issuer}
-              trigger={
-                <Button variant="outline">
-                  <PencilIcon />
-                  Засах
-                </Button>
-              }
-              onSubmit={(v) => act(() => updateIssuer(id, v), 'Хадгалагдлаа')}
-            />
-            <ConfirmDialog
-              trigger={
-                <Button variant="outline" className="text-destructive">
-                  <Trash2Icon />
-                  Устгах
-                </Button>
-              }
-              title={`${issuer.name}-г устгах уу?`}
-              description="Компани, түүний бүх ажилтны бүртгэл, банкны данс бүрмөсөн устана. Ажилтнууд дахин нэвтрэх боломжгүй болно. Шилжүүлэг хийгдсэн бонд гаргагчийг устгах боломжгүй."
-              confirmLabel="Устгах"
-              onConfirm={async () => {
-                await act(() => deleteIssuer(id), 'Устгагдлаа');
-                await navigate({ to: '/issuers' });
-              }}
-            />
-          </div>
+          {(can(PRIV.issuerUpdate) || can(PRIV.issuerDelete)) && (
+            <div className="flex flex-wrap gap-2">
+              {can(PRIV.issuerUpdate) && (
+                <EditIssuerDialog
+                  issuer={issuer}
+                  trigger={
+                    <Button variant="outline">
+                      <PencilIcon />
+                      Засах
+                    </Button>
+                  }
+                  onSubmit={(v) =>
+                    act(() => updateIssuer(id, v), 'Хадгалагдлаа')
+                  }
+                />
+              )}
+              {can(PRIV.issuerDelete) && (
+                <ConfirmDialog
+                  trigger={
+                    <Button variant="outline" className="text-destructive">
+                      <Trash2Icon />
+                      Устгах
+                    </Button>
+                  }
+                  title={`${issuer.name}-г устгах уу?`}
+                  description="Компани, түүний бүх ажилтны бүртгэл, банкны данс бүрмөсөн устана. Ажилтнууд дахин нэвтрэх боломжгүй болно. Шилжүүлэг хийгдсэн бонд гаргагчийг устгах боломжгүй."
+                  confirmLabel="Устгах"
+                  onConfirm={async () => {
+                    await act(() => deleteIssuer(id), 'Устгагдлаа');
+                    await navigate({ to: '/issuers' });
+                  }}
+                />
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -206,35 +218,37 @@ function IssuerDetail({ issuer }: { issuer: IssuerType }) {
               имэйлээр нэвтэрнэ. Захирал нэг байх ба гэрээнд түүний нэр орж,
               компанийн өмнөөс гарын үсэг зурна.
             </CardDescription>
-            <CardAction>
-              <StaffFormDialog
-                mode="create"
-                noun="ажилтан"
-                withPosition
-                phoneOptional
-                description="Ажилтан болж нэмэгдэнэ. Анхны нууц үгийг өөрөө дамжуулна; систем имэйл илгээхгүй."
-                trigger={
-                  <Button size="sm">
-                    <UserPlusIcon />
-                    Ажилтан нэмэх
-                  </Button>
-                }
-                onSubmit={(v) =>
-                  act(
-                    () =>
-                      addIssuerMember(id, {
-                        email: v.email,
-                        phone: v.phone || undefined,
-                        last_name: v.last_name,
-                        first_name: v.first_name,
-                        position: v.position || undefined,
-                        password: v.password,
-                      }),
-                    'Ажилтан нэмэгдлээ',
-                  )
-                }
-              />
-            </CardAction>
+            {manage && (
+              <CardAction>
+                <StaffFormDialog
+                  mode="create"
+                  noun="ажилтан"
+                  withPosition
+                  phoneOptional
+                  description="Ажилтан болж нэмэгдэнэ. Анхны нууц үгийг өөрөө дамжуулна; систем имэйл илгээхгүй."
+                  trigger={
+                    <Button size="sm">
+                      <UserPlusIcon />
+                      Ажилтан нэмэх
+                    </Button>
+                  }
+                  onSubmit={(v) =>
+                    act(
+                      () =>
+                        addIssuerMember(id, {
+                          email: v.email,
+                          phone: v.phone || undefined,
+                          last_name: v.last_name,
+                          first_name: v.first_name,
+                          position: v.position || undefined,
+                          password: v.password,
+                        }),
+                      'Ажилтан нэмэгдлээ',
+                    )
+                  }
+                />
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -250,7 +264,13 @@ function IssuerDetail({ issuer }: { issuer: IssuerType }) {
               </TableHeader>
               <TableBody>
                 {issuer.members.map((m) => (
-                  <MemberRow key={m.id} issuerId={id} member={m} act={act} />
+                  <MemberRow
+                    key={m.id}
+                    issuerId={id}
+                    member={m}
+                    act={act}
+                    manage={manage}
+                  />
                 ))}
               </TableBody>
             </Table>
@@ -272,10 +292,12 @@ function MemberRow({
   issuerId,
   member: m,
   act,
+  manage,
 }: {
   issuerId: string;
   member: IssuerMemberType;
   act: Act;
+  manage: boolean;
 }) {
   const [dialog, setDialog] = useState<
     'reset' | 'block' | 'delete' | 'director' | null
@@ -321,85 +343,91 @@ function MemberRow({
         {formatDate(m.created_at)}
       </TableCell>
       <TableCell className="pr-6 text-right">
-        <div className="flex justify-end gap-1">
-          <StaffFormDialog
-            mode="edit"
-            noun="ажилтан"
-            withPosition
-            initial={{
-              last_name: m.last_name,
-              first_name: m.first_name,
-              position: m.position,
-            }}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Засах"
-                title="Засах"
-              >
-                <PencilIcon />
-              </Button>
-            }
-            onSubmit={(v) =>
-              act(
-                () =>
-                  updateIssuerMember(issuerId, m.id, {
-                    last_name: v.last_name,
-                    first_name: v.first_name,
-                    position: v.position,
-                  }),
-                'Хадгалагдлаа',
-              )
-            }
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Бусад үйлдэл">
-                <MoreHorizontalIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {!director && m.is_active && (
-                <DropdownMenuItem onSelect={() => setDialog('director')}>
-                  <CrownIcon />
-                  Захирал болгох
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onSelect={() => setDialog('reset')}>
-                <KeyRoundIcon />
-                Нууц үг шинэчлэх
-              </DropdownMenuItem>
-              {m.is_active ? (
-                <DropdownMenuItem onSelect={() => setDialog('block')}>
-                  <BanIcon />
-                  Хаах
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    void act(
-                      () => unblockIssuerMember(issuerId, m.id),
-                      'Нээгдлээ',
-                    ).catch(() => {})
-                  }
+        {manage && (
+          <div className="flex justify-end gap-1">
+            <StaffFormDialog
+              mode="edit"
+              noun="ажилтан"
+              withPosition
+              initial={{
+                last_name: m.last_name,
+                first_name: m.first_name,
+                position: m.position,
+              }}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Засах"
+                  title="Засах"
                 >
-                  <LockOpenIcon />
-                  Нээх
+                  <PencilIcon />
+                </Button>
+              }
+              onSubmit={(v) =>
+                act(
+                  () =>
+                    updateIssuerMember(issuerId, m.id, {
+                      last_name: v.last_name,
+                      first_name: v.first_name,
+                      position: v.position,
+                    }),
+                  'Хадгалагдлаа',
+                )
+              }
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Бусад үйлдэл"
+                >
+                  <MoreHorizontalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                {!director && m.is_active && (
+                  <DropdownMenuItem onSelect={() => setDialog('director')}>
+                    <CrownIcon />
+                    Захирал болгох
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={() => setDialog('reset')}>
+                  <KeyRoundIcon />
+                  Нууц үг шинэчлэх
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={director}
-                onSelect={() => setDialog('delete')}
-              >
-                <Trash2Icon />
-                {director ? 'Захирлыг хасах боломжгүй' : 'Хасах'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                {m.is_active ? (
+                  <DropdownMenuItem onSelect={() => setDialog('block')}>
+                    <BanIcon />
+                    Хаах
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      void act(
+                        () => unblockIssuerMember(issuerId, m.id),
+                        'Нээгдлээ',
+                      ).catch(() => {})
+                    }
+                  >
+                    <LockOpenIcon />
+                    Нээх
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={director}
+                  onSelect={() => setDialog('delete')}
+                >
+                  <Trash2Icon />
+                  {director ? 'Захирлыг хасах боломжгүй' : 'Хасах'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         <ConfirmDialog
           open={dialog === 'director'}
           onOpenChange={(o) => setDialog(o ? 'director' : null)}
@@ -448,6 +476,8 @@ function MemberRow({
 }
 
 function BankAccountsCard({ issuer, act }: { issuer: IssuerType; act: Act }) {
+  const can = useCan();
+  const manage = can(PRIV.issuerAccount);
   // Each currency's default first, then the oldest.
   const accounts = [...issuer.bank_accounts].sort(
     (a, b) =>
@@ -464,31 +494,40 @@ function BankAccountsCard({ issuer, act }: { issuer: IssuerType; act: Act }) {
           болох ба шилжүүлэг өөр данс сонгоогүй бол үндсэн данс руу очно.
         </CardDescription>
         <CardAction className="flex flex-wrap justify-end gap-2">
-          <TransferDialog
-            issuerId={issuer.id}
-            trigger={
-              <Button size="sm" disabled={accounts.length === 0}>
-                <SendIcon />
-                Шилжүүлэг
-              </Button>
-            }
-          />
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/bank/transfers" search={{ bond_issuer_id: issuer.id }}>
-              Шилжүүлгүүд
-            </Link>
-          </Button>
-          <BankAccountDialog
-            trigger={
-              <Button size="sm" variant="outline">
-                <PlusIcon />
-                Нэмэх
-              </Button>
-            }
-            onSubmit={(body) =>
-              act(() => addIssuerBankAccount(issuer.id, body), 'Данс нэмэгдлээ')
-            }
-          />
+          {can(PRIV.transferCreate) && (
+            <TransferDialog
+              issuerId={issuer.id}
+              trigger={
+                <Button size="sm" disabled={accounts.length === 0}>
+                  <SendIcon />
+                  Шилжүүлэг
+                </Button>
+              }
+            />
+          )}
+          {can(PRIV.transferList) && (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/bank/transfers" search={{ bond_issuer_id: issuer.id }}>
+                Шилжүүлгүүд
+              </Link>
+            </Button>
+          )}
+          {manage && (
+            <BankAccountDialog
+              trigger={
+                <Button size="sm" variant="outline">
+                  <PlusIcon />
+                  Нэмэх
+                </Button>
+              }
+              onSubmit={(body) =>
+                act(
+                  () => addIssuerBankAccount(issuer.id, body),
+                  'Данс нэмэгдлээ',
+                )
+              }
+            />
+          )}
         </CardAction>
       </CardHeader>
       <CardContent className="grid gap-3 lg:grid-cols-2">
@@ -506,6 +545,7 @@ function BankAccountsCard({ issuer, act }: { issuer: IssuerType; act: Act }) {
               issuerId={issuer.id}
               account={a}
               act={act}
+              manage={manage}
             />
           ))
         )}
@@ -518,10 +558,12 @@ function BankAccountItem({
   issuerId,
   account: a,
   act,
+  manage,
 }: {
   issuerId: string;
   account: IssuerBankAccountType;
   act: Act;
+  manage: boolean;
 }) {
   const queryClient = useQueryClient();
   const [verifying, setVerifying] = useState(false);
@@ -560,72 +602,74 @@ function BankAccountItem({
         <InfoItem label="Дансны дугаар" value={a.account_number} mono />
         <InfoItem label="IBAN" value={a.iban} mono />
       </dl>
-      <div className="mt-3 flex flex-wrap justify-end gap-1">
-        {!a.is_default && (
+      {manage && (
+        <div className="mt-3 flex flex-wrap justify-end gap-1">
+          {!a.is_default && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                void act(
+                  () => setDefaultIssuerBankAccount(issuerId, a.id),
+                  'Үндсэн данс солигдлоо',
+                ).catch(() => {})
+              }
+            >
+              <StarIcon />
+              Үндсэн болгох
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() =>
-              void act(
-                () => setDefaultIssuerBankAccount(issuerId, a.id),
-                'Үндсэн данс солигдлоо',
-              ).catch(() => {})
-            }
+            disabled={verifying}
+            onClick={() => void verify()}
           >
-            <StarIcon />
-            Үндсэн болгох
+            {verifying ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <ShieldCheckIcon />
+            )}
+            Банкаар шалгах
           </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={verifying}
-          onClick={() => void verify()}
-        >
-          {verifying ? (
-            <Loader2Icon className="animate-spin" />
-          ) : (
-            <ShieldCheckIcon />
-          )}
-          Банкаар шалгах
-        </Button>
-        <BankAccountDialog
-          account={a}
-          trigger={
-            <Button variant="ghost" size="sm">
-              <PencilIcon />
-              Засах
-            </Button>
-          }
-          onSubmit={(body) =>
-            act(
-              () => updateIssuerBankAccount(issuerId, a.id, body),
-              'Данс хадгалагдлаа',
-            )
-          }
-        />
-        <ConfirmDialog
-          trigger={
-            <Button variant="ghost" size="sm" className="text-destructive">
-              <Trash2Icon />
-              Устгах
-            </Button>
-          }
-          title={`${a.currency} дансыг устгах уу?`}
-          description={
-            a.is_default
-              ? `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана. Энэ валютын өөр данс байвал түүнийг үндсэн болгоно.`
-              : `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана.`
-          }
-          confirmLabel="Устгах"
-          onConfirm={() =>
-            act(
-              () => deleteIssuerBankAccount(issuerId, a.id),
-              'Данс устгагдлаа',
-            )
-          }
-        />
-      </div>
+          <BankAccountDialog
+            account={a}
+            trigger={
+              <Button variant="ghost" size="sm">
+                <PencilIcon />
+                Засах
+              </Button>
+            }
+            onSubmit={(body) =>
+              act(
+                () => updateIssuerBankAccount(issuerId, a.id, body),
+                'Данс хадгалагдлаа',
+              )
+            }
+          />
+          <ConfirmDialog
+            trigger={
+              <Button variant="ghost" size="sm" className="text-destructive">
+                <Trash2Icon />
+                Устгах
+              </Button>
+            }
+            title={`${a.currency} дансыг устгах уу?`}
+            description={
+              a.is_default
+                ? `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана. Энэ валютын өөр данс байвал түүнийг үндсэн болгоно.`
+                : `${a.bank_name} ${a.account_number} данс бүртгэлээс хасагдана.`
+            }
+            confirmLabel="Устгах"
+            onConfirm={() =>
+              act(
+                () => deleteIssuerBankAccount(issuerId, a.id),
+                'Данс устгагдлаа',
+              )
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -38,3 +38,10 @@ export const dismissCredit = (id: string, note: string) =>
     method: 'POST',
     body: { note },
   });
+
+/** Records that the finance office sent a credit back from the bank by hand, for note. */
+export const returnCredit = (id: string, note: string) =>
+  fetchAndValidate<void>(`payments/entries/${id}/return`, undefined, {
+    method: 'POST',
+    body: { note },
+  });

@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { RefreshCwIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
+import { FilterPanel } from '@/components/common/filter-panel';
 import {
   Pagination,
   SearchInput,
@@ -28,8 +29,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { requireAuth } from '@/lib/auth';
 import { toApiError } from '@/lib/fetcher';
 import { formatDateTime, formatDay, formatMoney } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { cn, showToast } from '@/lib/utils';
 import {
@@ -49,6 +54,9 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_dashboard/bank/statement')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.statementList });
+  },
   validateSearch: searchSchema,
   component: StatementPage,
   staticData: { crumb: 'Хуулга' },
@@ -61,8 +69,9 @@ function StatementPage() {
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const page = search.page ?? 1;
+  const query = useDebouncedValue(search, 300);
   const { data, isPending, error, isPlaceholderData } = useQuery(
-    statementOptions(search),
+    statementOptions(query),
   );
 
   const { data: accounts } = useQuery(companyAccountsOptions());
@@ -81,10 +90,12 @@ function StatementPage() {
     [setFilter],
   );
 
+  const can = useCan();
   const sync = useMutation({
     mutationFn: syncStatement,
     onSuccess: async ({ stored }) => {
       await queryClient.invalidateQueries({ queryKey: bankKeys.statements() });
+      await queryClient.invalidateQueries({ queryKey: bankKeys.balances() });
       showToast(
         'success',
         stored
@@ -95,8 +106,12 @@ function StatementPage() {
     onError: (e) => showToast('error', toApiError(e).message),
   });
 
-  const filtered =
-    !!search.from || !!search.to || !!search.related_account || !!search.q;
+  const active = [
+    search.from,
+    search.to,
+    search.related_account,
+    search.q,
+  ].filter(Boolean).length;
 
   return (
     <>
@@ -104,20 +119,28 @@ function StatementPage() {
         title="Банкны хуулга"
         description="Улзий ХХК-ийн корпорацийн дансны хөдөлгөөн."
         action={
-          <Button
-            variant="outline"
-            onClick={() => sync.mutate()}
-            disabled={sync.isPending}
-          >
-            <RefreshCwIcon className={cn(sync.isPending && 'animate-spin')} />
-            {sync.isPending ? 'Уншиж байна…' : 'Банкнаас шинэчлэх'}
-          </Button>
+          can(PRIV.statementSync) && (
+            <Button
+              variant="outline"
+              onClick={() => sync.mutate()}
+              disabled={sync.isPending}
+            >
+              <RefreshCwIcon className={cn(sync.isPending && 'animate-spin')} />
+              {sync.isPending ? 'Уншиж байна…' : 'Банкнаас шинэчлэх'}
+            </Button>
+          )
         }
       />
 
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+        <FilterPanel
+          active={active}
+          onClear={() =>
+            navigate({
+              search: { page: undefined, account_id: search.account_id },
+            })
+          }
+          leading={
             <div className="space-y-1">
               <span className="block text-xs text-muted-foreground">
                 Компанийн данс
@@ -144,76 +167,61 @@ function StatementPage() {
                 </SelectContent>
               </Select>
             </div>
-            <label
-              htmlFor="statement-from"
-              className="space-y-1 text-xs text-muted-foreground"
-            >
-              <span>Эхлэх өдөр</span>
-              <Input
-                id="statement-from"
-                type="date"
-                value={search.from ?? ''}
-                onChange={(e) =>
-                  setFilter({ from: e.target.value || undefined })
-                }
-                className="h-9 w-full sm:w-40"
-              />
-            </label>
-            <label
-              htmlFor="statement-to"
-              className="space-y-1 text-xs text-muted-foreground"
-            >
-              <span>Дуусах өдөр</span>
-              <Input
-                id="statement-to"
-                type="date"
-                value={search.to ?? ''}
-                onChange={(e) => setFilter({ to: e.target.value || undefined })}
-                className="h-9 w-full sm:w-40"
-              />
-            </label>
-            <label
-              htmlFor="statement-account"
-              className="space-y-1 text-xs text-muted-foreground"
-            >
-              <span>Хамаарах данс</span>
-              <Input
-                id="statement-account"
-                value={search.related_account ?? ''}
-                onChange={(e) =>
-                  setFilter({
-                    related_account: e.target.value.trim() || undefined,
-                  })
-                }
-                placeholder="Дансны дугаар"
-                className="tabular h-9 w-full sm:w-44"
-              />
-            </label>
-            <div className="space-y-1">
-              <span className="block text-xs text-muted-foreground">
-                Тайлбар
-              </span>
-              <SearchInput
-                value={search.q ?? ''}
-                onChange={setQ}
-                placeholder="Тайлбараас хайх"
-              />
-            </div>
-            {filtered && (
-              <Button
-                variant="ghost"
-                className="h-9"
-                onClick={() =>
-                  navigate({
-                    search: { page: undefined, account_id: search.account_id },
-                  })
-                }
-              >
-                Шүүлтүүр цэвэрлэх
-              </Button>
-            )}
+          }
+        >
+          <label
+            htmlFor="statement-from"
+            className="space-y-1 text-xs text-muted-foreground"
+          >
+            <span>Эхлэх өдөр</span>
+            <Input
+              id="statement-from"
+              type="date"
+              value={search.from ?? ''}
+              onChange={(e) => setFilter({ from: e.target.value || undefined })}
+              className="h-9 w-full sm:w-40"
+            />
+          </label>
+          <label
+            htmlFor="statement-to"
+            className="space-y-1 text-xs text-muted-foreground"
+          >
+            <span>Дуусах өдөр</span>
+            <Input
+              id="statement-to"
+              type="date"
+              value={search.to ?? ''}
+              onChange={(e) => setFilter({ to: e.target.value || undefined })}
+              className="h-9 w-full sm:w-40"
+            />
+          </label>
+          <label
+            htmlFor="statement-account"
+            className="space-y-1 text-xs text-muted-foreground"
+          >
+            <span>Хамаарах данс</span>
+            <Input
+              id="statement-account"
+              value={search.related_account ?? ''}
+              onChange={(e) =>
+                setFilter({
+                  related_account: e.target.value.trim() || undefined,
+                })
+              }
+              placeholder="Дансны дугаар"
+              className="tabular h-9 w-full sm:w-44"
+            />
+          </label>
+          <div className="space-y-1">
+            <span className="block text-xs text-muted-foreground">Тайлбар</span>
+            <SearchInput
+              value={search.q ?? ''}
+              onChange={setQ}
+              placeholder="Тайлбараас хайх"
+              delay={0}
+            />
           </div>
-        </div>
+        </FilterPanel>
 
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>

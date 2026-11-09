@@ -9,7 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
+import { PRIV } from '@/lib/rbac';
 import type { AdminVariableType, VariableBody } from '@/queries/variable/type';
 import { DeleteVariableButton } from './delete-variable-button';
 import { VariableFormDialog } from './variable-form-dialog';
@@ -34,6 +36,9 @@ export function VariableListTable({
   onUpdate: (id: string, body: VariableBody) => Promise<unknown>;
   onDelete: (id: string) => Promise<unknown>;
 }) {
+  const can = useCan();
+  const canUpdate = can(PRIV.variableUpdate);
+  const canDelete = can(PRIV.variableDelete);
   return (
     <Table className={dimmed ? 'opacity-60' : undefined}>
       <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_var(--color-border)]">
@@ -85,16 +90,18 @@ export function VariableListTable({
               </TableCell>
               <TableCell className="pr-4">
                 <div className="flex justify-end gap-1">
-                  <VariableFormDialog
-                    variable={v}
-                    onSubmit={(body) => onUpdate(v.id, body)}
-                    trigger={
-                      <Button variant="ghost" size="icon" aria-label="Засах">
-                        <PencilIcon />
-                      </Button>
-                    }
-                  />
-                  {!v.builtin && (
+                  {canUpdate && (
+                    <VariableFormDialog
+                      variable={v}
+                      onSubmit={(body) => onUpdate(v.id, body)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label="Засах">
+                          <PencilIcon />
+                        </Button>
+                      }
+                    />
+                  )}
+                  {canDelete && !v.builtin && (
                     <DeleteVariableButton variable={v} onDelete={onDelete} />
                   )}
                 </div>

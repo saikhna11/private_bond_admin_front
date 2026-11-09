@@ -6,8 +6,10 @@ export const AdminSchema = z.object({
   phone: z.string(),
   last_name: z.string(),
   first_name: z.string(),
-  role: z.string().optional(),
-  is_super: z.boolean(),
+  /** The role the admin holds. */
+  role: z.object({ id: z.string(), name: z.string() }).nullable(),
+  /** The system role may call everything. */
+  is_system_role: z.boolean(),
   is_active: z.boolean(),
   created_at: z.string(),
 });
@@ -20,9 +22,18 @@ export interface CreateAdminBody {
   last_name: string;
   first_name: string;
   password: string;
+  role_id: string;
 }
 
 export interface UpdateAdminBody {
   last_name?: string;
   first_name?: string;
+}
+
+/** The admin list's filters: the staff ones and a role. */
+export interface AdminFilters {
+  page?: number;
+  q?: string;
+  status?: 'active' | 'inactive';
+  role_id?: string;
 }

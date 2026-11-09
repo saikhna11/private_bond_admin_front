@@ -10,7 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
+import { PRIV } from '@/lib/rbac';
 import { cn, showToast } from '@/lib/utils';
 import { contractVariablesOptions } from '@/queries/template/options';
 import {
@@ -44,9 +46,11 @@ export function FieldMappingTable({
 }) {
   const { data: catalog = [] } = useQuery(contractVariablesOptions());
   const variables = catalog.filter((v) => variableFits(v, t.ownership_type));
-  const readOnly = !templateEditable(t);
+  const can = useCan();
+  const manage = can(PRIV.templateUpdate);
+  const readOnly = !manage || !templateEditable(t);
   // A template contracts were drafted from never changes; the Гэрээ page counts them.
-  const hint = t.contracts > 0 ? '' : readOnlyHint[t.status];
+  const hint = !manage || t.contracts > 0 ? '' : readOnlyHint[t.status];
   const total = t.fields.length;
   const mapped = total - mapping.unmapped.length;
   const [saving, setSaving] = useState(false);

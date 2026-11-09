@@ -5,7 +5,7 @@ import {
   SearchIcon,
   XIcon,
 } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,18 +24,28 @@ export function SearchInput({
   value,
   onChange,
   placeholder,
+  delay,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  /** Milliseconds to wait after typing; 0 when the caller debounces its query itself. */
+  delay?: number;
 }) {
   const [text, setText] = useState(value);
-  const debounced = useDebouncedValue(text);
+  const debounced = useDebouncedValue(text, delay);
 
+  // Reports only what the user typed: a value changed from outside (a cleared filter, the
+  // back button) resets the text and must not be sent back as the stale debounced text.
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   useEffect(() => setText(value), [value]);
   useEffect(() => {
-    if (debounced.trim() !== value) onChange(debounced.trim());
-  }, [debounced, value, onChange]);
+    const next = debounced.trim();
+    if (next !== valueRef.current) onChangeRef.current(next);
+  }, [debounced]);
 
   return (
     <div className="relative w-full sm:w-72">

@@ -53,6 +53,52 @@ export const CompanyBankAccountListSchema = z.object({
     .transform((v) => v ?? []),
 });
 
+/**
+ * How an active company account's balance compares: matched (the bank's balance is the
+ * statement's and every transfer is proven), awaiting_statement (they agree, but transfers
+ * wait for their line), statement_behind (they differ: sync the statement) or
+ * bank_unavailable (the bank did not answer).
+ */
+export const BalanceStateSchema = z.enum([
+  'matched',
+  'awaiting_statement',
+  'statement_behind',
+  'bank_unavailable',
+]);
+export type BalanceState = z.infer<typeof BalanceStateSchema>;
+
+/** One active company account's balance three ways: the bank's, the statement's, the transfers'. */
+export const CompanyBalanceSchema = z.object({
+  account: CompanyBankAccountSchema,
+  /** The bank now; left out when it did not answer. */
+  bank: z.object({ balance: money, hold: money, available: money }).optional(),
+  bank_error: z.string().optional(),
+  /** The newest stored statement line; left out before the first. */
+  statement: z
+    .object({
+      balance: money,
+      record_no: z.number(),
+      tran_date: z.string(),
+      tran_time: z.string().optional(),
+      synced_at: z.string().optional(),
+    })
+    .optional(),
+  /** Outbound transfers pending, sent or unknown that no statement line proves yet. */
+  unreconciled_count: z.number(),
+  unreconciled_amount: money,
+  /** The bank's balance less the statement's. */
+  difference: money,
+  state: BalanceStateSchema,
+});
+export type CompanyBalanceType = z.infer<typeof CompanyBalanceSchema>;
+
+export const CompanyBalanceListSchema = z.object({
+  items: z
+    .array(CompanyBalanceSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+
 /** One line of Ulzii&Co's own account, as the bank statement reported it. */
 export const BankStatementEntrySchema = z.object({
   id: z.string(),
@@ -102,6 +148,10 @@ export const BankTransferSchema = z.object({
   amount: money,
   currency: z.string(),
   description: z.string().optional(),
+  /** Why a refund gives the money back; set on every refund. */
+  refund_reason: z.string().optional(),
+  /** The row of contract_id's schedule a coupon or principal payout pays. */
+  repayment_row_no: z.number().optional(),
   status: TransferStatusSchema,
   provider_uuid: z.string().optional(),
   error_code: z.string().optional(),
@@ -133,6 +183,8 @@ export interface TransferFilters {
   /** A company account number. */
   from_account?: string;
   status?: TransferStatus;
+  /** The transfers for one contract: its payments and refunds. */
+  contract_id?: string;
 }
 
 /** Exactly one of user_id and bond_issuer_id. */
@@ -148,9 +200,61 @@ export interface CreateTransferBody {
   purpose?: TransferPurpose;
   amount: string;
   description?: string;
-  /** The contract a refund gives money back for. */
+  /** The contract a refund gives money back for; required for a refund. */
   contract_id?: string;
+  /** Why a refund gives the money back; required for a refund. */
+  refund_reason?: string;
+  /** The schedule row a coupon or principal payout pays; required for one. */
+  repayment_row_no?: number;
 }
+
+/** An edited schedule row a recalculation left as it was (bond.md 9.5). */
+export const SkippedScheduleRowSchema = z.object({
+  contract_id: z.string(),
+  contract_no: z.string(),
+  row_no: z.number(),
+});
+
+/** What entering or removing a holiday did to the schedules (bond.md 9.2). */
+export const HolidayChangeSchema = z.object({
+  holiday: z.lazy(() => HolidaySchema).optional(),
+  recalculated: z.number(),
+  skipped: z
+    .array(SkippedScheduleRowSchema)
+    .nullable()
+    .transform((v) => v ?? []),
+});
+export type HolidayChangeType = z.infer<typeof HolidayChangeSchema>;
+
+/** A public holiday: neither the bank nor a repayment works on it. */
+export const HolidaySchema = z.object({
+  date: z.string(),
+  name: z.string(),
+  /** The admin who entered it; left out for the ones seeded from Bond_Input. */
+  created_by: z.string().optional(),
+  created_at: z.string(),
+});
+export type HolidayType = z.infer<typeof HolidaySchema>;
+
+export const HolidayListSchema = z.object({
+  items: z
+    .array(HolidaySchema)
+    .nullable()
+    .transform((v) => v ?? []),
+});
+
+/** What a day is for the bank. */
+export const BusinessDaySchema = z.object({
+  date: z.string(),
+  /** Neither a Saturday, a Sunday nor a holiday. */
+  business: z.boolean(),
+  holiday_name: z.string().optional(),
+  /** The first working day from date on: date itself when it works. */
+  next_business_day: z.string(),
+  /** Holidays of the year were entered; without, only weekends count. */
+  year_known: z.boolean(),
+});
+export type BusinessDayType = z.infer<typeof BusinessDaySchema>;
 
 export interface CreateCompanyAccountBody {
   bank_name: string;

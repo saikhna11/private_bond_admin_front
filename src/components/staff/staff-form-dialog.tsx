@@ -18,6 +18,13 @@ import {
 } from '@/components/ui/dialog';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { type ApiError, toApiError } from '@/lib/fetcher';
 import { applyFieldErrors } from '@/lib/form-errors';
 import { generatePassword, passwordSchema } from '@/lib/password';
@@ -30,12 +37,21 @@ export interface StaffValues {
   phone: string;
   position: string;
   password: string;
+  /** The role a new admin holds, when the dialog has access. */
+  role_id: string;
+}
+
+/** The roles an admin may be given, for the admin dialogs. */
+export interface StaffAccess {
+  roles: { id: string; name: string; is_active: boolean }[];
+  rolesLoading?: boolean;
 }
 
 const base = {
   last_name: z.string().trim().min(1, 'Овгоо оруулна уу').max(100),
   first_name: z.string().trim().min(1, 'Нэрээ оруулна уу').max(100),
   position: z.string().trim().max(100),
+  role_id: z.string(),
 };
 
 const createSchema = z.object({
@@ -73,6 +89,7 @@ export function StaffFormDialog({
   initial,
   trigger,
   onSubmit,
+  access,
 }: {
   mode: 'create' | 'edit';
   /** "брокер" or "админ". */
@@ -85,6 +102,8 @@ export function StaffFormDialog({
   initial?: Partial<StaffValues>;
   trigger: ReactNode;
   onSubmit: (values: StaffValues) => Promise<unknown>;
+  /** Shows the super flag and the role (the admin dialogs). */
+  access?: StaffAccess;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -95,6 +114,7 @@ export function StaffFormDialog({
     phone: initial?.phone ?? '',
     position: initial?.position ?? '',
     password: mode === 'create' ? generatePassword() : '',
+    role_id: initial?.role_id ?? '',
   });
   const form = useForm<StaffValues>({
     resolver: zodResolver(
@@ -110,17 +130,25 @@ export function StaffFormDialog({
 
   async function submit(values: StaffValues) {
     setError(null);
+    if (access && mode === 'create' && !values.role_id) {
+      form.setError('role_id', { message: 'Эрхийн бүлэг сонгоно уу' });
+      return;
+    }
     try {
       await onSubmit(values);
       setOpen(false);
     } catch (err) {
       const e = toApiError(err);
-      if (e.code === 'user.email_taken') {
+      if (e.code === 'user.email_taken' || e.code === 'admin.email_taken') {
         form.setError('email', { message: e.message });
         return;
       }
       if (e.code === 'user.phone_taken') {
         form.setError('phone', { message: e.message });
+        return;
+      }
+      if (e.code === 'admin.role_required' || e.code.startsWith('role.')) {
+        form.setError('role_id', { message: e.message });
         return;
       }
       if (
@@ -131,6 +159,7 @@ export function StaffFormDialog({
           phone: 'phone',
           position: 'position',
           password: 'password',
+          role_id: 'role_id',
         })
       ) {
         return;
@@ -245,6 +274,18 @@ export function StaffFormDialog({
                 />
               </FormField>
             )}
+            {access && mode === 'create' && (
+              <RoleSelect
+                id="role_id"
+                roles={access.roles}
+                loading={access.rolesLoading}
+                value={form.watch('role_id')}
+                error={errors.role_id?.message}
+                onChange={(v) =>
+                  form.setValue('role_id', v, { shouldValidate: true })
+                }
+              />
+            )}
             {mode === 'create' && (
               <FormField
                 id="password"
@@ -286,5 +327,50 @@ export function StaffFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The role select of the admin dialogs: the system role first, as the API lists them. */
+export function RoleSelect({
+  id,
+  roles,
+  loading,
+  value,
+  error,
+  onChange,
+}: {
+  id: string;
+  roles: StaffAccess['roles'];
+  loading?: boolean;
+  value: string;
+  error?: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <FormField
+      id={id}
+      label="Эрхийн бүлэг"
+      error={error}
+      hint="Админ зөвхөн бүлгийнхээ эрхээр ажиллана. Супер админ бүх эрхтэй."
+    >
+      <Select value={value || undefined} onValueChange={onChange}>
+        <SelectTrigger
+          id={id}
+          className="h-10! w-full"
+          aria-invalid={!!error}
+          disabled={loading}
+        >
+          <SelectValue placeholder={loading ? 'Ачаалж байна...' : 'Сонгох'} />
+        </SelectTrigger>
+        <SelectContent>
+          {roles.map((r) => (
+            <SelectItem key={r.id} value={r.id} disabled={!r.is_active}>
+              {r.name}
+              {!r.is_active && ' (идэвхгүй)'}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </FormField>
   );
 }

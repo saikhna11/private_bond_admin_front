@@ -41,9 +41,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { countryName } from '@/lib/countries';
 import { toApiError } from '@/lib/fetcher';
 import { formatDateTime } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { showToast } from '@/lib/utils';
 import {
@@ -109,6 +111,8 @@ function name(c: ClientDetailType) {
 function ClientDetail({ c }: { c: ClientDetailType }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const can = useCan();
+
   const individual = c.type === 'customer' || c.type === 'foreign';
   const reviewable = c.status === 'pending' && c.type !== 'org_member';
   // Approval waits for a complete profile; members follow their organization.
@@ -153,7 +157,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {reviewable && (
+            {reviewable && can(PRIV.clientReview) && (
               <>
                 <RejectDialog
                   trigger={
@@ -189,62 +193,65 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
                 />
               </>
             )}
-            {c.is_active ? (
+            {can(PRIV.clientBlock) &&
+              (c.is_active ? (
+                <ConfirmDialog
+                  trigger={
+                    <Button variant="outline">
+                      <BanIcon />
+                      Хаах
+                    </Button>
+                  }
+                  title="Харилцагчийг хаах уу?"
+                  description={
+                    c.type === 'organization'
+                      ? 'Байгууллага болон бүх хариуцагч ажилтан нэвтрэлт шууд дуусна.'
+                      : 'Бүх нэвтрэлт нь шууд дуусч, дахин нэвтрэх боломжгүй болно.'
+                  }
+                  confirmLabel="Хаах"
+                  onConfirm={() =>
+                    act(() => blockClient(c.id), 'Харилцагчийг хаалаа')
+                  }
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    void act(
+                      () => unblockClient(c.id),
+                      'Харилцагчийг нээлээ',
+                    ).catch(() => {})
+                  }
+                >
+                  <LockOpenIcon />
+                  Нээх
+                </Button>
+              ))}
+            {can(PRIV.clientDelete) && (
               <ConfirmDialog
                 trigger={
-                  <Button variant="outline">
-                    <BanIcon />
-                    Хаах
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Устгах"
+                    title="Устгах"
+                  >
+                    <Trash2Icon />
                   </Button>
                 }
-                title="Харилцагчийг хаах уу?"
+                title="Харилцагчийг устгах уу?"
                 description={
                   c.type === 'organization'
-                    ? 'Байгууллага болон бүх хариуцагч ажилтан нэвтрэлт шууд дуусна.'
-                    : 'Бүх нэвтрэлт нь шууд дуусч, дахин нэвтрэх боломжгүй болно.'
+                    ? 'Байгууллага болон бүх албан тушаалтнуудын мэдээлэл бүрмөсөн устана. Энэ үйлдлийг буцаах боломжгүй.'
+                    : 'Бүх мэдээлэл нь бүрмөсөн устана. Энэ үйлдлийг буцаах боломжгүй.'
                 }
-                confirmLabel="Хаах"
-                onConfirm={() =>
-                  act(() => blockClient(c.id), 'Харилцагчийг хаалаа')
-                }
+                confirmLabel="Устгах"
+                onConfirm={async () => {
+                  await act(() => deleteClient(c.id), 'Харилцагчийг устгалаа');
+                  await navigate({ to: '/clients' });
+                }}
               />
-            ) : (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  void act(
-                    () => unblockClient(c.id),
-                    'Харилцагчийг нээлээ',
-                  ).catch(() => {})
-                }
-              >
-                <LockOpenIcon />
-                Нээх
-              </Button>
             )}
-            <ConfirmDialog
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Устгах"
-                  title="Устгах"
-                >
-                  <Trash2Icon />
-                </Button>
-              }
-              title="Харилцагчийг устгах уу?"
-              description={
-                c.type === 'organization'
-                  ? 'Байгууллага болон бүх албан тушаалтнуудын мэдээлэл бүрмөсөн устана. Энэ үйлдлийг буцаах боломжгүй.'
-                  : 'Бүх мэдээлэл нь бүрмөсөн устана. Энэ үйлдлийг буцаах боломжгүй.'
-              }
-              confirmLabel="Устгах"
-              onConfirm={async () => {
-                await act(() => deleteClient(c.id), 'Харилцагчийг устгалаа');
-                await navigate({ to: '/clients' });
-              }}
-            />
           </div>
         </CardContent>
       </Card>
@@ -412,6 +419,7 @@ function ClientDetail({ c }: { c: ClientDetailType }) {
 
 /** The accounts bond payments go to: an individual's, or an organization's in its name. */
 function BankAccount({ c }: { c: ClientDetailType }) {
+  const can = useCan();
   const accounts = c.bank_accounts;
   const organization = c.type === 'organization';
   const owner = organization
@@ -436,20 +444,24 @@ function BankAccount({ c }: { c: ClientDetailType }) {
             автоматаар шалгана.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <TransferDialog
-              initialUserId={c.id}
-              trigger={
-                <Button>
-                  <SendIcon />
-                  Шилжүүлэг илгээх
-                </Button>
-              }
-            />
-            <Button variant="outline" asChild>
-              <Link to="/bank/transfers" search={{ user_id: c.id }}>
-                Шилжүүлгүүд
-              </Link>
-            </Button>
+            {can(PRIV.transferCreate) && (
+              <TransferDialog
+                initialUserId={c.id}
+                trigger={
+                  <Button>
+                    <SendIcon />
+                    Шилжүүлэг илгээх
+                  </Button>
+                }
+              />
+            )}
+            {can(PRIV.transferList) && (
+              <Button variant="outline" asChild>
+                <Link to="/bank/transfers" search={{ user_id: c.id }}>
+                  Шилжүүлгүүд
+                </Link>
+              </Button>
+            )}
           </div>
         </>
       ) : (
@@ -533,6 +545,7 @@ function TaxExemption({
   c: ClientDetailType;
   act: (action: () => Promise<unknown>, done: string) => Promise<void>;
 }) {
+  const can = useCan();
   const status = c.tax_exempt_status as TaxExemptStatus;
   const s = taxLabels[status];
 
@@ -557,7 +570,7 @@ function TaxExemption({
               : `Шийдсэн: ${formatDateTime(c.tax_exempt_reviewed_at)}`}
           </p>
         </div>
-        {status === 'requested' && (
+        {status === 'requested' && can(PRIV.clientTaxExempt) && (
           <div className="flex gap-2">
             <ConfirmDialog
               trigger={

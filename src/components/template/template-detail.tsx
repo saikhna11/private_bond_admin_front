@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeftIcon } from 'lucide-react';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import type { TemplateDetailType } from '@/queries/template/type';
 import { FieldMappingTable } from './field-mapping-table';
 import { TemplateActions } from './template-actions';
@@ -14,6 +16,11 @@ import { useFieldMapping } from './use-field-mapping';
  */
 export function TemplateDetail({ t }: { t: TemplateDetailType }) {
   const mapping = useFieldMapping(t);
+  const can = useCan();
+  const manage =
+    can(PRIV.templateUpdate) ||
+    can(PRIV.templateActivate) ||
+    can(PRIV.templateDelete);
   return (
     <div className="flex flex-col gap-6 md:h-[calc(100svh-var(--header-height)-4rem)] lg:h-[calc(100svh-var(--header-height)-5rem)]">
       <Link
@@ -25,9 +32,9 @@ export function TemplateDetail({ t }: { t: TemplateDetailType }) {
       </Link>
       <TemplateInfoCard
         t={t}
-        actions={<TemplateActions t={t} dirty={mapping.dirty} />}
+        actions={manage && <TemplateActions t={t} dirty={mapping.dirty} />}
       />
-      <TemplateProblems t={t} mapping={mapping} />
+      {manage && <TemplateProblems t={t} mapping={mapping} />}
       <FieldMappingTable t={t} mapping={mapping} />
     </div>
   );

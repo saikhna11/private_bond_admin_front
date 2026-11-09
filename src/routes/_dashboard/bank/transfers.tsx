@@ -7,6 +7,7 @@ import { ClientPicker } from '@/components/bank/client-picker';
 import { IssuerPicker } from '@/components/bank/issuer-picker';
 import { TransferDialog } from '@/components/bank/transfer-dialog';
 import { TransferStatusBadge } from '@/components/bank/transfer-status-badge';
+import { FilterPanel } from '@/components/common/filter-panel';
 import {
   FilterSelect,
   Pagination,
@@ -32,8 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { requireAuth } from '@/lib/auth';
 import { toApiError } from '@/lib/fetcher';
 import { formatDateTime, formatMoney } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
@@ -60,6 +65,9 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_dashboard/bank/transfers')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.transferList });
+  },
   validateSearch: searchSchema,
   component: TransfersPage,
   staticData: { crumb: 'Шилжүүлэг' },
@@ -75,7 +83,12 @@ function ClientName({
   id: string;
   fallback?: boolean;
 }) {
-  const { data } = useQuery({ ...clientOptions(id), staleTime: 60_000 });
+  const can = useCan();
+  const { data } = useQuery({
+    ...clientOptions(id),
+    staleTime: 60_000,
+    enabled: can(PRIV.clientList),
+  });
   const name = data
     ? data.name ||
       [data.last_name, data.first_name].filter(Boolean).join(' ') ||
@@ -92,7 +105,12 @@ function ClientName({
 
 /** The bond issuer behind a transfer's issuer id, once its record is read. */
 function IssuerName({ id }: { id: string }) {
-  const { data } = useQuery({ ...issuerOptions(id), staleTime: 60_000 });
+  const can = useCan();
+  const { data } = useQuery({
+    ...issuerOptions(id),
+    staleTime: 60_000,
+    enabled: can(PRIV.issuerList),
+  });
   if (data) return <>{data.name}</>;
   return (
     <span className="tabular font-mono text-xs text-muted-foreground">
@@ -125,12 +143,14 @@ function Recipient({ t }: { t: BankTransferType }) {
 }
 
 function TransfersPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const page = search.page ?? 1;
   const [selected, setSelected] = useState<string | null>(null);
+  const query = useDebouncedValue(search, 300);
   const { data, isPending, error, isPlaceholderData } = useQuery(
-    transfersOptions(search),
+    transfersOptions(query),
   );
 
   const setFilter = useCallback(
@@ -140,11 +160,12 @@ function TransfersPage() {
   );
 
   const { data: companyAccounts } = useQuery(companyAccountsOptions());
-  const filtered =
-    !!search.user_id ||
-    !!search.bond_issuer_id ||
-    !!search.from_account ||
-    !!search.status;
+  const active = [
+    search.user_id,
+    search.bond_issuer_id,
+    search.from_account,
+    search.status,
+  ].filter(Boolean).length;
 
   return (
     <>
@@ -152,40 +173,49 @@ function TransfersPage() {
         title="Шилжүүлэг"
         description="Компанийн данснаас харилцагч эсвэл бонд гаргагчийн бүртгэлтэй данс руу хийсэн төлбөр."
         action={
-          <TransferDialog
-            initialUserId={search.user_id}
-            trigger={
-              <Button>
-                <PlusIcon />
-                Шинэ шилжүүлэг
-              </Button>
-            }
-          />
+          can(PRIV.transferCreate) && (
+            <TransferDialog
+              initialUserId={search.user_id}
+              trigger={
+                <Button>
+                  <PlusIcon />
+                  Шинэ шилжүүлэг
+                </Button>
+              }
+            />
+          )
         }
       />
 
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="space-y-1">
-            <span className="block text-xs text-muted-foreground">
-              Харилцагч
-            </span>
-            <ClientPicker
-              clearable
-              value={search.user_id}
-              onChange={(id) => setFilter({ user_id: id })}
-            />
-          </div>
-          <div className="space-y-1">
-            <span className="block text-xs text-muted-foreground">
-              Бонд гаргагч
-            </span>
-            <IssuerPicker
-              clearable
-              value={search.bond_issuer_id}
-              onChange={(id) => setFilter({ bond_issuer_id: id })}
-            />
-          </div>
+        <FilterPanel
+          active={active}
+          onClear={() => navigate({ search: { page: undefined } })}
+        >
+          {can(PRIV.clientList) && (
+            <div className="space-y-1">
+              <span className="block text-xs text-muted-foreground">
+                Харилцагч
+              </span>
+              <ClientPicker
+                clearable
+                value={search.user_id}
+                onChange={(id) => setFilter({ user_id: id })}
+              />
+            </div>
+          )}
+          {can(PRIV.issuerList) && (
+            <div className="space-y-1">
+              <span className="block text-xs text-muted-foreground">
+                Бонд гаргагч
+              </span>
+              <IssuerPicker
+                clearable
+                value={search.bond_issuer_id}
+                onChange={(id) => setFilter({ bond_issuer_id: id })}
+              />
+            </div>
+          )}
           <div className="space-y-1">
             <span className="block text-xs text-muted-foreground">
               Илгээгч данс
@@ -212,16 +242,7 @@ function TransfersPage() {
               }))}
             />
           </div>
-          {filtered && (
-            <Button
-              variant="ghost"
-              className="h-9"
-              onClick={() => navigate({ search: { page: undefined } })}
-            >
-              Шүүлтүүр цэвэрлэх
-            </Button>
-          )}
-        </div>
+        </FilterPanel>
 
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>

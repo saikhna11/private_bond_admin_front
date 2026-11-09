@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import {
   activateTemplate,
   deactivateTemplate,
@@ -34,11 +36,14 @@ export function TemplateActions({
 }) {
   const act = useTemplateAction();
   const navigate = useNavigate();
+  const can = useCan();
+  const canUpdate = can(PRIV.templateUpdate);
+  const canActivate = can(PRIV.templateActivate);
 
   return (
     <div className="flex flex-wrap gap-2">
-      {templateEditable(t) && <ReplaceFileButton id={t.id} />}
-      {t.status !== 'active' && (
+      {canUpdate && templateEditable(t) && <ReplaceFileButton id={t.id} />}
+      {canActivate && t.status !== 'active' && (
         <ConfirmDialog
           trigger={
             <Button disabled={dirty || t.problems.length > 0}>
@@ -55,7 +60,7 @@ export function TemplateActions({
           }
         />
       )}
-      {t.status === 'active' && (
+      {canActivate && t.status === 'active' && (
         <ConfirmDialog
           trigger={
             <Button variant="outline">
@@ -71,7 +76,7 @@ export function TemplateActions({
           }
         />
       )}
-      {t.status === 'inactive' && t.contracts === 0 && (
+      {canUpdate && t.status === 'inactive' && t.contracts === 0 && (
         <ConfirmDialog
           trigger={
             <Button variant="outline">
@@ -88,7 +93,7 @@ export function TemplateActions({
           }
         />
       )}
-      {templateEditable(t) && (
+      {can(PRIV.templateDelete) && templateEditable(t) && (
         <ConfirmDialog
           trigger={
             <Button variant="outline" className="text-destructive">

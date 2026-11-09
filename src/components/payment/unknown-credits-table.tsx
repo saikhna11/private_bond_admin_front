@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LinkIcon, XIcon } from 'lucide-react';
+import { LinkIcon, Undo2Icon, XIcon } from 'lucide-react';
 import {
   Pagination,
   TableEmpty,
@@ -14,14 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { formatDate, formatMoney } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { unknownCreditsOptions } from '@/queries/payment/options';
-import { dismissCredit, linkCredit } from '@/queries/payment/query';
+import {
+  dismissCredit,
+  linkCredit,
+  returnCredit,
+} from '@/queries/payment/query';
 import { linkResultLabel } from '@/queries/payment/type';
 import { CreditActionDialog } from './credit-action-dialog';
-
-const COLS = 5;
 
 /**
  * The statement credits no order's reference matched: the admin links one to the order the
@@ -37,6 +41,12 @@ export function UnknownCreditsTable({
   const { data, isPending, isPlaceholderData } = useQuery(
     unknownCreditsOptions(page),
   );
+  const can = useCan();
+  const canLink = can(PRIV.paymentLink);
+  const canDismiss = can(PRIV.paymentDismiss);
+  const canReturn = can(PRIV.paymentReturn);
+  const resolve = canLink || canDismiss || canReturn;
+  const cols = resolve ? 5 : 4;
   return (
     <>
       <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
@@ -46,14 +56,14 @@ export function UnknownCreditsTable({
             <TableHead>Гүйлгээний утга</TableHead>
             <TableHead>Илгээсэн данс</TableHead>
             <TableHead className="text-right">Дүн</TableHead>
-            <TableHead className="text-right">Үйлдэл</TableHead>
+            {resolve && <TableHead className="text-right">Үйлдэл</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {isPending ? (
-            <TableSkeletonRows cols={COLS} />
+            <TableSkeletonRows cols={cols} />
           ) : !data?.items.length ? (
-            <TableEmpty cols={COLS} title="Танигдаагүй орлого алга" />
+            <TableEmpty cols={cols} title="Танигдаагүй орлого алга" />
           ) : (
             data.items.map((c) => (
               <TableRow key={c.id}>
@@ -69,44 +79,72 @@ export function UnknownCreditsTable({
                 <TableCell className="tabular text-right font-medium text-success">
                   {formatMoney(c.amount, c.currency)}
                 </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <CreditActionDialog
-                      trigger={
-                        <Button size="sm" variant="outline">
-                          <LinkIcon />
-                          Гэрээнд холбох
-                        </Button>
-                      }
-                      title="Гэрээнд холбох"
-                      description="Харилцагчийн захиалгын гүйлгээний утгыг оруулна. Захиалга төлбөр хүлээж байвал орлого түүнд тооцогдоно."
-                      label="Гүйлгээний утга"
-                      placeholder="PAY-MFG-7K3Q"
-                      action="Холбох"
-                      send={async (ref) =>
-                        linkResultLabel[(await linkCredit(c.id, ref)).status]
-                      }
-                    />
-                    <CreditActionDialog
-                      trigger={
-                        <Button size="sm" variant="ghost">
-                          <XIcon />
-                          Хамааралгүй
-                        </Button>
-                      }
-                      title="Хамааралгүй гэж тэмдэглэх"
-                      description="Энэ орлого ямар ч захиалгын төлбөр биш бол (бонд гаргагчийн эргэн төлөлт, банкны хүү гэх мэт) жагсаалтаас гаргана."
-                      label="Шалтгаан"
-                      placeholder="Жишээ нь: банкны хүүгийн орлого"
-                      action="Тэмдэглэх"
-                      multiline
-                      send={async (note) => {
-                        await dismissCredit(c.id, note);
-                        return 'Хамааралгүй гэж тэмдэглэлээ.';
-                      }}
-                    />
-                  </div>
-                </TableCell>
+                {resolve && (
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      {canLink && (
+                        <CreditActionDialog
+                          trigger={
+                            <Button size="sm" variant="outline">
+                              <LinkIcon />
+                              Гэрээнд холбох
+                            </Button>
+                          }
+                          title="Гэрээнд холбох"
+                          description="Харилцагчийн захиалгын гүйлгээний утгыг оруулна. Захиалга төлбөр хүлээж байвал орлого түүнд тооцогдоно."
+                          label="Гүйлгээний утга"
+                          placeholder="PAY-MFG-7K3Q"
+                          action="Холбох"
+                          send={async (ref) =>
+                            linkResultLabel[
+                              (await linkCredit(c.id, ref)).status
+                            ]
+                          }
+                        />
+                      )}
+                      {canDismiss && (
+                        <CreditActionDialog
+                          trigger={
+                            <Button size="sm" variant="ghost">
+                              <XIcon />
+                              Хамааралгүй
+                            </Button>
+                          }
+                          title="Хамааралгүй гэж тэмдэглэх"
+                          description="Энэ орлого ямар ч захиалгын төлбөр биш бол (бонд гаргагчийн эргэн төлөлт, банкны хүү гэх мэт) жагсаалтаас гаргана."
+                          label="Шалтгаан"
+                          placeholder="Жишээ нь: банкны хүүгийн орлого"
+                          action="Тэмдэглэх"
+                          multiline
+                          send={async (note) => {
+                            await dismissCredit(c.id, note);
+                            return 'Хамааралгүй гэж тэмдэглэлээ.';
+                          }}
+                        />
+                      )}
+                      {canReturn && (
+                        <CreditActionDialog
+                          trigger={
+                            <Button size="sm" variant="ghost">
+                              <Undo2Icon />
+                              Банкнаас буцаасан
+                            </Button>
+                          }
+                          title="Банкнаас гараар буцаасан"
+                          description="Систем зөвхөн баталгаажсан харилцагчийн данс руу шилжүүлдэг тул танигдаагүй төлөгчид санхүүгийн алба банкнаас гараар буцаана. Буцаасны дараа энд тэмдэглэнэ; тэмдэглэл нь бүртгэл болж үлдэнэ."
+                          label="Хэзээ, ямар гүйлгээгээр буцаасан"
+                          placeholder="Жишээ нь: 2026.11.06 Хаан банкнаас буцаасан, гүйлгээ #123456"
+                          action="Тэмдэглэх"
+                          multiline
+                          send={async (note) => {
+                            await returnCredit(c.id, note);
+                            return 'Банкнаас буцаасан гэж тэмдэглэлээ.';
+                          }}
+                        />
+                      )}
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

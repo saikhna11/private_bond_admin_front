@@ -8,6 +8,8 @@ import { Pagination, SearchInput } from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { bondsOptions } from '@/queries/bond/options';
 
@@ -22,6 +24,7 @@ export const Route = createFileRoute('/_dashboard/bonds/')({
 });
 
 function BondsPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { data, isPending, error, isPlaceholderData } = useQuery(
@@ -41,12 +44,14 @@ function BondsPage() {
         title="Бонд"
         description="Бонд, түүний хүүгийн нөхцөл, танилцуулга, нүүр зургийг бүртгэнэ."
         action={
-          <Button asChild>
-            <Link to="/bonds/new">
-              <PlusIcon />
-              Бонд нэмэх
-            </Link>
-          </Button>
+          can(PRIV.bondCreate) && (
+            <Button asChild>
+              <Link to="/bonds/new">
+                <PlusIcon />
+                Бонд нэмэх
+              </Link>
+            </Button>
+          )
         }
       />
 

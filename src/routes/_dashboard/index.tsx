@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/format';
+import { can, PRIV } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import { meOptions } from '@/queries/auth/options';
 import { brokersOptions } from '@/queries/broker/options';
@@ -33,6 +34,8 @@ export const Route = createFileRoute('/_dashboard/')({
 
 function DashboardHome() {
   const { data: me } = useSuspenseQuery(meOptions());
+  const canClients = can(me, PRIV.clientList);
+  const canBrokers = can(me, PRIV.brokerList);
 
   return (
     <>
@@ -41,37 +44,57 @@ function DashboardHome() {
         description="Платформын өнөөдрийн байдал."
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
-        <Stat
-          label="Шалгах хүлээгдэж буй"
-          filters={{ status: 'pending' }}
-          Icon={ClockIcon}
-          tone="warning"
-          highlight
-        />
-        <Stat
-          label="Баталгаажсан"
-          filters={{ status: 'approved' }}
-          Icon={CircleCheckIcon}
-          tone="success"
-        />
-        <Stat
-          label="Цуцлагдсан"
-          filters={{ status: 'rejected' }}
-          Icon={CircleXIcon}
-          tone="destructive"
-        />
-        <Stat
-          label="Хаагдсан харилцагч"
-          filters={{ active: 'inactive' }}
-          Icon={UserXIcon}
-          tone="muted"
-        />
-        <BrokerStat />
-      </div>
+      {canClients || canBrokers ? (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+          {canClients && (
+            <>
+              <Stat
+                label="Шалгах хүлээгдэж буй"
+                filters={{ status: 'pending' }}
+                Icon={ClockIcon}
+                tone="warning"
+                highlight
+              />
+              <Stat
+                label="Баталгаажсан"
+                filters={{ status: 'approved' }}
+                Icon={CircleCheckIcon}
+                tone="success"
+              />
+              <Stat
+                label="Цуцлагдсан"
+                filters={{ status: 'rejected' }}
+                Icon={CircleXIcon}
+                tone="destructive"
+              />
+              <Stat
+                label="Хаагдсан харилцагч"
+                filters={{ active: 'inactive' }}
+                Icon={UserXIcon}
+                tone="muted"
+              />
+            </>
+          )}
+          {canBrokers && <BrokerStat />}
+        </div>
+      ) : (
+        <NoAccess />
+      )}
 
-      <PendingQueue />
+      {canClients && <PendingQueue />}
     </>
+  );
+}
+
+/** The home of an admin whose role reads neither clients nor brokers. */
+function NoAccess() {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        Зүүн талын цэснээс өөрийн эрхтэй хэсгээ сонгоно уу. Эрх нэмүүлэх бол
+        супер админд хандана уу.
+      </CardContent>
+    </Card>
   );
 }
 

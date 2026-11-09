@@ -1,15 +1,21 @@
 import fetchAndValidate from '@/lib/fetcher';
 import { listQuery, PAGE_SIZE, pageSchema } from '@/lib/types';
-import type { StaffFilters } from '@/queries/broker/type';
 import {
+  type AdminFilters,
   AdminSchema,
   type CreateAdminBody,
   type UpdateAdminBody,
 } from './type';
 
-export const getAdmins = (f: StaffFilters) =>
+export const getAdmins = (f: AdminFilters) =>
   fetchAndValidate(
-    `admins${listQuery({ page: f.page, size: PAGE_SIZE, q: f.q, status: f.status })}`,
+    `admins${listQuery({
+      page: f.page,
+      size: PAGE_SIZE,
+      q: f.q,
+      status: f.status,
+      role_id: f.role_id,
+    })}`,
     pageSchema(AdminSchema),
   );
 
@@ -18,6 +24,12 @@ export const createAdmin = (body: CreateAdminBody) =>
 
 export const updateAdmin = (id: string, body: UpdateAdminBody) =>
   fetchAndValidate(`admins/${id}`, AdminSchema, { method: 'PATCH', body });
+
+export const assignAdminRole = (id: string, roleId: string) =>
+  fetchAndValidate(`admins/${id}/role`, AdminSchema, {
+    method: 'PUT',
+    body: { role_id: roleId },
+  });
 
 export const blockAdmin = (id: string) =>
   fetchAndValidate(`admins/${id}/block`, undefined, { method: 'POST' });

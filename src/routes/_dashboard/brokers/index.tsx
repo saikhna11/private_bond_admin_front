@@ -3,6 +3,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import * as z from 'zod';
 import { StaffManager } from '@/components/staff/staff-manager';
+import { useCan } from '@/hooks/use-can';
+import { requireAuth } from '@/lib/auth';
+import { PRIV } from '@/lib/rbac';
 import { brokerKeys, brokersOptions } from '@/queries/broker/options';
 import {
   blockBroker,
@@ -21,12 +24,16 @@ const staffSearchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_dashboard/brokers/')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.brokerList });
+  },
   validateSearch: staffSearchSchema,
   component: BrokersPage,
   staticData: { crumb: 'Брокерууд' },
 });
 
 function BrokersPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const query = useQuery(brokersOptions(search));
@@ -48,6 +55,13 @@ function BrokersPage() {
       description="Брокерууд өөрийн самбараар нэвтэрнэ. Харилцагч хуваарилах нь удахгүй нэмэгдэнэ."
       noun="брокер"
       withPosition
+      allow={{
+        create: can(PRIV.brokerCreate),
+        update: can(PRIV.brokerUpdate),
+        block: can(PRIV.brokerBlock),
+        resetPassword: can(PRIV.brokerResetPassword),
+        remove: can(PRIV.brokerDelete),
+      }}
       filters={search}
       onFilters={onFilters}
       query={query}

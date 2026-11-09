@@ -6,6 +6,8 @@ import { PaymentContractsTable } from '@/components/payment/payment-contracts-ta
 import { UnknownCreditsTable } from '@/components/payment/unknown-credits-table';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { requireAuth } from '@/lib/auth';
+import { PRIV } from '@/lib/rbac';
 import { paymentCountsOptions } from '@/queries/payment/options';
 import {
   type PaymentTab,
@@ -19,6 +21,9 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_dashboard/bank/payments')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient, { privilege: PRIV.paymentList });
+  },
   validateSearch: searchSchema,
   component: PaymentsPage,
   staticData: { crumb: 'Анхаарах төлбөр' },

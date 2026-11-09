@@ -49,7 +49,7 @@ const company = {
   state_register_number: z
     .string()
     .trim()
-    .regex(/^\d{20}$/, 'Улсын бүртгэлийн дугаар 20 оронтой тоо байна'),
+    .regex(/^\d{7}$/, 'Улсын бүртгэлийн дугаар 7 оронтой тоо байна'),
 };
 
 const createSchema = z.object({
@@ -268,7 +268,7 @@ export function CreateIssuerDialog({
               <Input
                 id="state_register_number"
                 inputMode="numeric"
-                maxLength={20}
+                maxLength={7}
                 className="tabular h-10"
                 aria-invalid={!!errors.state_register_number}
                 {...form.register('state_register_number')}
@@ -592,7 +592,7 @@ export function EditIssuerDialog({
               <Input
                 id="edit_state_register_number"
                 inputMode="numeric"
-                maxLength={20}
+                maxLength={7}
                 className="tabular h-10"
                 aria-invalid={!!errors.state_register_number}
                 {...form.register('state_register_number')}

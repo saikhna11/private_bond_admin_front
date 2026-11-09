@@ -133,9 +133,24 @@ export const BondFileSchema = z.object({
 });
 export type BondFileType = z.infer<typeof BondFileSchema>;
 
+/** How far a bond's purchases were repaid (bond.md 5.2), apart from its sales. */
+export const RepaymentStatusSchema = z.enum([
+  'not_started',
+  'in_progress',
+  'settled',
+]);
+export type RepaymentStatus = z.infer<typeof RepaymentStatusSchema>;
+
+export const repaymentStatusLabel: Record<RepaymentStatus, string> = {
+  not_started: 'Эхлээгүй',
+  in_progress: 'Төлөлт явагдаж буй',
+  settled: 'Бүрэн барагдсан',
+};
+
 export const BondDetailSchema = BondSchema.extend({
   rate_options: z.array(RateOptionSchema),
   files: z.array(BondFileSchema),
+  repayment_status: RepaymentStatusSchema.optional(),
 });
 export type BondDetailType = z.infer<typeof BondDetailSchema>;
 

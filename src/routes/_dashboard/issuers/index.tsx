@@ -21,8 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
 import { formatDate } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { showToast } from '@/lib/utils';
 import { issuerKeys, issuersOptions } from '@/queries/issuer/options';
@@ -41,6 +43,7 @@ export const Route = createFileRoute('/_dashboard/issuers/')({
 const COLS = 3;
 
 function IssuersPage() {
+  const can = useCan();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
@@ -62,25 +65,27 @@ function IssuersPage() {
         title="Бонд гаргагчид"
         description="Бондоор хөрөнгө босгох компаниуд, тэдний ажилтан, банкны данс."
         action={
-          <CreateIssuerDialog
-            trigger={
-              <Button>
-                <PlusIcon />
-                Бонд гаргагч бүртгэх
-              </Button>
-            }
-            onSubmit={async (body) => {
-              const issuer = await createIssuer(body);
-              showToast('success', 'Бонд гаргагч бүртгэгдлээ');
-              await queryClient.invalidateQueries({
-                queryKey: issuerKeys.all,
-              });
-              await navigate({
-                to: '/issuers/$issuerId',
-                params: { issuerId: issuer.id },
-              });
-            }}
-          />
+          can(PRIV.issuerCreate) && (
+            <CreateIssuerDialog
+              trigger={
+                <Button>
+                  <PlusIcon />
+                  Бонд гаргагч бүртгэх
+                </Button>
+              }
+              onSubmit={async (body) => {
+                const issuer = await createIssuer(body);
+                showToast('success', 'Бонд гаргагч бүртгэгдлээ');
+                await queryClient.invalidateQueries({
+                  queryKey: issuerKeys.all,
+                });
+                await navigate({
+                  to: '/issuers/$issuerId',
+                  params: { issuerId: issuer.id },
+                });
+              }}
+            />
+          )
         }
       />
 

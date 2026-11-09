@@ -1,6 +1,13 @@
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
 import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
-import { type BondDetailType, interestMethodLabel } from '@/queries/bond/type';
+import { PRIV } from '@/lib/rbac';
+import {
+  type BondDetailType,
+  interestMethodLabel,
+  repaymentStatusLabel,
+} from '@/queries/bond/type';
 import { BondEditDialog } from './bond-edit-dialog';
 import { BondSalesStatusBadge } from './bond-sales-status-badge';
 import { BondStateActions } from './bond-state-actions';
@@ -16,6 +23,7 @@ function Term({ label, value }: { label: string; value: string }) {
 
 /** A bond's name, sales status and terms, with its actions. */
 export function BondInfoCard({ b }: { b: BondDetailType }) {
+  const can = useCan();
   const amount = (v: string) => formatAmount(v, b.currency);
   return (
     <Card className="py-0">
@@ -30,16 +38,23 @@ export function BondInfoCard({ b }: { b: BondDetailType }) {
                 {b.name}
               </h1>
               <BondSalesStatusBadge status={b.sales_status} />
+              {b.repayment_status && b.repayment_status !== 'not_started' && (
+                <Badge variant="outline" className="font-normal">
+                  {repaymentStatusLabel[b.repayment_status]}
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">
               {b.bond_issuer_name} · бүртгэсэн {formatDateTime(b.created_at)}
               {b.updated_at && ` · засварласан ${formatDateTime(b.updated_at)}`}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <BondStateActions b={b} />
-            <BondEditDialog b={b} />
-          </div>
+          {(can(PRIV.bondState) || can(PRIV.bondUpdate)) && (
+            <div className="flex flex-wrap gap-2">
+              {can(PRIV.bondState) && <BondStateActions b={b} />}
+              {can(PRIV.bondUpdate) && <BondEditDialog b={b} />}
+            </div>
+          )}
         </div>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
           <Term label="Нийт босгох дүн" value={amount(b.total_amount)} />

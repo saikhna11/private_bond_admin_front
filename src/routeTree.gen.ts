@@ -22,7 +22,9 @@ import { Route as BrokerPublicRouteRouteImport } from './routes/broker/_public/r
 import { Route as DashboardAccountIndexRouteImport } from './routes/_dashboard/account/index'
 import { Route as DashboardAdminsIndexRouteImport } from './routes/_dashboard/admins/index'
 import { Route as DashboardBankAccountsRouteImport } from './routes/_dashboard/bank/accounts'
+import { Route as DashboardBankHolidaysRouteImport } from './routes/_dashboard/bank/holidays'
 import { Route as DashboardBankPaymentsRouteImport } from './routes/_dashboard/bank/payments'
+import { Route as DashboardBankRepaymentsRouteImport } from './routes/_dashboard/bank/repayments'
 import { Route as DashboardBankStatementRouteImport } from './routes/_dashboard/bank/statement'
 import { Route as DashboardBankTransfersRouteImport } from './routes/_dashboard/bank/transfers'
 import { Route as DashboardBondsIndexRouteImport } from './routes/_dashboard/bonds/index'
@@ -35,6 +37,7 @@ import { Route as DashboardContractsIndexRouteImport } from './routes/_dashboard
 import { Route as DashboardContractsContractIdRouteImport } from './routes/_dashboard/contracts/$contractId'
 import { Route as DashboardIssuersIndexRouteImport } from './routes/_dashboard/issuers/index'
 import { Route as DashboardIssuersIssuerIdRouteImport } from './routes/_dashboard/issuers/$issuerId'
+import { Route as DashboardRbacIndexRouteImport } from './routes/_dashboard/rbac/index'
 import { Route as DashboardTemplatesIndexRouteImport } from './routes/_dashboard/templates/index'
 import { Route as DashboardTemplatesTemplateIdRouteImport } from './routes/_dashboard/templates/$templateId'
 import { Route as DashboardVariablesIndexRouteImport } from './routes/_dashboard/variables/index'
@@ -106,9 +109,19 @@ const DashboardBankAccountsRoute = DashboardBankAccountsRouteImport.update({
   path: '/bank/accounts',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardBankHolidaysRoute = DashboardBankHolidaysRouteImport.update({
+  id: '/bank/holidays',
+  path: '/bank/holidays',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardBankPaymentsRoute = DashboardBankPaymentsRouteImport.update({
   id: '/bank/payments',
   path: '/bank/payments',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardBankRepaymentsRoute = DashboardBankRepaymentsRouteImport.update({
+  id: '/bank/repayments',
+  path: '/bank/repayments',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardBankStatementRoute = DashboardBankStatementRouteImport.update({
@@ -174,6 +187,11 @@ const DashboardIssuersIssuerIdRoute =
     path: '/$issuerId',
     getParentRoute: () => DashboardIssuersRouteRoute,
   } as any)
+const DashboardRbacIndexRoute = DashboardRbacIndexRouteImport.update({
+  id: '/rbac/',
+  path: '/rbac/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardTemplatesIndexRoute = DashboardTemplatesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -220,7 +238,9 @@ export interface FileRoutesByFullPath {
   '/templates': typeof DashboardTemplatesRouteRouteWithChildren
   '/broker': typeof BrokerPublicRouteRouteWithChildren
   '/bank/accounts': typeof DashboardBankAccountsRoute
+  '/bank/holidays': typeof DashboardBankHolidaysRoute
   '/bank/payments': typeof DashboardBankPaymentsRoute
+  '/bank/repayments': typeof DashboardBankRepaymentsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
   '/bonds/$bondId': typeof DashboardBondsBondIdRoute
@@ -236,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/clients/': typeof DashboardClientsIndexRoute
   '/contracts/': typeof DashboardContractsIndexRoute
   '/issuers/': typeof DashboardIssuersIndexRoute
+  '/rbac/': typeof DashboardRbacIndexRoute
   '/templates/': typeof DashboardTemplatesIndexRoute
   '/variables/': typeof DashboardVariablesIndexRoute
   '/login/': typeof PublicLoginIndexRoute
@@ -247,7 +268,9 @@ export interface FileRoutesByTo {
   '/': typeof DashboardIndexRoute
   '/broker': typeof BrokerPanelIndexRoute
   '/bank/accounts': typeof DashboardBankAccountsRoute
+  '/bank/holidays': typeof DashboardBankHolidaysRoute
   '/bank/payments': typeof DashboardBankPaymentsRoute
+  '/bank/repayments': typeof DashboardBankRepaymentsRoute
   '/bank/statement': typeof DashboardBankStatementRoute
   '/bank/transfers': typeof DashboardBankTransfersRoute
   '/bonds/$bondId': typeof DashboardBondsBondIdRoute
@@ -263,6 +286,7 @@ export interface FileRoutesByTo {
   '/clients': typeof DashboardClientsIndexRoute
   '/contracts': typeof DashboardContractsIndexRoute
   '/issuers': typeof DashboardIssuersIndexRoute
+  '/rbac': typeof DashboardRbacIndexRoute
   '/templates': typeof DashboardTemplatesIndexRoute
   '/variables': typeof DashboardVariablesIndexRoute
   '/login': typeof PublicLoginIndexRoute
@@ -282,7 +306,9 @@ export interface FileRoutesById {
   '/broker/_public': typeof BrokerPublicRouteRouteWithChildren
   '/_dashboard/': typeof DashboardIndexRoute
   '/_dashboard/bank/accounts': typeof DashboardBankAccountsRoute
+  '/_dashboard/bank/holidays': typeof DashboardBankHolidaysRoute
   '/_dashboard/bank/payments': typeof DashboardBankPaymentsRoute
+  '/_dashboard/bank/repayments': typeof DashboardBankRepaymentsRoute
   '/_dashboard/bank/statement': typeof DashboardBankStatementRoute
   '/_dashboard/bank/transfers': typeof DashboardBankTransfersRoute
   '/_dashboard/bonds/$bondId': typeof DashboardBondsBondIdRoute
@@ -298,6 +324,7 @@ export interface FileRoutesById {
   '/_dashboard/clients/': typeof DashboardClientsIndexRoute
   '/_dashboard/contracts/': typeof DashboardContractsIndexRoute
   '/_dashboard/issuers/': typeof DashboardIssuersIndexRoute
+  '/_dashboard/rbac/': typeof DashboardRbacIndexRoute
   '/_dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/_dashboard/variables/': typeof DashboardVariablesIndexRoute
   '/_public/login/': typeof PublicLoginIndexRoute
@@ -316,7 +343,9 @@ export interface FileRouteTypes {
     | '/templates'
     | '/broker'
     | '/bank/accounts'
+    | '/bank/holidays'
     | '/bank/payments'
+    | '/bank/repayments'
     | '/bank/statement'
     | '/bank/transfers'
     | '/bonds/$bondId'
@@ -332,6 +361,7 @@ export interface FileRouteTypes {
     | '/clients/'
     | '/contracts/'
     | '/issuers/'
+    | '/rbac/'
     | '/templates/'
     | '/variables/'
     | '/login/'
@@ -343,7 +373,9 @@ export interface FileRouteTypes {
     | '/'
     | '/broker'
     | '/bank/accounts'
+    | '/bank/holidays'
     | '/bank/payments'
+    | '/bank/repayments'
     | '/bank/statement'
     | '/bank/transfers'
     | '/bonds/$bondId'
@@ -359,6 +391,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/contracts'
     | '/issuers'
+    | '/rbac'
     | '/templates'
     | '/variables'
     | '/login'
@@ -377,7 +410,9 @@ export interface FileRouteTypes {
     | '/broker/_public'
     | '/_dashboard/'
     | '/_dashboard/bank/accounts'
+    | '/_dashboard/bank/holidays'
     | '/_dashboard/bank/payments'
+    | '/_dashboard/bank/repayments'
     | '/_dashboard/bank/statement'
     | '/_dashboard/bank/transfers'
     | '/_dashboard/bonds/$bondId'
@@ -393,6 +428,7 @@ export interface FileRouteTypes {
     | '/_dashboard/clients/'
     | '/_dashboard/contracts/'
     | '/_dashboard/issuers/'
+    | '/_dashboard/rbac/'
     | '/_dashboard/templates/'
     | '/_dashboard/variables/'
     | '/_public/login/'
@@ -501,11 +537,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBankAccountsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/_dashboard/bank/holidays': {
+      id: '/_dashboard/bank/holidays'
+      path: '/bank/holidays'
+      fullPath: '/bank/holidays'
+      preLoaderRoute: typeof DashboardBankHolidaysRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/_dashboard/bank/payments': {
       id: '/_dashboard/bank/payments'
       path: '/bank/payments'
       fullPath: '/bank/payments'
       preLoaderRoute: typeof DashboardBankPaymentsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/_dashboard/bank/repayments': {
+      id: '/_dashboard/bank/repayments'
+      path: '/bank/repayments'
+      fullPath: '/bank/repayments'
+      preLoaderRoute: typeof DashboardBankRepaymentsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/_dashboard/bank/statement': {
@@ -591,6 +641,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/issuers/$issuerId'
       preLoaderRoute: typeof DashboardIssuersIssuerIdRouteImport
       parentRoute: typeof DashboardIssuersRouteRoute
+    }
+    '/_dashboard/rbac/': {
+      id: '/_dashboard/rbac/'
+      path: '/rbac'
+      fullPath: '/rbac/'
+      preLoaderRoute: typeof DashboardRbacIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/_dashboard/templates/': {
       id: '/_dashboard/templates/'
@@ -729,12 +786,15 @@ interface DashboardRouteRouteChildren {
   DashboardTemplatesRouteRoute: typeof DashboardTemplatesRouteRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardBankAccountsRoute: typeof DashboardBankAccountsRoute
+  DashboardBankHolidaysRoute: typeof DashboardBankHolidaysRoute
   DashboardBankPaymentsRoute: typeof DashboardBankPaymentsRoute
+  DashboardBankRepaymentsRoute: typeof DashboardBankRepaymentsRoute
   DashboardBankStatementRoute: typeof DashboardBankStatementRoute
   DashboardBankTransfersRoute: typeof DashboardBankTransfersRoute
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
   DashboardAdminsIndexRoute: typeof DashboardAdminsIndexRoute
   DashboardBrokersIndexRoute: typeof DashboardBrokersIndexRoute
+  DashboardRbacIndexRoute: typeof DashboardRbacIndexRoute
   DashboardVariablesIndexRoute: typeof DashboardVariablesIndexRoute
 }
 
@@ -746,12 +806,15 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardTemplatesRouteRoute: DashboardTemplatesRouteRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardBankAccountsRoute: DashboardBankAccountsRoute,
+  DashboardBankHolidaysRoute: DashboardBankHolidaysRoute,
   DashboardBankPaymentsRoute: DashboardBankPaymentsRoute,
+  DashboardBankRepaymentsRoute: DashboardBankRepaymentsRoute,
   DashboardBankStatementRoute: DashboardBankStatementRoute,
   DashboardBankTransfersRoute: DashboardBankTransfersRoute,
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
   DashboardAdminsIndexRoute: DashboardAdminsIndexRoute,
   DashboardBrokersIndexRoute: DashboardBrokersIndexRoute,
+  DashboardRbacIndexRoute: DashboardRbacIndexRoute,
   DashboardVariablesIndexRoute: DashboardVariablesIndexRoute,
 }
 

@@ -9,9 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useCan } from '@/hooks/use-can';
 import { toApiError } from '@/lib/fetcher';
 import { saveBlob } from '@/lib/file';
 import { formatDate } from '@/lib/format';
+import { PRIV } from '@/lib/rbac';
 import { showToast } from '@/lib/utils';
 import { deleteBondFile, downloadBondFile } from '@/queries/bond/query';
 import {
@@ -32,6 +34,8 @@ function sizeLabel(bytes: number): string {
 /** A bond's cover image and its up to five prospectus files (bond.md 3.2). */
 export function BondFilesCard({ b }: { b: BondDetailType }) {
   const run = useBondAction();
+  const can = useCan();
+  const manage = can(PRIV.bondUpdate);
   const cover = b.files.find((f) => f.kind === 'cover');
   const prospectus = b.files.filter((f) => f.kind === 'prospectus');
 
@@ -43,19 +47,20 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
     }
   }
 
-  const remove = (f: BondFileType, what: string) => (
-    <ConfirmDialog
-      trigger={
-        <Button variant="ghost" size="icon" aria-label="Устгах">
-          <Trash2Icon />
-        </Button>
-      }
-      title={`${what} устгах уу?`}
-      description={f.file_name}
-      confirmLabel="Устгах"
-      onConfirm={() => run(() => deleteBondFile(b.id, f.id), 'Файл устлаа')}
-    />
-  );
+  const remove = (f: BondFileType, what: string) =>
+    manage && (
+      <ConfirmDialog
+        trigger={
+          <Button variant="ghost" size="icon" aria-label="Устгах">
+            <Trash2Icon />
+          </Button>
+        }
+        title={`${what} устгах уу?`}
+        description={f.file_name}
+        confirmLabel="Устгах"
+        onConfirm={() => run(() => deleteBondFile(b.id, f.id), 'Файл устлаа')}
+      />
+    );
 
   return (
     <div className="@container">
@@ -66,14 +71,16 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
             <CardDescription>
               PNG эсвэл JPEG, шинэ нь хуучныг солино
             </CardDescription>
-            <CardAction className="flex gap-1">
-              {cover && remove(cover, 'Нүүр зургийг')}
-              <BondFileUploadButton
-                bondId={b.id}
-                kind="cover"
-                label={cover ? 'Солих' : 'Оруулах'}
-              />
-            </CardAction>
+            {manage && (
+              <CardAction className="flex gap-1">
+                {cover && remove(cover, 'Нүүр зургийг')}
+                <BondFileUploadButton
+                  bondId={b.id}
+                  kind="cover"
+                  label={cover ? 'Солих' : 'Оруулах'}
+                />
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent>
             <BondCoverPreview bondId={b.id} cover={cover} />
@@ -85,14 +92,16 @@ export function BondFilesCard({ b }: { b: BondDetailType }) {
             <CardDescription>
               PDF, PNG, JPEG; {prospectus.length}/{MAX_PROSPECTUS_FILES}
             </CardDescription>
-            <CardAction>
-              <BondFileUploadButton
-                bondId={b.id}
-                kind="prospectus"
-                label="Файл нэмэх"
-                disabled={prospectus.length >= MAX_PROSPECTUS_FILES}
-              />
-            </CardAction>
+            {manage && (
+              <CardAction>
+                <BondFileUploadButton
+                  bondId={b.id}
+                  kind="prospectus"
+                  label="Файл нэмэх"
+                  disabled={prospectus.length >= MAX_PROSPECTUS_FILES}
+                />
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent>
             {prospectus.length === 0 ? (
