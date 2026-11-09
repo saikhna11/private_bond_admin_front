@@ -150,8 +150,8 @@ export const BankTransferSchema = z.object({
   description: z.string().optional(),
   /** Why a refund gives the money back; set on every refund. */
   refund_reason: z.string().optional(),
-  /** The row of contract_id's schedule a coupon or principal payout pays. */
-  repayment_row_no: z.number().optional(),
+  /** The schedule row a coupon or principal payout pays; such a payout has no contract_id. */
+  repayment_schedule_id: z.string().optional(),
   status: TransferStatusSchema,
   provider_uuid: z.string().optional(),
   error_code: z.string().optional(),
