@@ -5,11 +5,52 @@ import { ContractStatusSchema } from '@/queries/contract/type';
 export const PaymentTabSchema = z.enum(['unknown', 'short', 'refund']);
 export type PaymentTab = z.infer<typeof PaymentTabSchema>;
 
+/** What the payments page shows: every list, one under another, or one of them. */
+export const PaymentViewSchema = z.enum(['all', 'unknown', 'short', 'refund']);
+export type PaymentView = z.infer<typeof PaymentViewSchema>;
+
+export const paymentViewLabel: Record<PaymentView, string> = {
+  all: 'Бүгд',
+  unknown: 'Танигдаагүй',
+  short: 'Дутуу',
+  refund: 'Буцаах',
+};
+
 export const paymentTabLabel: Record<PaymentTab, string> = {
   unknown: 'Танигдаагүй',
   short: 'Дутуу',
   refund: 'Буцаах',
 };
+
+/**
+ * What narrows a payments list: the days from to to (YYYY-MM-DD), the day the money came in or
+ * the order was made, and q, any part of the description, account, contract number, payment
+ * reference or holder's name.
+ */
+export interface PaymentFilter {
+  from?: string;
+  to?: string;
+  q?: string;
+}
+
+/** One row of every list of the payments to look at, of any kind (GET /payments/all). */
+export const PaymentIssueSchema = z.object({
+  kind: PaymentTabSchema,
+  id: z.guid(),
+  day: z.string(),
+  tran_time: z.string().optional(),
+  description: z.string(),
+  counterparty: z.string(),
+  currency: z.string(),
+  amount: z.string(),
+  contract_id: z.guid().optional(),
+  contract_no: z.string().optional(),
+  contract_status: ContractStatusSchema.optional(),
+  payment_reference: z.string().optional(),
+  holder_id: z.guid().optional(),
+  payment_deadline: z.string().optional(),
+});
+export type PaymentIssueType = z.infer<typeof PaymentIssueSchema>;
 
 /** A statement credit no order's reference matched and no admin decided on. */
 export const UnknownCreditSchema = z.object({

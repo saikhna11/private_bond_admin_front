@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { CheckIcon, ChevronsUpDownIcon, Loader2Icon } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronsUpDownIcon,
+  Loader2Icon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +25,8 @@ import { bondOptions, bondsOptions } from '@/queries/bond/options';
 
 /**
  * Picks a bond, searched on the server by the start of its code or name. With allLabel, a
- * first item picks none (''), for a filter.
+ * first item picks none (''), for a filter, and the trigger looks like the list filters'
+ * selects (FilterSelect).
  */
 export function BondCombobox({
   value,
@@ -70,7 +76,12 @@ export function BondCombobox({
           role="combobox"
           aria-expanded={open}
           aria-invalid={invalid}
-          className={cn('h-10 w-full justify-between font-normal', className)}
+          className={cn(
+            allLabel
+              ? 'h-9 w-full justify-between gap-1.5 pr-2 pl-2.5 font-normal shadow-xs dark:bg-input/30 dark:hover:bg-input/50 sm:w-44'
+              : 'h-10 w-full justify-between font-normal',
+            className,
+          )}
         >
           {value && picked ? (
             <span className="flex min-w-0 items-baseline gap-2">
@@ -84,7 +95,11 @@ export function BondCombobox({
               {allLabel ?? 'Бонд сонгох'}
             </span>
           )}
-          <ChevronsUpDownIcon className="opacity-50" />
+          {allLabel ? (
+            <ChevronDownIcon className="size-4 text-muted-foreground" />
+          ) : (
+            <ChevronsUpDownIcon className="opacity-50" />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) min-w-72 p-0">

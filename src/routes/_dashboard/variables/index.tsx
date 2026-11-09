@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
+import { FilterSelect } from '@/components/common/list-parts';
 import { PageTitle } from '@/components/common/page-title';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -147,23 +148,18 @@ function VariablesPage() {
               group: search.group,
               q: search.q,
             }}
-            tabs={
-              <Tabs
-                value={view}
-                onValueChange={(v) =>
-                  setFilter({
-                    view: v === 'all' ? undefined : VariableViewSchema.parse(v),
-                  })
-                }
-              >
-                <TabsList className="w-full sm:w-fit">
-                  <TabsTrigger value="all">Бүгд</TabsTrigger>
-                  <TabsTrigger value="system">Систем</TabsTrigger>
-                  <TabsTrigger value="field">Талбар</TabsTrigger>
-                  <TabsTrigger value="custom">Тогтмол текст</TabsTrigger>
-                  <TabsTrigger value="unused">Ашиглаагүй</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            viewSelect={
+              <FilterSelect
+                value={search.view}
+                onChange={(v) => setFilter({ view: v })}
+                allLabel="Бүх хувьсагч"
+                options={[
+                  { value: 'system', label: 'Систем' },
+                  { value: 'field', label: 'Талбар' },
+                  { value: 'custom', label: 'Тогтмол текст' },
+                  { value: 'unused', label: 'Ашиглаагүй' },
+                ]}
+              />
             }
             onFilter={setFilter}
             onPage={onPage}

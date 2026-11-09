@@ -1,6 +1,18 @@
 import z from 'zod';
 import { LanguageSchema, OwnershipTypeSchema } from '@/queries/template/type';
 
+/** The underwriter every contract names: it signs no account, the contract holds its signature. */
+export const UnderwriterSchema = z.object({
+  name: z.string(),
+  state_reg_no: z.string(),
+  register_no: z.string(),
+  phone: z.string(),
+  director_last_name: z.string(),
+  director_first_name: z.string(),
+});
+
+export type UnderwriterType = z.infer<typeof UnderwriterSchema>;
+
 export const ContractStatusSchema = z.enum([
   'pending_payment',
   'pending_customer_signature',
@@ -144,8 +156,8 @@ export const AdminContractDetailSchema = z.object({
   parties: z.array(ContractPartySchema),
   render_attempts: z.number(),
   render_error: z.string().optional(),
-  /** The underwriter the contract names beside its parties; it does not sign. */
-  underwriter: z.string(),
+  /** The underwriter the contract names beside its parties, signed from the start. */
+  underwriter: UnderwriterSchema,
   /** How it is paid: what came in, per currency what it keeps, gave back and has left to. */
   payment: z
     .object({
@@ -183,4 +195,7 @@ export interface ContractFilters {
   status?: ContractStatus;
   template?: string;
   q?: string;
+  /** The first and the last day it was made. */
+  from?: string;
+  to?: string;
 }

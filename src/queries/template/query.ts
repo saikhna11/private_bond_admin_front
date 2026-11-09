@@ -18,7 +18,7 @@ export const getContractVariables = () =>
 
 export const getTemplates = (f: TemplateFilters) =>
   fetchAndValidate(
-    `contract-templates${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, bond_id: f.bond_id })}`,
+    `contract-templates${listQuery({ page: f.page, size: PAGE_SIZE, status: f.status, bond_id: f.bond_id, q: f.q, from: f.from, to: f.to })}`,
     pageSchema(TemplateSummarySchema),
   );
 

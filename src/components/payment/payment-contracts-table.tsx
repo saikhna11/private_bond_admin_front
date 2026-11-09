@@ -22,6 +22,7 @@ import { formatDateTime, formatMoney } from '@/lib/format';
 import { PRIV } from '@/lib/rbac';
 import { PAGE_SIZE } from '@/lib/types';
 import { paymentContractsOptions } from '@/queries/payment/options';
+import type { PaymentFilter } from '@/queries/payment/type';
 
 /**
  * The orders paid short (short), or the money contracts received and must give back
@@ -29,15 +30,17 @@ import { paymentContractsOptions } from '@/queries/payment/options';
  */
 export function PaymentContractsTable({
   tab,
+  filter,
   page,
   onPage,
 }: {
   tab: 'short' | 'refund';
+  filter: PaymentFilter;
   page: number;
   onPage: (page: number) => void;
 }) {
   const { data, isPending, isPlaceholderData } = useQuery(
-    paymentContractsOptions(tab, page),
+    paymentContractsOptions(tab, filter, page),
   );
   const can = useCan();
   const refund = tab === 'refund';

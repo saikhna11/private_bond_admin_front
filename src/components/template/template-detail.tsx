@@ -30,11 +30,11 @@ export function TemplateDetail({ t }: { t: TemplateDetailType }) {
         <ArrowLeftIcon className="size-4" />
         Гэрээний загвар
       </Link>
+      {manage && <TemplateProblems t={t} mapping={mapping} />}
       <TemplateInfoCard
         t={t}
         actions={manage && <TemplateActions t={t} dirty={mapping.dirty} />}
       />
-      {manage && <TemplateProblems t={t} mapping={mapping} />}
       <FieldMappingTable t={t} mapping={mapping} />
     </div>
   );

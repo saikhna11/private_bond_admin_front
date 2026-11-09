@@ -4,6 +4,7 @@ import { CircleAlertIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import * as z from 'zod';
 import {
+  FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
@@ -21,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toApiError } from '@/lib/fetcher';
 import { formatDate } from '@/lib/format';
 import { PAGE_SIZE } from '@/lib/types';
@@ -73,51 +73,44 @@ function ClientsPage() {
       />
 
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4">
-          <Tabs
-            value={search.status ?? 'all'}
-            onValueChange={(v) =>
-              setFilter({
-                status:
-                  v === 'all'
-                    ? undefined
-                    : (v as z.infer<typeof ReviewStatusSchema>),
-              })
-            }
-          >
-            <TabsList className="w-full sm:w-fit">
-              <TabsTrigger value="all">Бүгд</TabsTrigger>
-              <TabsTrigger value="pending">Хүлээгдэж буй</TabsTrigger>
-              <TabsTrigger value="approved">Баталгаажсан</TabsTrigger>
-              <TabsTrigger value="rejected">Цуцлагдсан</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <FilterBar
+          search={
             <SearchInput
               value={search.q ?? ''}
               onChange={setQ}
               placeholder="Нэр, имэйл, утас, РД"
             />
-            <FilterSelect
-              value={search.type}
-              onChange={(type) => setFilter({ type })}
-              allLabel="Бүх төрөл"
-              options={ClientTypeSchema.options.map((t) => ({
-                value: t,
-                label: clientTypeLabel[t],
-              }))}
-            />
-            <FilterSelect
-              value={search.active}
-              onChange={(active) => setFilter({ active })}
-              allLabel="Идэвхтэй, хаагдсан"
-              options={[
-                { value: 'active', label: 'Идэвхтэй' },
-                { value: 'inactive', label: 'Хаагдсан' },
-              ]}
-            />
-          </div>
-        </div>
+          }
+        >
+          <FilterSelect
+            value={search.status}
+            onChange={(status) => setFilter({ status })}
+            allLabel="Бүх төлөв"
+            options={[
+              { value: 'pending', label: 'Хүлээгдэж буй' },
+              { value: 'approved', label: 'Баталгаажсан' },
+              { value: 'rejected', label: 'Цуцлагдсан' },
+            ]}
+          />
+          <FilterSelect
+            value={search.type}
+            onChange={(type) => setFilter({ type })}
+            allLabel="Бүх төрөл"
+            options={ClientTypeSchema.options.map((t) => ({
+              value: t,
+              label: clientTypeLabel[t],
+            }))}
+          />
+          <FilterSelect
+            value={search.active}
+            onChange={(active) => setFilter({ active })}
+            allLabel="Идэвхтэй, хаагдсан"
+            options={[
+              { value: 'active', label: 'Идэвхтэй' },
+              { value: 'inactive', label: 'Хаагдсан' },
+            ]}
+          />
+        </FilterBar>
 
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>

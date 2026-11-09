@@ -11,6 +11,7 @@ import {
 import { type ReactNode, useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import {
+  FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
@@ -162,12 +163,15 @@ export function StaffManager<T extends StaffRow>({
       />
 
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-2 border-b p-4 sm:flex-row">
-          <SearchInput
-            value={filters.q ?? ''}
-            onChange={(q) => onFilters({ q: q || undefined })}
-            placeholder="Имэйлээр хайх"
-          />
+        <FilterBar
+          search={
+            <SearchInput
+              value={filters.q ?? ''}
+              onChange={(q) => onFilters({ q: q || undefined })}
+              placeholder="Имэйлээр хайх"
+            />
+          }
+        >
           <FilterSelect
             value={filters.status}
             onChange={(status) => onFilters({ status })}
@@ -178,7 +182,7 @@ export function StaffManager<T extends StaffRow>({
             ]}
           />
           {toolbar}
-        </div>
+        </FilterBar>
         <Table className={isPlaceholderData ? 'opacity-60' : undefined}>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">

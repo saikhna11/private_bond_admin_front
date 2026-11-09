@@ -9,20 +9,23 @@ import { Button } from '@/components/ui/button';
 import { setBondState } from '@/queries/bond/query';
 import type { BondDetailType } from '@/queries/bond/type';
 import { BondPublishDialog } from './bond-publish-dialog';
+import { BondRejectDialog } from './bond-reject-dialog';
 import { useBondAction } from './use-bond-action';
 
 /**
  * Moves a bond through its life: a draft is published, an active bond paused, a paused one
  * resumed, a published one hidden as a draft again while no contract names it, and any of
- * them closed for good.
+ * them closed for good. An issuer's request is published or rejected with a reason; a rejected
+ * bond is final.
  */
 export function BondStateActions({ b }: { b: BondDetailType }) {
   const run = useBondAction();
   const state = b.manual_state;
-  if (state === 'closed') return null;
+  if (state === 'closed' || state === 'rejected') return null;
   return (
     <>
       {state === 'draft' && <BondPublishDialog b={b} />}
+      {state === 'draft' && b.requested_at && <BondRejectDialog b={b} />}
       {state === 'active' && (
         <Button
           variant="outline"

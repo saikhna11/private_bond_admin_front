@@ -12,17 +12,22 @@ const accept: Record<BondFileKind, string> = {
   cover: 'image/png,image/jpeg',
 };
 
-/** Picks a file and uploads it to bond bondId as kind. */
+/**
+ * Picks a file and uploads it to bond bondId as kind, spinning while it uploads; onBusy tells
+ * the card, which locks its other file buttons meanwhile.
+ */
 export function BondFileUploadButton({
   bondId,
   kind,
   label,
   disabled,
+  onBusy,
 }: {
   bondId: string;
   kind: BondFileKind;
   label: string;
   disabled?: boolean;
+  onBusy?: (busy: boolean) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -34,6 +39,7 @@ export function BondFileUploadButton({
       return;
     }
     setBusy(true);
+    onBusy?.(true);
     try {
       const content = await fileToBase64(file);
       await run(
@@ -44,6 +50,7 @@ export function BondFileUploadButton({
       // useBondAction reported it.
     } finally {
       setBusy(false);
+      onBusy?.(false);
     }
   }
 

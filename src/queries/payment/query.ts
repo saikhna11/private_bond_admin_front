@@ -4,6 +4,8 @@ import {
   LinkResultSchema,
   PaymentContractSchema,
   PaymentCountsSchema,
+  type PaymentFilter,
+  PaymentIssueSchema,
   UnknownCreditSchema,
 } from './type';
 
@@ -13,15 +15,26 @@ const ContractPageSchema = pageSchema(PaymentContractSchema);
 export const getPaymentCounts = () =>
   fetchAndValidate('payments/counts', PaymentCountsSchema);
 
-export const getUnknownCredits = (page?: number) =>
+/** Every list of the payments to look at in one, newest day first. */
+export const getPaymentIssues = (filter: PaymentFilter, page?: number) =>
   fetchAndValidate(
-    `payments/unknown${listQuery({ page, size: PAGE_SIZE })}`,
+    `payments/all${listQuery({ ...filter, page, size: PAGE_SIZE })}`,
+    pageSchema(PaymentIssueSchema),
+  );
+
+export const getUnknownCredits = (filter: PaymentFilter, page?: number) =>
+  fetchAndValidate(
+    `payments/unknown${listQuery({ ...filter, page, size: PAGE_SIZE })}`,
     UnknownPageSchema,
   );
 
-export const getPaymentContracts = (tab: 'short' | 'refund', page?: number) =>
+export const getPaymentContracts = (
+  tab: 'short' | 'refund',
+  filter: PaymentFilter,
+  page?: number,
+) =>
   fetchAndValidate(
-    `payments/contracts${listQuery({ tab, page, size: PAGE_SIZE })}`,
+    `payments/contracts${listQuery({ tab, ...filter, page, size: PAGE_SIZE })}`,
     ContractPageSchema,
   );
 
